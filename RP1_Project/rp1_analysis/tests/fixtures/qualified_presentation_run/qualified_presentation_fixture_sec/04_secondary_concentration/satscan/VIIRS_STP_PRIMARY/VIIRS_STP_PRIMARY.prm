@@ -1,0 +1,69 @@
+; Ghana Fire RP1 Analysis - config-realised SaTScan run
+; scenario_id=VIIRS_STP_PRIMARY
+; product=viirs
+; model_identity=space_time_permutation
+; reporting_identity=hierarchical_non_overlapping
+; scientific_seed=20260822
+; user_defined_random_seed_supported=false
+; rng_authority=engine_deterministic_internal_seed
+; engine_rng_behaviour=same_internal_seed_for_identical_input
+[Input]
+CaseFile=04_secondary_concentration/satscan/VIIRS_STP_PRIMARY/VIIRS_STP_PRIMARY.cas
+ControlFile=
+PrecisionCaseTimes=2
+StartDate=2012/2/1
+EndDate=2024/12/31
+PopulationFile=
+CoordinatesFile=04_secondary_concentration/satscan/VIIRS_STP_PRIMARY/VIIRS_STP_PRIMARY.geo
+UseGridFile=n
+GridFile=
+CoordinatesType=0
+
+[Analysis]
+AnalysisType=3
+ModelType=2
+ScanAreas=1
+TimeAggregationUnits=2
+TimeAggregationLength=1
+
+[Spatial Window]
+MaxSpatialSizeInPopulationAtRisk=50
+UseMaxCirclePopulationFileOption=n
+UseDistanceFromCenterOption=n
+IncludePurelyTemporal=n
+SpatialWindowShapeType=0
+
+[Temporal Window]
+MinimumTemporalClusterSize=1
+MaxTemporalSizeInterpretation=1
+MaxTemporalSize=12
+IncludePurelySpatial=n
+IncludeClusters=0
+
+[Inference]
+PValueReportType=1
+ReportGumbel=n
+MonteCarloReps=999
+AdjustForEarlierAnalyses=n
+IterativeScan=n
+
+[Spatial Output]
+ReportHierarchicalClusters=y
+CriteriaForReportingSecondaryClusters=0
+ReportGiniClusters=n
+UseReportOnlySmallerClusters=n
+
+[Other Output]
+ReportClusterRank=y
+PrintAsciiColumnHeaders=y
+
+[Output]
+ResultsFile=04_secondary_concentration/satscan/VIIRS_STP_PRIMARY/results/VIIRS_STP_PRIMARY
+MostLikelyClusterEachCentroidASCII=y
+MostLikelyClusterCaseInfoEachCentroidASCII=y
+CensusAreasReportedClustersASCII=y
+IncludeRelativeRisksCensusAreasASCII=n
+SaveSimLLRsASCII=y
+OutputShapefiles=n
+OutputGoogleEarthKML=n
+OutputGoogleMaps=n

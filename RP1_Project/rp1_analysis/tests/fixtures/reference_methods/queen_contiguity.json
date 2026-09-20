@@ -1,0 +1,22 @@
+{
+  "input": {
+    "rectangles": [
+      {"id": "A", "bounds": [0, 0, 1, 1]},
+      {"id": "B", "bounds": [1, 0, 2, 1]},
+      {"id": "C", "bounds": [0, 1, 1, 2]},
+      {"id": "D", "bounds": [1, 1, 2, 2]},
+      {"id": "ISLAND", "bounds": [10, 10, 11, 11]}
+    ]
+  },
+  "expected": {
+    "neighbours": {
+      "A": ["B", "C", "D"],
+      "B": ["A", "C", "D"],
+      "C": ["A", "B", "D"],
+      "D": ["A", "B", "C"],
+      "ISLAND": []
+    },
+    "islands": ["ISLAND"]
+  },
+  "provenance": "hand-verifiable 2x2 Queen grid plus a spatially isolated rectangle"
+}

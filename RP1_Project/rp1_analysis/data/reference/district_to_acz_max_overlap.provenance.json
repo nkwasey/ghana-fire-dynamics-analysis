@@ -1,0 +1,69 @@
+{
+  "analysis_crs": "EPSG:32630",
+  "area_method": "projected polygon area in EPSG:32630",
+  "assignment_method": "maximum original-polygon overlap share",
+  "authority_role": "neutral_governed_reference_input",
+  "comparisons": {
+    "all_parent_assignments_match_existing_derived_geometry": true,
+    "all_parent_assignments_match_governed_panel": true,
+    "existing_derived_geometry_rows": 260,
+    "governed_panel_unique_parent_rows": 260,
+    "max_abs_overlap_share_difference_vs_existing_derived_geometry": 3.7259084706420253e-13
+  },
+  "cross_boundary_policy": "whole district assigned to one parent ACZ; no panel fragmentation",
+  "crosswalk": {
+    "max_dominant_overlap_share_raw": 1.0000000000000027,
+    "max_dominant_overlap_share_serialized": 1.0,
+    "min_dominant_overlap_share_raw": 0.9999999966313188,
+    "min_dominant_overlap_share_serialized": 0.999999996631319,
+    "provenance_relative_path": "RP1_Project/rp1_analysis/data/reference/district_to_acz_max_overlap.provenance.json",
+    "regenerated_byte_identical": true,
+    "regenerated_sha256": "fb42b79ca19ab2a620cac7484c4d92c785374d39b78c52c18618be18e35772d0",
+    "relative_path": "RP1_Project/rp1_analysis/data/reference/district_to_acz_max_overlap.csv",
+    "rows": 260,
+    "sha256": "fb42b79ca19ab2a620cac7484c4d92c785374d39b78c52c18618be18e35772d0",
+    "ties_requiring_break": 0,
+    "unique_district_ids": 260
+  },
+  "district_id_derivation": "geo_data_prep.normalise.ids.dist_id_from_label(adm2_name)",
+  "implementation_identity": "geo_data_prep.spatial.overlay.assign_districts_to_zones_by_max_share",
+  "schema": "rp1-district-to-acz-crosswalk-provenance-v1",
+  "share_definition": "area(district \u2229 ACZ) / area(original district)",
+  "source_acz_geometry": {
+    "bundle_sha256": "a5ad37a9b8c9cb0763997aa124268b78162f53e32c863d82c6a8ad86969b58ef",
+    "code_field": "aczid_code",
+    "label_field": "acz_name",
+    "parts": {
+      "Agro_climatic_zone.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "Agro_climatic_zone.dbf": "fa6322e526de4f0ddd421dd43b76f020079b481919cafcd535990cca741cc507",
+      "Agro_climatic_zone.prj": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b",
+      "Agro_climatic_zone.sbn": "7f404bad6047cca6acc89e271ae6ce72e598115f6e0346264ef6016c661b9411",
+      "Agro_climatic_zone.sbx": "25b6c6f46b4bf53155bb3747346edcf930534c87d9d20cf604f016649c5bcb94",
+      "Agro_climatic_zone.shp": "b5e95136539e3da7765c295e43eb8afc0e547e04263dc13439232d176da4a309",
+      "Agro_climatic_zone.shx": "c4bda44b4d6ad488cbd739ebb0125042c1ff3c4b8cf740b323321be697f6b80c",
+      "Agro_climatic_zone.xml": "7c3c7c67f3ee406e4c39123bc49e627341d821f766d012c7d21d66e5a95be0d1"
+    },
+    "rows": 5,
+    "shapefile_relative_to_product": "geo_data_prep/data/raw/zones/Agro_climatic_zone.shp",
+    "shapefile_sha256": "b5e95136539e3da7765c295e43eb8afc0e547e04263dc13439232d176da4a309",
+    "source_crs": "EPSG:32630"
+  },
+  "source_district_geometry": {
+    "bundle_sha256": "b4d3050dc9f239df67c7a84fcd5bce52a306d32c450db2e80e2175909e663272",
+    "label_field": "adm2_name",
+    "parts": {
+      "gha_admin2.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "gha_admin2.dbf": "6055e69a88383ab7da0ccb18b9c46377e599b9fc12851c0520c3e5441301232c",
+      "gha_admin2.prj": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4",
+      "gha_admin2.shp": "b6489e63e44c74a3b98aeef8c24d08c0c843297aceeef3cbf0dbf7ff2c7c524f",
+      "gha_admin2.shx": "6f7fedbc31edee918f5e3f221a1fe357c3a1c7e277662567f4ec707ea385be25"
+    },
+    "rows": 260,
+    "shapefile_relative_to_product": "geo_data_prep/data/raw/districts/gha_admin2.shp",
+    "shapefile_sha256": "b6489e63e44c74a3b98aeef8c24d08c0c843297aceeef3cbf0dbf7ff2c7c524f",
+    "source_crs": "EPSG:4326"
+  },
+  "tie_break": "lexicographically smallest zone_id, then zone_name among shares tied within tolerance",
+  "tie_tolerance": 1e-12,
+  "zone_id_derivation": "geo_data_prep.normalise.ids.zone_id_from_label(acz_name)"
+}

@@ -1,0 +1,115 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghana-fire-rp1-analysis-workspace"
+version = "1.2.3"
+description = "Workspace configuration for the Ghana Fire RP1 analysis and its governed preparation components."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Ghana Fire RP1 contributors" }]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7,<10",
+  "pypdf>=5,<7",
+  "Pillow>=10,<13",
+  "build>=1,<2",
+  "setuptools>=68",
+  "wheel",
+]
+dev = [
+  "pytest>=7,<10",
+  "pypdf>=5,<7",
+  "Pillow>=10,<13",
+  "pytest-cov>=4,<7",
+  "ruff>=0.6,<1",
+  "black>=24,<26",
+  "mypy>=1.8,<2",
+  "types-PyYAML>=6,<7",
+  "pandas-stubs==2.3.3.260113",
+  "types-geopandas==1.1.4.20260807",
+  "scipy-stubs==1.17.1.5",
+  "build>=1,<2",
+  "setuptools>=68",
+  "wheel",
+]
+
+[tool.setuptools]
+packages = []
+include-package-data = false
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+extend-exclude = '''
+(
+  ^RP1_Project/rp1_gee_ba_scripts/
+  | ^RP1_Project/docs/
+  | ^RP1_Project/rp1_analysis/out/
+  | ^RP1_Project/rp1_analysis/data/
+  | ^RP1_Project/rp1_analysis/.*\.ipynb$
+  | ^geo_data_prep/docs/
+)
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [
+  "RP1_Project/rp1_gee_ba_scripts",
+  "RP1_Project/docs",
+  "RP1_Project/rp1_analysis/out",
+  "RP1_Project/rp1_analysis/data",
+  "geo_data_prep/docs",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-q"
+testpaths = [
+  "geo_data_prep/tests",
+  "RP1_Project/rp1_mv_firms_panels/tests",
+  "RP1_Project/rp1_analysis/tests",
+]
+norecursedirs = [
+  ".git",
+  ".idea",
+  ".pytest_cache",
+  "__pycache__",
+  "data",
+  "out",
+  "runs",
+]
+markers = [
+  "native_plot_smoke: opt-in native GeoPandas/Matplotlib rendering smoke test for geospatial plotting paths",
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+exclude = '''
+(^RP1_Project/rp1_gee_ba_scripts/)|(^RP1_Project/docs/)|(^RP1_Project/rp1_analysis/out/)|(^RP1_Project/rp1_analysis/data/)|(^geo_data_prep/docs/)
+'''
+
+[[tool.mypy.overrides]]
+module = ["statsmodels", "statsmodels.*"]
+ignore_missing_imports = true

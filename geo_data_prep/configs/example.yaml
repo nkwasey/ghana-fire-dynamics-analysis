@@ -1,0 +1,153 @@
+# Example Stage 1 configuration for the canonical ACZ workflow.
+#
+# This file is intended to be runnable against the bundled Ghana ACZ, district,
+# and AOI Shapefile bundles under data/raw/.
+#
+# Stage 1 contract reminders
+# --------------------------
+# - All configured paths must be relative to the repo root.
+# - Stage 1 is the canonical upstream contract; downstream consumers adapt later.
+# - The current canonical unit_universe.csv schema exposes exactly one area_sqkm
+#   column, so runnable Stage 1 configs should keep:
+#     * area_policy.method in {projected, geodesic}
+#     * area_policy.units  = sq_km
+# - Rich provenance, QA, and crosswalk information is emitted as sidecars rather
+#   than being pushed into the canonical Shapefile DBF schemas.
+# - The frozen logical unit_universe.csv column order is:
+#     unit_type, level, unit_id, unit_code, unit_name,
+#     parent_level, parent_id, parent_code, parent_name, area_sqkm
+# - unit_id and parent_id remain the canonical relational keys.
+# - unit_code is row-owned code metadata; parent_code is parent-owned code metadata.
+# - Zone rows emit unit_code = zone_code and blank parent_code.
+# - District rows emit parent_code = zone_code; unit_code is filled only when a
+#   district_code value exists upstream, otherwise it stays blank.
+
+schema_version: "1.0"
+
+inputs:
+  zones:
+    path: "data/raw/zones/Agro_climatic_zone.shp"
+    label_field: "acz_name"
+  districts:
+    path: "data/raw/districts/gha_admin2.shp"
+    label_field: "adm2_name"
+  aoi:
+    enabled: true
+    path: "data/raw/aoi/gha_admin0.shp"
+
+levels:
+  zone:
+    level: "acz"
+  district:
+    level: "district"
+
+crs:
+  # Binding projected CRS for spatial operations used by the runtime:
+  # reading, reprojection, AOI clipping, overlay, and overlap-area calculation.
+  working_crs: "EPSG:32630"
+
+  # Geographic plotting CRS used for PNG map outputs and graticules.
+  plot_crs: "EPSG:4326"
+
+outputs:
+  # Each run writes to:
+  #   <outputs.out_dir>/<run_id>/
+  out_dir: "out"
+
+  toggles:
+    # When true, write per-zone split Shapefile bundles plus splits_manifest.json.
+    splits: true
+
+    # When true, write plots/combined_zones_districts.png and plots/per_zone/*.png.
+    plots: true
+
+  basenames:
+    # Used by combined boundary exports, split Shapefile names, and the contract manifest.
+    zones: "acz"
+    districts: "districts_within_acz"
+
+derivations:
+  zone_code:
+    # Mapping-first code derivation. Keys are compared after Stage 1 text
+    # normalisation, so whitespace/case differences are handled deterministically.
+    mapping:
+      "Coastal Zone": "CZ"
+      "Forest Zone": "FZ"
+      "Guinea Savannah": "GS"
+      "Sudan Savannah": "SS"
+      "Transition Zone": "TZ"
+
+    fallback:
+      # Current codebase supports only the initials fallback.
+      method: "initials"
+
+      # Current codebase supports deterministic numeric suffixing for collisions.
+      collision: "suffix"
+
+area_policy:
+  # Reported area methodology for unit_universe.csv and contract/audit metadata.
+  #
+  # Supported by config validation:
+  #   projected | geodesic | both
+  #
+  # Current Stage 1 runtime/export contract:
+  #   - unit_universe.csv can faithfully represent only a single area_sqkm column
+  #   - therefore method="both" fails fast at runtime for Stage 1 exports
+  method: "projected"
+
+  # Projected CRS used for reported area calculations when method is projected.
+  # If omitted, the runtime defaults this to crs.working_crs.
+  projected_crs: "EPSG:32630"
+
+  # Ellipsoid recorded in audit/contract metadata and used when method=geodesic.
+  geodesic_ellipsoid: "WGS84"
+
+  # Current Stage 1 canonical CSV schema is area_sqkm, so runnable configs should
+  # keep this at sq_km.
+  units: "sq_km"
+
+  # Retained in manifests/metadata for explicit provenance.
+  include_method_metadata: true
+
+qa:
+  enabled: true
+
+  thresholds:
+    overlap_share:
+      # Assigned district->zone overlap shares below warn_below are WARN;
+      # below fail_below are FAIL. Shares outside [0, 1] are treated as invalid.
+      warn_below: 0.95
+      fail_below: 0.80
+
+    area_relative_difference:
+      # Absolute relative difference between district area and summed overlap area.
+      warn_above: 0.01
+      fail_above: 0.05
+
+    unassigned_units:
+      # Counts of districts without a valid assignment.
+      warn_above: 0
+      fail_above: 0
+
+    legacy_assignment_disagreement:
+      # Counts of districts whose legacy parent disagrees with the recomputed parent,
+      # when legacy assignment fields are actually supplied upstream.
+      warn_above: 0
+      fail_above: 0
+
+    invalid_geometries:
+      # Counts of invalid geometries detected by validator logic.
+      warn_above: 0
+      fail_above: 0
+
+contract:
+  stage: "stage_1"
+  name: "geo_data_prep"
+  # schema_version remains 1.0 because the YAML config shape is unchanged.
+  # contract.version is explicit here because the logical Stage 1 output
+  # contract changed in batch_1 even though the config schema did not.
+  version: "1.1.0"
+
+  # Binding Stage 1 semantics:
+  canonical_upstream: true
+  downstreams_adapt_later: true

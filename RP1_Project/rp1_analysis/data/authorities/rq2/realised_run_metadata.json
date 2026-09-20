@@ -1,0 +1,510 @@
+{
+  "annual_series_values": {
+    "coastal_zone": [
+      {
+        "annual_rate": 0.3977804203184537,
+        "year": 2001
+      },
+      {
+        "annual_rate": 2.834602218993719,
+        "year": 2002
+      },
+      {
+        "annual_rate": 4.795065211759486,
+        "year": 2003
+      },
+      {
+        "annual_rate": 11.120956818896438,
+        "year": 2004
+      },
+      {
+        "annual_rate": 8.8129581701226,
+        "year": 2005
+      },
+      {
+        "annual_rate": 6.6953833064506405,
+        "year": 2006
+      },
+      {
+        "annual_rate": 3.387781923061232,
+        "year": 2007
+      },
+      {
+        "annual_rate": 6.391193084160584,
+        "year": 2008
+      },
+      {
+        "annual_rate": 4.691422380067835,
+        "year": 2009
+      },
+      {
+        "annual_rate": 2.5437746132606573,
+        "year": 2010
+      },
+      {
+        "annual_rate": 4.912049613523096,
+        "year": 2011
+      },
+      {
+        "annual_rate": 4.382237647344655,
+        "year": 2012
+      },
+      {
+        "annual_rate": 3.7137074647265638,
+        "year": 2013
+      },
+      {
+        "annual_rate": 2.090840210517303,
+        "year": 2014
+      },
+      {
+        "annual_rate": 6.675341436632398,
+        "year": 2015
+      },
+      {
+        "annual_rate": 3.4546662142283227,
+        "year": 2016
+      },
+      {
+        "annual_rate": 1.1064282389334155,
+        "year": 2017
+      },
+      {
+        "annual_rate": 2.4267804148843912,
+        "year": 2018
+      },
+      {
+        "annual_rate": 0.9543360424330791,
+        "year": 2019
+      },
+      {
+        "annual_rate": 8.211293757246798,
+        "year": 2020
+      },
+      {
+        "annual_rate": 1.5309501125721727,
+        "year": 2021
+      },
+      {
+        "annual_rate": 5.2145754609808375,
+        "year": 2022
+      },
+      {
+        "annual_rate": 1.4506938203629887,
+        "year": 2023
+      },
+      {
+        "annual_rate": 1.9287228840330901,
+        "year": 2024
+      }
+    ],
+    "forest_zone": [
+      {
+        "annual_rate": 12.171021970761553,
+        "year": 2001
+      },
+      {
+        "annual_rate": 8.315693144491727,
+        "year": 2002
+      },
+      {
+        "annual_rate": 10.061882060129,
+        "year": 2003
+      },
+      {
+        "annual_rate": 12.771195005288746,
+        "year": 2004
+      },
+      {
+        "annual_rate": 14.398825021692682,
+        "year": 2005
+      },
+      {
+        "annual_rate": 12.210534136683007,
+        "year": 2006
+      },
+      {
+        "annual_rate": 10.098999052101089,
+        "year": 2007
+      },
+      {
+        "annual_rate": 11.699503614708426,
+        "year": 2008
+      },
+      {
+        "annual_rate": 11.560015840088004,
+        "year": 2009
+      },
+      {
+        "annual_rate": 10.308479608355956,
+        "year": 2010
+      },
+      {
+        "annual_rate": 11.598476835389704,
+        "year": 2011
+      },
+      {
+        "annual_rate": 9.603696860416143,
+        "year": 2012
+      },
+      {
+        "annual_rate": 10.691051231882826,
+        "year": 2013
+      },
+      {
+        "annual_rate": 8.17334781169243,
+        "year": 2014
+      },
+      {
+        "annual_rate": 14.663303199662085,
+        "year": 2015
+      },
+      {
+        "annual_rate": 11.897200166132158,
+        "year": 2016
+      },
+      {
+        "annual_rate": 6.620988615429954,
+        "year": 2017
+      },
+      {
+        "annual_rate": 11.546066701668963,
+        "year": 2018
+      },
+      {
+        "annual_rate": 5.149965727020382,
+        "year": 2019
+      },
+      {
+        "annual_rate": 14.587302413888589,
+        "year": 2020
+      },
+      {
+        "annual_rate": 6.856483129199403,
+        "year": 2021
+      },
+      {
+        "annual_rate": 15.170079439444109,
+        "year": 2022
+      },
+      {
+        "annual_rate": 6.5674405959578674,
+        "year": 2023
+      },
+      {
+        "annual_rate": 13.435773541407645,
+        "year": 2024
+      }
+    ],
+    "guinea_savannah": [
+      {
+        "annual_rate": 47.69481492875543,
+        "year": 2001
+      },
+      {
+        "annual_rate": 46.08474439392109,
+        "year": 2002
+      },
+      {
+        "annual_rate": 49.020075579609625,
+        "year": 2003
+      },
+      {
+        "annual_rate": 31.196310932699305,
+        "year": 2004
+      },
+      {
+        "annual_rate": 58.86559772203701,
+        "year": 2005
+      },
+      {
+        "annual_rate": 47.89817465655547,
+        "year": 2006
+      },
+      {
+        "annual_rate": 42.124776379824496,
+        "year": 2007
+      },
+      {
+        "annual_rate": 40.93199933478036,
+        "year": 2008
+      },
+      {
+        "annual_rate": 32.620114777436875,
+        "year": 2009
+      },
+      {
+        "annual_rate": 35.29278237060237,
+        "year": 2010
+      },
+      {
+        "annual_rate": 53.22382657104308,
+        "year": 2011
+      },
+      {
+        "annual_rate": 37.27326974572897,
+        "year": 2012
+      },
+      {
+        "annual_rate": 44.50572125445318,
+        "year": 2013
+      },
+      {
+        "annual_rate": 40.820790378367796,
+        "year": 2014
+      },
+      {
+        "annual_rate": 41.08464771122741,
+        "year": 2015
+      },
+      {
+        "annual_rate": 40.368754596816025,
+        "year": 2016
+      },
+      {
+        "annual_rate": 44.32276352725735,
+        "year": 2017
+      },
+      {
+        "annual_rate": 30.94144617838131,
+        "year": 2018
+      },
+      {
+        "annual_rate": 34.71783193289424,
+        "year": 2019
+      },
+      {
+        "annual_rate": 45.24348547460612,
+        "year": 2020
+      },
+      {
+        "annual_rate": 31.07480173609199,
+        "year": 2021
+      },
+      {
+        "annual_rate": 44.698614680786704,
+        "year": 2022
+      },
+      {
+        "annual_rate": 29.464285143099385,
+        "year": 2023
+      },
+      {
+        "annual_rate": 37.364051693678675,
+        "year": 2024
+      }
+    ],
+    "sudan_savannah": [
+      {
+        "annual_rate": 37.31870764211849,
+        "year": 2001
+      },
+      {
+        "annual_rate": 38.81733363235494,
+        "year": 2002
+      },
+      {
+        "annual_rate": 44.44095016225567,
+        "year": 2003
+      },
+      {
+        "annual_rate": 48.05470945719034,
+        "year": 2004
+      },
+      {
+        "annual_rate": 55.95468108353596,
+        "year": 2005
+      },
+      {
+        "annual_rate": 40.518022590147275,
+        "year": 2006
+      },
+      {
+        "annual_rate": 39.896981433207884,
+        "year": 2007
+      },
+      {
+        "annual_rate": 36.385752749748356,
+        "year": 2008
+      },
+      {
+        "annual_rate": 39.264560176251265,
+        "year": 2009
+      },
+      {
+        "annual_rate": 47.15881141841073,
+        "year": 2010
+      },
+      {
+        "annual_rate": 44.25576512287523,
+        "year": 2011
+      },
+      {
+        "annual_rate": 34.24339415629075,
+        "year": 2012
+      },
+      {
+        "annual_rate": 42.45956563400652,
+        "year": 2013
+      },
+      {
+        "annual_rate": 47.5390872517527,
+        "year": 2014
+      },
+      {
+        "annual_rate": 32.2605529985808,
+        "year": 2015
+      },
+      {
+        "annual_rate": 49.11739869839107,
+        "year": 2016
+      },
+      {
+        "annual_rate": 47.27267363523439,
+        "year": 2017
+      },
+      {
+        "annual_rate": 31.250615958518836,
+        "year": 2018
+      },
+      {
+        "annual_rate": 32.24633141620378,
+        "year": 2019
+      },
+      {
+        "annual_rate": 37.84579551171539,
+        "year": 2020
+      },
+      {
+        "annual_rate": 39.624911684363234,
+        "year": 2021
+      },
+      {
+        "annual_rate": 30.52558086823697,
+        "year": 2022
+      },
+      {
+        "annual_rate": 30.56967816905496,
+        "year": 2023
+      },
+      {
+        "annual_rate": 26.11551090028601,
+        "year": 2024
+      }
+    ],
+    "transition_zone": [
+      {
+        "annual_rate": 24.80685489653328,
+        "year": 2001
+      },
+      {
+        "annual_rate": 20.03649437430237,
+        "year": 2002
+      },
+      {
+        "annual_rate": 23.268263331717982,
+        "year": 2003
+      },
+      {
+        "annual_rate": 15.395233489098358,
+        "year": 2004
+      },
+      {
+        "annual_rate": 33.3111573993214,
+        "year": 2005
+      },
+      {
+        "annual_rate": 29.66063282900577,
+        "year": 2006
+      },
+      {
+        "annual_rate": 23.02727149656298,
+        "year": 2007
+      },
+      {
+        "annual_rate": 23.39764843562845,
+        "year": 2008
+      },
+      {
+        "annual_rate": 15.444448344558971,
+        "year": 2009
+      },
+      {
+        "annual_rate": 20.603150241045718,
+        "year": 2010
+      },
+      {
+        "annual_rate": 24.60097332630799,
+        "year": 2011
+      },
+      {
+        "annual_rate": 15.322033237721124,
+        "year": 2012
+      },
+      {
+        "annual_rate": 21.00934581193645,
+        "year": 2013
+      },
+      {
+        "annual_rate": 16.424413462249344,
+        "year": 2014
+      },
+      {
+        "annual_rate": 23.343343929750077,
+        "year": 2015
+      },
+      {
+        "annual_rate": 14.400065037431924,
+        "year": 2016
+      },
+      {
+        "annual_rate": 13.734351956052095,
+        "year": 2017
+      },
+      {
+        "annual_rate": 14.237669293718895,
+        "year": 2018
+      },
+      {
+        "annual_rate": 12.01882651335889,
+        "year": 2019
+      },
+      {
+        "annual_rate": 17.682731950021832,
+        "year": 2020
+      },
+      {
+        "annual_rate": 5.921959754131974,
+        "year": 2021
+      },
+      {
+        "annual_rate": 15.297962647098819,
+        "year": 2022
+      },
+      {
+        "annual_rate": 9.49563631740406,
+        "year": 2023
+      },
+      {
+        "annual_rate": 11.643041693435976,
+        "year": 2024
+      }
+    ]
+  },
+  "bandwidth_rule": "floor_n_power_one_third",
+  "bh_alpha": 0.05,
+  "bh_family_size": 5,
+  "configuration_sha256": "ade5e7c5176874304150154bc5d3dc128f65d6e73d37b7dca463ce49ad5fa606",
+  "dataset_sha256": "6fac5e8eb14f899f1be61277df6aaaa9415ddc71d715d12f7645b1cb20c1a722",
+  "deterministic_rerun": "PASS",
+  "effect_method_id": "sens_slope",
+  "implementation_id": "trend.romano_tirlea_studentized_global_mk.v1",
+  "method_id": "studentized_global_mann_kendall_permutation",
+  "methods_spec_sha256": "fccbed270a4c1c1c238d6f5e01c35471a4f40269d02351b704170cba24634a80",
+  "n_per_series": 24,
+  "permutation_count": 9999,
+  "realised_bandwidth": 2,
+  "schema_version": "rp1-rq2-realised-run-v1",
+  "seed": 20260822,
+  "series_count": 5
+}

@@ -1,0 +1,59 @@
+{
+  "authority_scope": "population_design_diagnostics_only_no_pgee_estimation",
+  "configuration_sha256": "d33d2c86a5e179a632b1f19c739ae29aaf16f6f933b9df99e7e4138debe888dc",
+  "files": [
+    {
+      "file": "cluster_outcome_counts.csv",
+      "sha256": "bcbb91b966c0bb9a0af22fc78c029cc8e71dc6dc7c584da3cecb6432dc143606",
+      "size_bytes": 8923
+    },
+    {
+      "file": "design_metadata.csv",
+      "sha256": "c7deb3fb63ebeb4c2abd8972aa2dcf97e5e3eab2c643a80d056ba63e77be1518",
+      "size_bytes": 2969
+    },
+    {
+      "file": "factor_outcome_counts.csv",
+      "sha256": "d9b0ba626a7a58cfa94b675124ce77148bda230a46bd7e23c1aa969bbe70c03e",
+      "size_bytes": 1472
+    },
+    {
+      "file": "four_state_summary.csv",
+      "sha256": "7ff8ed6ecbbec3a9b718e8fe69a3aea3dcb50be7525ba38b020377313e0a657a",
+      "size_bytes": 1765
+    },
+    {
+      "file": "mean_model_design.csv",
+      "sha256": "459780762584b6daf1db84154a17440772e571422345b69893d2c4486bb1ddd1",
+      "size_bytes": 4255205
+    },
+    {
+      "file": "model_population_source.csv",
+      "sha256": "5d2ee48076a81837eb0314b27d187af006329be63b92288762171906e296c986",
+      "size_bytes": 2301642
+    },
+    {
+      "file": "paired_four_state_source.csv",
+      "sha256": "eb2005b428143838215ab6e50d2eecc41b8e39135fa9e235a9ff7b757cc00774",
+      "size_bytes": 3666026
+    },
+    {
+      "file": "predictor_correlation.csv",
+      "sha256": "3f1dd279a0d90fbbf02b2367794848af296d7f3ee2497e7f17be3f4597a646ae",
+      "size_bytes": 299
+    },
+    {
+      "file": "predictor_vif.csv",
+      "sha256": "e133fd26da827142d41d3a27849e9ed4b16be983c568da8151a5b99d438f1643",
+      "size_bytes": 152
+    },
+    {
+      "file": "realised_run_metadata.json",
+      "sha256": "f92364de9713e1fd242978b0ac28226acfd71d528786bbee64ae416ffe088e98",
+      "size_bytes": 1677
+    }
+  ],
+  "governed_data_archive_sha256": "6fac5e8eb14f899f1be61277df6aaaa9415ddc71d715d12f7645b1cb20c1a722",
+  "methods_specification_sha256": "fccbed270a4c1c1c238d6f5e01c35471a4f40269d02351b704170cba24634a80",
+  "schema": "rp1-rq3-design-authority-manifest-v1"
+}

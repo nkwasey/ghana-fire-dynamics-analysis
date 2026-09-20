@@ -1,0 +1,16 @@
+{
+  "gini_cases": {
+    "ties": {"values": [2, 2, 2, 2], "expected": 0.0},
+    "uniform": {"values": [5, 5, 5, 5], "expected": 0.0},
+    "single_positive": {"values": [4, 0, 0, 0], "expected": 0.75}
+  },
+  "circular_cases": {
+    "uniform": {"shares": [0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333, 0.08333333333333333]},
+    "january_only": {"shares": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "mean_month": 1.0, "resultant_length": 1.0}
+  },
+  "spatial_cases": {
+    "strong_positive": {"values": [10, 9, 8, -8, -9, -10]},
+    "spatial_outlier": {"values": [10, 9, -10, 9, 8, 7]}
+  },
+  "provenance": "hand-verifiable synthetic edge cases selected before Ghana-result inspection"
+}

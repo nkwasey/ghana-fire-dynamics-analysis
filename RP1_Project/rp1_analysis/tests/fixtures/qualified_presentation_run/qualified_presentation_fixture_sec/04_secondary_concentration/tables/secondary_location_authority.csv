@@ -1,0 +1,261 @@
+location_id,unit_id,unit_name,parent_code,parent_name,x,y,crs,anchor_method,anchor_rule,anchor_covered_by_geometry
+1,Ablekuma_Central_Municipal,ABLEKUMA CENTRAL MUNICIPAL,CZ,COASTAL ZONE,805822.6784005363,614557.452077686,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+2,Ablekuma_North_Municipal,ABLEKUMA NORTH MUNICIPAL,CZ,COASTAL ZONE,804867.5226642736,617637.7602109314,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+3,Ablekuma_West_Municipal,ABLEKUMA WEST MUNICIPAL,CZ,COASTAL ZONE,804275.6692597114,612514.9552247244,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+4,Abuakwa_North,ABUAKWA NORTH,FZ,FOREST ZONE,788863.3816352369,690266.8300883226,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+5,Abuakwa_South,ABUAKWA SOUTH,FZ,FOREST ZONE,777494.0206235377,681643.1980146517,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+6,Abura_Asebu_Kwamankese,ABURA-ASEBU-KWAMANKESE,CZ,COASTAL ZONE,699146.5599792367,583981.020703724,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+7,Accra_Metropolis,ACCRA METROPOLIS,CZ,COASTAL ZONE,808943.7160975722,613770.5860149087,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+8,Achiase,ACHIASE,FZ,FOREST ZONE,720495.4009890882,641033.7239696273,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+9,Ada_East,ADA EAST,CZ,COASTAL ZONE,894044.5616100661,647726.8247518428,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+10,Ada_West,ADA WEST,CZ,COASTAL ZONE,878900.8523208725,652103.2288407172,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+11,Adaklu,ADAKLU,FZ,FOREST ZONE,892363.6212558323,711969.9581766949,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+12,Adansi_Akrofuom,ADANSI AKROFUOM,FZ,FOREST ZONE,647715.3807865578,666892.036961988,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+13,Adansi_Asokwa,ADANSI ASOKWA,FZ,FOREST ZONE,673375.5843745813,682866.255189999,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+14,Adansi_North,ADANSI NORTH,FZ,FOREST ZONE,658698.0937053874,695379.4862634186,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+15,Adansi_South,ADANSI SOUTH,FZ,FOREST ZONE,680477.1028843862,664403.3801869735,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+16,Adenta_Municipal,ADENTA MUNICIPAL,CZ,COASTAL ZONE,817873.8971546486,630685.0712553634,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+17,Afadzato_South,AFADZATO SOUTH,FZ,FOREST ZONE,877319.0141906386,764948.2248821541,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+18,Afigya_Kwabre_North,AFIGYA KWABRE NORTH,FZ,FOREST ZONE,652232.9412450243,778260.943191296,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+19,Afigya_Kwabre_South,AFIGYA KWABRE SOUTH,FZ,FOREST ZONE,653261.6291589728,756880.9330766684,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+20,Agona_East,AGONA EAST,FZ,FOREST ZONE,759073.9727349757,623550.9527377351,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+21,Agona_West_Municipal,AGONA WEST MUNICIPAL,FZ,FOREST ZONE,744080.800410134,621602.5665225815,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+22,Agotime_Ziope,AGOTIME ZIOPE,FZ,FOREST ZONE,908698.5587344505,718292.8859668103,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+23,Ahafo_Ano_North,AHAFO ANO NORTH,FZ,FOREST ZONE,586450.1111189902,763406.9849384663,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+24,Ahafo_Ano_South_East,AHAFO ANO SOUTH EAST,FZ,FOREST ZONE,621478.2856119847,763843.435537242,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+25,Ahafo_Ano_South_West,AHAFO ANO SOUTH WEST,FZ,FOREST ZONE,601762.5210564801,761041.9916384938,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+26,Ahanta_West_Municipal,AHANTA WEST MUNICIPAL,CZ,COASTAL ZONE,612419.5139508711,536613.3380615652,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+27,Ajumako_Enyan_Essiam,AJUMAKO-ENYAN-ESSIAM,CZ,COASTAL ZONE,723034.9822889226,599798.0696262198,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+28,Akatsi_North,AKATSI NORTH,CZ,COASTAL ZONE,925627.7131731748,698181.4872149847,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+29,Akatsi_South,AKATSI SOUTH,CZ,COASTAL ZONE,918701.9616494228,680977.9128134197,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+30,Akwapem_North,AKWAPEM NORTH,FZ,FOREST ZONE,814119.8261375476,659143.5478682626,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+31,Akwapem_South,AKWAPEM SOUTH,FZ,FOREST ZONE,806188.5330845892,648178.625753969,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+32,Akyem_Mansa,AKYEM MANSA,FZ,FOREST ZONE,709688.2028747048,672202.4516818658,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+33,Amansie_Central,AMANSIE CENTRAL,FZ,FOREST ZONE,632633.9583492167,687260.4097072517,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+34,Amansie_South,AMANSIE SOUTH,FZ,FOREST ZONE,610149.60070105,697417.7241346764,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+35,Amansie_West,AMANSIE WEST,FZ,FOREST ZONE,626862.9532852442,713933.0262143519,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+36,Anloga,ANLOGA,CZ,COASTAL ZONE,921634.431354669,644976.3264608746,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+37,Aowin,AOWIN,FZ,FOREST ZONE,526244.8524121459,636744.0839592512,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+38,Asante_Akim_Central_Municipal,ASANTE AKIM CENTRAL MUNICIPAL,FZ,FOREST ZONE,695663.0642642723,728425.1819458822,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+39,Asante_Akim_North,ASANTE AKIM NORTH,FZ,FOREST ZONE,722060.2740575853,757056.7922678133,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+40,Asante_Akim_South,ASANTE AKIM SOUTH,FZ,FOREST ZONE,708040.5736164345,716522.5581989506,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+41,Asene_Akroso_Manso,ASENE AKROSO MANSO,FZ,FOREST ZONE,741603.33881799,646826.6750385863,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+42,Ashaiman_Municipal,ASHAIMAN MUNICIPAL,CZ,COASTAL ZONE,828507.8732221933,631033.2229900633,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+43,Asikuma_Odoben_Brakwa,ASIKUMA-ODOBEN-BRAKWA,FZ,FOREST ZONE,720345.7481967336,622804.0200903266,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+44,Asokore_Mampong_Municipal,ASOKORE MAMPONG MUNICIPAL,FZ,FOREST ZONE,657752.5590218408,742091.2507931516,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+45,Asokwa_Municipal,ASOKWA MUNICIPAL,FZ,FOREST ZONE,656370.6799277518,734865.3203082791,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+46,Assin_Fosu,ASSIN FOSU,FZ,FOREST ZONE,688225.5133185323,633853.0950654723,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+47,Assin_North,ASSIN NORTH,FZ,FOREST ZONE,680470.8483765867,645830.4619169133,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+48,Assin_South,ASSIN SOUTH,FZ,FOREST ZONE,690676.4732168781,611286.7543270763,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+49,Asunafo_North_Municipal,ASUNAFO NORTH MUNICIPAL,TZ,TRANSITION ZONE,534813.5388568732,754151.1255523653,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+50,Asunafo_South,ASUNAFO SOUTH,FZ,FOREST ZONE,550457.5319113244,727518.7335593841,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+51,Asuogyaman,ASUOGYAMAN,FZ,FOREST ZONE,842086.4356337063,707656.1778548482,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+52,Asutifi_North,ASUTIFI NORTH,TZ,TRANSITION ZONE,553269.8160391855,780849.171993714,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+53,Asutifi_South,ASUTIFI SOUTH,TZ,TRANSITION ZONE,559601.3420433125,757198.1662927843,EPSG:32630,point_on_surface,centroid_inside_else_point_on_surface,True
+54,Atebubu_Amantin,ATEBUBU AMANTIN,TZ,TRANSITION ZONE,714471.5719853092,852650.603248411,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+55,Atiwa_East,ATIWA EAST,FZ,FOREST ZONE,756049.2187098388,708923.3438878128,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+56,Atiwa_West,ATIWA WEST,FZ,FOREST ZONE,761745.0389023628,691204.9745457395,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+57,Atwima_Kwanwoma,ATWIMA KWANWOMA,FZ,FOREST ZONE,642855.5116463724,728843.4960758361,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+58,Atwima_Mponua,ATWIMA MPONUA,FZ,FOREST ZONE,594139.4214109797,727916.6310585196,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+59,Atwima_Nwabiagya_North,ATWIMA NWABIAGYA NORTH,FZ,FOREST ZONE,638597.5749009562,759442.8897535279,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+60,Atwima_Nwabiagya_South,ATWIMA NWABIAGYA SOUTH,FZ,FOREST ZONE,633525.758248961,742305.659974212,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+61,Awutu_Senya,AWUTU SENYA,CZ,COASTAL ZONE,773271.1551013483,623322.6782183758,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+62,Awutu_Senya_East,AWUTU SENYA EAST,CZ,COASTAL ZONE,775079.406971059,597817.9684446909,EPSG:32630,point_on_surface,centroid_inside_else_point_on_surface,True
+63,Ayawaso_Central_Municipal,AYAWASO CENTRAL MUNICIPAL,CZ,COASTAL ZONE,809777.3024002508,617458.8430279117,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+64,Ayawaso_East_Municipal,AYAWASO EAST MUNICIPAL,CZ,COASTAL ZONE,811124.0345639063,618717.5521643837,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+65,Ayawaso_North_Municipal,AYAWASO NORTH MUNICIPAL,CZ,COASTAL ZONE,809455.1473456472,619624.8341607475,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+66,Ayawaso_West,AYAWASO WEST,CZ,COASTAL ZONE,813126.1021044444,623485.9191087605,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+67,Ayensuano,AYENSUANO,FZ,FOREST ZONE,779546.5763006096,657715.8055322369,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+68,Banda,BANDA,TZ,TRANSITION ZONE,568169.385425779,913247.4010085367,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+69,Bawku_Municipal,BAWKU MUNICIPAL,SS,SUDAN SAVANNAH,802929.1564792977,1222499.1259819597,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+70,Bawku_West,BAWKU WEST,SS,SUDAN SAVANNAH,777126.5390328603,1198316.2215804409,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+71,Bekwai_Municipal,BEKWAI MUNICIPAL,FZ,FOREST ZONE,655770.6479635391,712097.1299266716,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+72,Berekum_East_Municipal,BEREKUM EAST MUNICIPAL,TZ,TRANSITION ZONE,547391.8934562305,831730.4015291685,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+73,Berekum_West,BEREKUM WEST,TZ,TRANSITION ZONE,536071.8060585029,824807.6504072865,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+74,Bia_East,BIA EAST,TZ,TRANSITION ZONE,499122.3815269837,755562.8585549513,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+75,Bia_West,BIA WEST,FZ,FOREST ZONE,489518.6151298937,730352.9389188841,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+76,Biakoye,BIAKOYE,FZ,FOREST ZONE,866340.7133633792,814302.1776460407,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+77,Bibiani_Anhwiaso_Bekwai_Municipal,BIBIANI-ANHWIASO-BEKWAI MUNICIPAL,FZ,FOREST ZONE,581249.9099702025,695670.4116676223,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+78,Binduri,BINDURI,SS,SUDAN SAVANNAH,793459.7072567546,1212299.3748365038,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+79,Birim_Central_Municipal,BIRIM CENTRAL MUNICIPAL,FZ,FOREST ZONE,721139.1345822919,659616.0896945603,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+80,Birim_North,BIRIM NORTH,FZ,FOREST ZONE,721914.9015203031,704756.5088406663,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+81,Birim_South,BIRIM SOUTH,FZ,FOREST ZONE,713402.5714013526,652088.0497195504,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+82,Bodi,BODI,FZ,FOREST ZONE,519873.35228431324,690961.7726904764,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+83,Bole,BOLE,GS,GUINEA SAVANNAH,582295.4427458312,962792.2022241849,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+84,Bolga_East,BOLGA EAST,SS,SUDAN SAVANNAH,740784.1001054423,1194668.2133468527,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+85,Bolgatanga_Municipal,BOLGATANGA MUNICIPAL,SS,SUDAN SAVANNAH,727095.1921025703,1191268.970681182,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+86,Bongo,BONGO,SS,SUDAN SAVANNAH,741141.0687780941,1208345.1491065752,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+87,Bosome_Freho,BOSOME FREHO,FZ,FOREST ZONE,683944.8593484166,698521.143321028,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+88,Bosomtwe,BOSOMTWE,FZ,FOREST ZONE,670598.5036588036,725530.2674870043,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+89,Builsa_North,BUILSA NORTH,SS,SUDAN SAVANNAH,691792.7158337756,1184069.8899360518,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+90,Builsa_South,BUILSA SOUTH,SS,SUDAN SAVANNAH,682269.9200336176,1165403.8055726306,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+91,Bunkpurugu_Nakpanduri,BUNKPURUGU NAKPANDURI,GS,GUINEA SAVANNAH,826908.8181476548,1165183.6599903149,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+92,Cape_Coast_Metropolitan,CAPE COAST METROPOLITAN,CZ,COASTAL ZONE,689014.8128360822,571652.5430445881,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+93,Central_Gonja,CENTRAL GONJA,GS,GUINEA SAVANNAH,690596.2290885856,986602.5521639596,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+94,Central_Tongu,CENTRAL TONGU,CZ,COASTAL ZONE,895592.1847628019,684476.4745126067,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+95,Chereponi,CHEREPONI,GS,GUINEA SAVANNAH,854223.6247542647,1126015.0295813652,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+96,Daffiama_Bussie_Issa,DAFFIAMA BUSSIE ISSA,GS,GUINEA SAVANNAH,573236.8034029054,1148415.7304166832,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+97,Denkyembour,DENKYEMBOUR,FZ,FOREST ZONE,738577.8081873206,669687.5586746902,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+98,Dormaa_East,DORMAA EAST,TZ,TRANSITION ZONE,536941.255655721,803511.7042849123,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+99,Dormaa_Municipal,DORMAA MUNICIPAL,TZ,TRANSITION ZONE,515016.85067060683,797812.0610957048,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+100,Dormaa_West,DORMAA WEST,TZ,TRANSITION ZONE,504070.38299503387,772050.2061239792,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+101,East_Gonja_Municipal,EAST GONJA MUNICIPAL,GS,GUINEA SAVANNAH,713757.7982835877,926725.8325645891,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+102,East_Mamprusi,EAST MAMPRUSI,GS,GUINEA SAVANNAH,787266.9889900497,1155507.1830205475,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+103,Effia_Kwesimintsim_Municipal,EFFIA KWESIMINTSIM MUNICIPAL,CZ,COASTAL ZONE,634401.3776466945,548849.8227937974,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+104,Effutu_Municipal,EFFUTU MUNICIPAL,CZ,COASTAL ZONE,765420.090610874,594874.5968109317,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+105,Ejisu_Municipal,EJISU MUNICIPAL,FZ,FOREST ZONE,676771.8711943368,735006.1848774744,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+106,Ejura_Sekyedumase,EJURA-SEKYEDUMASE,TZ,TRANSITION ZONE,675388.8368694278,817163.172650203,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+107,Ekumfi,EKUMFI,CZ,COASTAL ZONE,731799.8105892962,581984.1482461853,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+108,Ellembelle,ELLEMBELLE,CZ,COASTAL ZONE,567352.3062778544,566223.9534702799,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+109,Fanteakwa_North,FANTEAKWA NORTH,FZ,FOREST ZONE,792430.5950954837,720596.2741133565,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+110,Fanteakwa_South,FANTEAKWA SOUTH,FZ,FOREST ZONE,779888.0472268827,704912.3720058312,EPSG:32630,point_on_surface,centroid_inside_else_point_on_surface,True
+111,Ga_Central_Municipal,GA CENTRAL MUNICIPAL,CZ,COASTAL ZONE,798196.1970152331,621499.6026261182,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+112,Ga_East,GA EAST,CZ,COASTAL ZONE,807810.9656609677,630727.3622645364,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+113,Ga_North_Municipal,GA NORTH MUNICIPAL,CZ,COASTAL ZONE,801127.0164532377,634458.1232970546,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+114,Ga_South_Municipal,GA SOUTH MUNICIPAL,CZ,COASTAL ZONE,783930.969361259,627885.2461170898,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+115,Ga_West_Municipal,GA WEST MUNICIPAL,CZ,COASTAL ZONE,791532.0798791972,632137.1770683944,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+116,Garu,GARU,SS,SUDAN SAVANNAH,802766.8552878036,1191139.2547792373,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+117,Gomoa_Central,GOMOA CENTRAL,CZ,COASTAL ZONE,752396.5124781976,591933.386419543,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+118,Gomoa_East,GOMOA EAST,CZ,COASTAL ZONE,765827.8577562893,605653.6467920502,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+119,Gomoa_West,GOMOA WEST,CZ,COASTAL ZONE,741602.3779630895,596789.3539795962,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+120,Gushegu,GUSHEGU,GS,GUINEA SAVANNAH,809572.8588079903,1098019.3063746553,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+121,Ho_Municipal,HO MUNICIPAL,FZ,FOREST ZONE,888647.4427189699,738954.1501422272,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+122,Ho_West,HO WEST,FZ,FOREST ZONE,872344.8353238672,726295.4018252671,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+123,Hohoe_Municipal,HOHOE MUNICIPAL,FZ,FOREST ZONE,886346.1738282461,793107.3938108148,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+124,Jaman_North,JAMAN NORTH,TZ,TRANSITION ZONE,536816.5500109935,873514.0744114895,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+125,Jaman_South_Municipal,JAMAN SOUTH MUNICIPAL,TZ,TRANSITION ZONE,520662.19565776247,841899.421551937,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+126,Jasikan,JASIKAN,FZ,FOREST ZONE,886784.9933783686,818242.2251978947,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+127,Jirapa,JIRAPA,GS,GUINEA SAVANNAH,545465.3740620926,1170332.087912531,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+128,Jomoro,JOMORO,CZ,COASTAL ZONE,536938.360503711,571450.2910583727,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+129,Juaben_Municipal,JUABEN MUNICIPAL,FZ,FOREST ZONE,678900.7877018993,747698.991556092,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+130,Juaboso,JUABOSO,FZ,FOREST ZONE,508637.63554228307,709874.9296331005,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+131,Kadjebi,KADJEBI,GS,GUINEA SAVANNAH,888463.8644054645,855259.1093288205,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+132,Karaga,KARAGA,GS,GUINEA SAVANNAH,776218.6027114387,1104635.541301762,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+133,Kasena_Nankana_East,KASENA NANKANA EAST,SS,SUDAN SAVANNAH,713937.6848441438,1190116.4903595524,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+134,Kasena_Nankana_West,KASENA NANKANA WEST,SS,SUDAN SAVANNAH,689586.4544897247,1205434.4121805967,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+135,Keta_Municipal,KETA MUNICIPAL,CZ,COASTAL ZONE,932739.1251328826,658510.2966529828,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+136,Ketu_North,KETU NORTH,CZ,COASTAL ZONE,938681.453432152,684962.7788698231,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+137,Ketu_South,KETU SOUTH,CZ,COASTAL ZONE,952008.437402229,676159.6393019354,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+138,Kintampo_North_Municipal,KINTAMPO NORTH MUNICIPAL,GS,GUINEA SAVANNAH,657611.5268547471,928245.8093060822,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+139,Kintampo_South,KINTAMPO SOUTH,TZ,TRANSITION ZONE,633164.4752400214,878220.0694461773,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+140,Komenda_Edina_Eguafo_Abirem_Municipal,KOMENDA-EDINA-EGUAFO-ABIREM MUNICIPAL,CZ,COASTAL ZONE,671651.7672376692,567291.4726525688,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+141,Korle_Klottey_Municipal,KORLE KLOTTEY MUNICIPAL,CZ,COASTAL ZONE,810840.6178958146,615358.0437872234,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+142,Kpandai,KPANDAI,GS,GUINEA SAVANNAH,827647.0036821191,930090.1824291514,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+143,Kpando_Municipal,KPANDO MUNICIPAL,FZ,FOREST ZONE,864216.8355688403,776261.1958374528,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+144,Kpone_Katamanso,KPONE KATAMANSO,CZ,COASTAL ZONE,825736.2672707943,637147.1615197044,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+145,Krachi_East_Municipal,KRACHI EAST MUNICIPAL,GS,GUINEA SAVANNAH,855958.9477733291,862380.0407212826,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+146,Krachi_Nchumuru,KRACHI NCHUMURU,GS,GUINEA SAVANNAH,821210.3691422736,904843.8164723746,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+147,Krachi_West,KRACHI WEST,GS,GUINEA SAVANNAH,827955.7440442139,876678.7579535282,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+148,Krowor_Municipal,KROWOR MUNICIPAL,CZ,COASTAL ZONE,822705.1224292365,621222.7061887055,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+149,Kumasi_Metropolitan,KUMASI METROPOLITAN,FZ,FOREST ZONE,652401.5651493806,739498.8910974797,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+150,Kumbungu,KUMBUNGU,GS,GUINEA SAVANNAH,712968.9578151717,1082796.1377367924,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+151,Kwabre_East,KWABRE EAST,FZ,FOREST ZONE,662686.6958649575,750859.5536170232,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+152,Kwadaso_Municipal,KWADASO MUNICIPAL,FZ,FOREST ZONE,648712.2333006806,737288.7430478821,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+153,Kwaebibirem,KWAEBIBIREM,FZ,FOREST ZONE,737661.9086919427,687001.6815778366,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+154,Kwahu_Afram_Plains_North,KWAHU AFRAM PLAINS NORTH,FZ,FOREST ZONE,834550.6076421143,763865.4697212349,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+155,Kwahu_Afram_Plains_South,KWAHU AFRAM PLAINS SOUTH,FZ,FOREST ZONE,791179.7219050995,763011.4351896576,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+156,Kwahu_East,KWAHU EAST,FZ,FOREST ZONE,741700.1130427448,742300.9897589443,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+157,Kwahu_South,KWAHU SOUTH,FZ,FOREST ZONE,768546.4922705498,733762.5293929626,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+158,Kwahu_West,KWAHU WEST,FZ,FOREST ZONE,745793.8674562364,721245.6617719844,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+159,La_Dade_Kotopon,LA DADE-KOTOPON,CZ,COASTAL ZONE,814746.3142097158,618269.8182754775,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+160,La_Nkwantanang_Madina,LA-NKWANTANANG-MADINA,CZ,COASTAL ZONE,813880.2891253107,635793.9343294355,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+161,Lambussie_Karni,LAMBUSSIE-KARNI,SS,SUDAN SAVANNAH,542620.4371612909,1198989.9154362248,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+162,Lawra,LAWRA,SS,SUDAN SAVANNAH,519241.54579522746,1177293.3226077447,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+163,Ledzokuku_Municipal,LEDZOKUKU MUNICIPAL,CZ,COASTAL ZONE,819366.5822719282,620025.611779559,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+164,Lower_Manya,LOWER MANYA,FZ,FOREST ZONE,832889.4899148587,685251.5612138665,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+165,Mampong_Municipal,MAMPONG MUNICIPAL,FZ,FOREST ZONE,674143.5395257357,791670.8538754162,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+166,Mamprugu_Moagduri,MAMPRUGU MOAGDURI,GS,GUINEA SAVANNAH,682312.1891599103,1133301.3734971513,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+167,Mfantseman_Municipal,MFANTSEMAN MUNICIPAL,CZ,COASTAL ZONE,717795.6633787067,583526.8851901065,EPSG:32630,point_on_surface,centroid_inside_else_point_on_surface,True
+168,Mion,MION,GS,GUINEA SAVANNAH,802086.4769001986,1039433.7384688902,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+169,Mpohor,MPOHOR,CZ,COASTAL ZONE,627050.1096507588,559568.597473653,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+170,Nabdam,NABDAM,SS,SUDAN SAVANNAH,756706.6914794589,1198847.104596272,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+171,Nadowli_Kaleo,NADOWLI-KALEO,GS,GUINEA SAVANNAH,540419.6448866191,1137367.7500977025,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+172,Nandom,NANDOM,SS,SUDAN SAVANNAH,522726.0975091217,1199736.331555782,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+173,Nanton,NANTON,GS,GUINEA SAVANNAH,752976.008205951,1057208.6131764653,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+174,Nanumba_North,NANUMBA NORTH,GS,GUINEA SAVANNAH,819460.4171182675,987076.8337509554,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+175,Nanumba_South,NANUMBA SOUTH,GS,GUINEA SAVANNAH,835878.5000996557,966490.3364479794,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+176,New_Juaben_North_Municipal,NEW JUABEN NORTH MUNICIPAL,FZ,FOREST ZONE,797778.5757950756,679517.7396012876,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+177,New_Juaben_South_Municipal,NEW JUABEN SOUTH MUNICIPAL,FZ,FOREST ZONE,803180.4314133613,672660.4630986805,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+178,Ningo_Prampram,NINGO/PRAMPRAM,CZ,COASTAL ZONE,851273.7895930127,643479.3077648069,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+179,Nkoranza_North,NKORANZA NORTH,TZ,TRANSITION ZONE,654938.8061643313,851475.9465221594,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+180,Nkoranza_South,NKORANZA SOUTH,TZ,TRANSITION ZONE,647157.8104107418,825389.6179386516,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+181,Nkwanta_North,NKWANTA NORTH,GS,GUINEA SAVANNAH,858050.6815222824,948780.1893409393,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+182,Nkwanta_South_Municipal,NKWANTA SOUTH MUNICIPAL,GS,GUINEA SAVANNAH,881189.7079684868,914985.9978992832,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+183,North_Dayi,NORTH DAYI,FZ,FOREST ZONE,857528.7351406096,755927.092780284,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+184,North_East_Gonja,NORTH EAST GONJA,GS,GUINEA SAVANNAH,773407.8270867062,966458.4183219163,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+185,North_Gonja,NORTH GONJA,GS,GUINEA SAVANNAH,660422.3217633247,1073198.7478281835,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+186,North_Tongu,NORTH TONGU,FZ,FOREST ZONE,866547.7328607087,683154.2431148993,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+187,Nsawam_Adoagyiri,NSAWAM ADOAGYIRI,FZ,FOREST ZONE,793825.596304529,644815.4109737384,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+188,Nzema_East,NZEMA EAST,CZ,COASTAL ZONE,586909.3575424069,564473.1637156098,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+189,Obuasi_East,OBUASI EAST,FZ,FOREST ZONE,654188.2215297282,683660.646655017,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+190,Obuasi_Municipal,OBUASI MUNICIPAL,FZ,FOREST ZONE,645375.1633441979,685083.9898674339,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+191,Offinso_Municipal,OFFINSO MUNICIPAL,FZ,FOREST ZONE,640530.278786198,781481.4961679945,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+192,Offinso_North,OFFINSO NORTH,TZ,TRANSITION ZONE,622543.9378586566,807469.1249738596,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+193,Oforikrom_Municipal,OFORIKROM MUNICIPAL,FZ,FOREST ZONE,660532.126310325,738132.315931118,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+194,Okaikwei_North_Municipal,OKAIKWEI NORTH MUNICIPAL,CZ,COASTAL ZONE,807848.2505873317,622255.0722985261,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+195,Okere,OKERE,FZ,FOREST ZONE,818327.2648656471,669861.9386643319,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+196,Old_Tafo_Municipal,OLD TAFO MUNICIPAL,FZ,FOREST ZONE,653830.9443455831,745061.4318580071,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+197,Prestea_Huni_Valley,PRESTEA/HUNI VALLEY,FZ,FOREST ZONE,610741.831706014,603078.0317854253,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+198,Pru_East,PRU EAST,GS,GUINEA SAVANNAH,739472.6935381055,900020.2942581018,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+199,Pru_West,PRU WEST,TZ,TRANSITION ZONE,685865.8619837003,884841.5333889426,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+200,Pusiga,PUSIGA,SS,SUDAN SAVANNAH,816050.7350753464,1225245.2259679295,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+201,Saboba,SABOBA,GS,GUINEA SAVANNAH,849657.9787028049,1079271.162750832,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+202,Sagnerigu,SAGNERIGU,GS,GUINEA SAVANNAH,734371.0073818746,1047406.4452063265,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+203,Savelugu,SAVELUGU,GS,GUINEA SAVANNAH,737682.4648712454,1091012.6272199242,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+204,Sawla_Tuna_Kalba,SAWLA-TUNA-KALBA,GS,GUINEA SAVANNAH,570482.0680919384,1051668.7714790853,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+205,Sefwi_Akontombra,SEFWI AKONTOMBRA,FZ,FOREST ZONE,533584.6206791017,673258.0414746687,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+206,Sefwi_Wiawso,SEFWI-WIAWSO,FZ,FOREST ZONE,551907.9677102931,697494.7056891148,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+207,Sekondi_Takoradi_Metropolis,SEKONDI TAKORADI METROPOLIS,CZ,COASTAL ZONE,640685.9230666287,548746.8328203055,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+208,Sekyere_Afram_Plains_North,SEKYERE AFRAM PLAINS NORTH,FZ,FOREST ZONE,749477.6140241572,798330.4983280333,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+209,Sekyere_Central,SEKYERE CENTRAL,FZ,FOREST ZONE,704637.3412840778,798256.7070190564,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+210,Sekyere_East,SEKYERE EAST,FZ,FOREST ZONE,685514.7862171248,750466.806207414,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+211,Sekyere_Kumawu,SEKYERE KUMAWU,FZ,FOREST ZONE,696467.3262853128,763431.4806750212,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+212,Sekyere_South,SEKYERE SOUTH,FZ,FOREST ZONE,663818.8172136055,772526.2799877162,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+213,Sene_East,SENE EAST,GS,GUINEA SAVANNAH,811364.2086218453,839939.0456850827,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+214,Sene_West,SENE WEST,GS,GUINEA SAVANNAH,766601.189369382,856300.4550138899,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+215,Shai_Osudoku,SHAI OSUDOKU,CZ,COASTAL ZONE,846453.1692518644,660057.6167798343,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+216,Shama,SHAMA,CZ,COASTAL ZONE,650371.7993549376,559365.7616766461,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+217,Sissala_East,SISSALA EAST,SS,SUDAN SAVANNAH,631880.655414036,1178348.5820361702,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+218,Sissala_West,SISSALA WEST,SS,SUDAN SAVANNAH,579771.7096653607,1197880.9374472348,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+219,South_Dayi,SOUTH DAYI,FZ,FOREST ZONE,856102.274435559,730402.4337016725,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+220,South_Tongu,SOUTH TONGU,CZ,COASTAL ZONE,904997.2742132858,661378.1544307935,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+221,Suaman,SUAMAN,FZ,FOREST ZONE,497254.24698850716,675993.8728667651,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+222,Suame_Municipal,SUAME MUNICIPAL,FZ,FOREST ZONE,648168.4814334249,745019.7398682865,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+223,Suhum_Municipal,SUHUM MUNICIPAL,FZ,FOREST ZONE,787813.6469176336,668787.2884503317,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+224,Sunyani_Municipal,SUNYANI MUNICIPAL,TZ,TRANSITION ZONE,570185.1151960277,799753.1392143125,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+225,Sunyani_West,SUNYANI WEST,TZ,TRANSITION ZONE,571627.3211656808,822187.8174108523,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+226,Tain,TAIN,TZ,TRANSITION ZONE,568731.8898922261,861577.9381492967,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+227,Talensi,TALENSI,SS,SUDAN SAVANNAH,748879.7389630376,1179778.1771940533,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+228,Tamale_Metropolitan,TAMALE METROPOLITAN,GS,GUINEA SAVANNAH,747874.3149142498,1036973.7659514643,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+229,Tano_North_Municipal,TANO NORTH MUNICIPAL,TZ,TRANSITION ZONE,589937.7919181858,793378.8905846487,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+230,Tano_South_Municipal,TANO SOUTH MUNICIPAL,TZ,TRANSITION ZONE,610941.4562766819,793993.4722861205,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+231,Tarkwa_Nsuaem,TARKWA NSUAEM,CZ,COASTAL ZONE,608315.35931563,569744.8405986765,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+232,Tatale_Sanguli,TATALE SANGULI,GS,GUINEA SAVANNAH,877161.6333090567,1020628.0331471323,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+233,Techiman_Municipal,TECHIMAN MUNICIPAL,TZ,TRANSITION ZONE,614316.6764311248,832936.959748905,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+234,Techiman_North,TECHIMAN NORTH,TZ,TRANSITION ZONE,613897.7342993336,850757.2292620125,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+235,Tema_Metropolitan,TEMA METROPOLITAN,CZ,COASTAL ZONE,831112.9308794877,625149.342008352,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+236,Tema_West_Municipal,TEMA WEST MUNICIPAL,CZ,COASTAL ZONE,825226.1591930852,625558.4549383038,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+237,Tempane,TEMPANE,SS,SUDAN SAVANNAH,819706.01936132,1208037.7212761482,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+238,Tolon,TOLON,GS,GUINEA SAVANNAH,699340.0933944159,1054829.2320832699,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+239,Twifo_Atti_Morkwa,TWIFO ATTI-MORKWA,FZ,FOREST ZONE,655206.7639914013,627507.7278783869,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+240,Twifo_Hemang_Lower_Denkyira,TWIFO HEMANG LOWER DENKYIRA,FZ,FOREST ZONE,672554.0789642842,595947.9017921088,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+241,Upper_Denkyira_East_Municipal,UPPER DENKYIRA EAST MUNICIPAL,FZ,FOREST ZONE,639239.2360188505,648198.6892303247,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+242,Upper_Denkyira_West,UPPER DENKYIRA WEST,FZ,FOREST ZONE,608120.3403027038,675178.4058643887,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+243,Upper_Manya,UPPER MANYA,FZ,FOREST ZONE,816992.5411897327,707051.2631895196,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+244,Upper_West_Akim,UPPER WEST AKIM,FZ,FOREST ZONE,770215.7811578566,641710.1801925806,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+245,Wa_East,WA EAST,GS,GUINEA SAVANNAH,605614.0220133453,1111041.7839216578,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+246,Wa_Municipal,WA MUNICIPAL,GS,GUINEA SAVANNAH,558696.9835447221,1109011.5901698011,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+247,Wa_West,WA WEST,GS,GUINEA SAVANNAH,538517.8481431914,1093560.767180117,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+248,Wassa_Amenfi_Central,WASSA AMENFI CENTRAL,FZ,FOREST ZONE,579017.1306217972,634711.3786870097,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+249,Wassa_Amenfi_East,WASSA AMENFI EAST,FZ,FOREST ZONE,608326.7083658086,645580.8769207872,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+250,Wassa_Amenfi_West,WASSA AMENFI WEST,FZ,FOREST ZONE,558722.7093838295,631931.3384149184,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+251,Wassa_East,WASSA EAST,FZ,FOREST ZONE,648454.9989625557,591331.627072287,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+252,Weija_Gbawe_Municipal,WEIJA GBAWE MUNICIPAL,CZ,COASTAL ZONE,793463.5618948515,614077.2682851098,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+253,Wenchi_Municipal,WENCHI MUNICIPAL,TZ,TRANSITION ZONE,598940.7081298527,860729.1649239633,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+254,West_Akim,WEST AKIM,FZ,FOREST ZONE,755384.8719311204,654588.7881230464,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+255,West_Gonja,WEST GONJA,GS,GUINEA SAVANNAH,630721.6950512152,1019984.7409643099,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+256,West_Mamprusi_Municipal,WEST MAMPRUSI MUNICIPAL,GS,GUINEA SAVANNAH,737300.227421486,1142260.2605537293,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+257,Yendi_Municipal,YENDI MUNICIPAL,GS,GUINEA SAVANNAH,834312.3134646522,1046719.4001000832,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+258,Yilo_Krobo,YILO KROBO,FZ,FOREST ZONE,815296.1672993727,682852.5342644049,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+259,Yunyoo_Nasuan,YUNYOO-NASUAN,GS,GUINEA SAVANNAH,819510.5707294263,1154700.8160303636,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True
+260,Zabzugu,ZABZUGU,GS,GUINEA SAVANNAH,865069.9478781954,1010725.1022358007,EPSG:32630,polygon_centroid,centroid_inside_else_point_on_surface,True

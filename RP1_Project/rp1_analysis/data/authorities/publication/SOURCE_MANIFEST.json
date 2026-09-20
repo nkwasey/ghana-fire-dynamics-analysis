@@ -1,0 +1,258 @@
+{
+  "authority": "qualified_analysis_results_for_publication",
+  "configuration_sha256": "64c2383768ae8db943b976aae7dde09e80d91eb2a1da592751f093d1596ffdc9",
+  "satscan_dependent_sources_materialised": false,
+  "satscan_reason": "genuine_external_results_required",
+  "schema_version": "rp1-analysis-v1.1",
+  "sources": {
+    "annual_trend_source": {
+      "columns": [
+        "parent_code",
+        "parent_name",
+        "year",
+        "annual_rate",
+        "sen_slope",
+        "raw_p",
+        "bh_q"
+      ],
+      "path": "data/authorities/publication/annual_trend_source.csv",
+      "rows": 120,
+      "sha256": "4814e4973dd4afa408c2021631e03afdeaede7000e889ac56794b69acad1cc04",
+      "size_bytes": 12414
+    },
+    "cross_product_observability_presentation_source": {
+      "columns": [
+        "panel",
+        "record_type",
+        "unit_id",
+        "unit_name",
+        "parent_code",
+        "state",
+        "proportion",
+        "value",
+        "term",
+        "adjusted_or",
+        "or_lower_95",
+        "or_upper_95",
+        "p",
+        "support_status",
+        "exclusion_reasons"
+      ],
+      "path": "data/authorities/publication/cross_product_observability_presentation_source.csv",
+      "rows": 282,
+      "sha256": "4bb184b0e837ab5961d0726121562b6e3176276d59ca1487b1c3e64c48fc90e0",
+      "size_bytes": 33616
+    },
+    "district_seasonal_diagnostics_source": {
+      "columns": [
+        "record_type",
+        "unit_id",
+        "unit_name",
+        "parent_code",
+        "month",
+        "monthly_share",
+        "circular_mean_month",
+        "mean_resultant_length"
+      ],
+      "path": "data/authorities/publication/district_seasonal_diagnostics_source.csv",
+      "rows": 3000,
+      "sha256": "d45766f4cc448b76f474ad66da7e17aed8be3d69db188f0cc8e0d6d097489eee",
+      "size_bytes": 275492
+    },
+    "long_run_spatial_rate_presentation_source": {
+      "columns": [
+        "panel",
+        "unit_id",
+        "unit_name",
+        "parent_code",
+        "support_status",
+        "value",
+        "exclusion_reasons"
+      ],
+      "path": "data/authorities/publication/long_run_spatial_rate_presentation_source.csv",
+      "rows": 265,
+      "sha256": "87b00521f9d79d6f4e6860677fbf76fc8d9613cde8f4ae50b96b3d01101971ab",
+      "size_bytes": 23992
+    },
+    "seasonality_spatial_organisation_presentation_source": {
+      "columns": [
+        "panel",
+        "record_type",
+        "unit_id",
+        "unit_name",
+        "parent_code",
+        "month",
+        "value",
+        "circular_mean_month",
+        "mean_resultant_length",
+        "local_class",
+        "support_status",
+        "exclusion_reasons"
+      ],
+      "path": "data/authorities/publication/seasonality_spatial_organisation_presentation_source.csv",
+      "rows": 580,
+      "sha256": "0783ca5dac4fea78365c9a762568c52c565a3da215faeda588abc54f804ecaa2",
+      "size_bytes": 58457
+    },
+    "supplement_s1_populations": {
+      "columns": [
+        "population_id",
+        "source_population",
+        "units",
+        "rows",
+        "start",
+        "end",
+        "eligibility_rule",
+        "exclusion_reason"
+      ],
+      "path": "data/authorities/publication/supplement_s1_populations.csv",
+      "rows": 5,
+      "sha256": "202e341f0bbae0686d0073d647f67bde16ef6fd16a028f140f87f82aa6e70f45",
+      "size_bytes": 737
+    },
+    "supplement_s2_district_rq1": {
+      "columns": [
+        "unit_id",
+        "unit_name",
+        "parent_code",
+        "parent_name",
+        "dominant_overlap_share",
+        "long_run_rate",
+        "district_departure",
+        "circular_mean_month",
+        "mean_resultant_length"
+      ],
+      "path": "data/authorities/publication/supplement_s2_district_rq1.csv",
+      "rows": 250,
+      "sha256": "dea8ffdd4f23782e33a19e4a1ff0adca1ed4c1bce0d20d3d302eb92855a12c93",
+      "size_bytes": 33138
+    },
+    "supplement_s3_spatial": {
+      "columns": [
+        "record_type",
+        "unit_id",
+        "global_morans_i",
+        "global_permutation_p",
+        "local_morans_i",
+        "local_raw_p",
+        "local_bh_q",
+        "local_class",
+        "island",
+        "n_effective",
+        "permutations",
+        "random_seed"
+      ],
+      "path": "data/authorities/publication/supplement_s3_spatial.csv",
+      "rows": 251,
+      "sha256": "8067c4194304d6c8001e094b437c4f7b3b161f57fc5b37951db947dab9cedd56",
+      "size_bytes": 27551
+    },
+    "supplement_s4_rq2": {
+      "columns": [
+        "parent_code",
+        "parent_name",
+        "year",
+        "annual_rate",
+        "sen_slope",
+        "u_n",
+        "long_run_variance",
+        "t_n",
+        "realised_bandwidth",
+        "permutation_count",
+        "seed",
+        "raw_p",
+        "bh_q"
+      ],
+      "path": "data/authorities/publication/supplement_s4_rq2.csv",
+      "rows": 120,
+      "sha256": "405d73afe0801bf52d26b5dd9120290dfd358ab64f8ad020ccf02d924b3acfef",
+      "size_bytes": 21698
+    },
+    "supplement_s5_rq3": {
+      "columns": [
+        "record_type",
+        "scope",
+        "parent_code",
+        "parent_name",
+        "state",
+        "count",
+        "denominator_n",
+        "proportion",
+        "month",
+        "y1",
+        "y0",
+        "term",
+        "term_role",
+        "beta",
+        "corrected_se",
+        "z",
+        "p",
+        "adjusted_or",
+        "or_lower_95",
+        "or_upper_95",
+        "diagnostic_name",
+        "diagnostic_value",
+        "comparison_variable",
+        "correlation",
+        "vif",
+        "predictor_id",
+        "quantile",
+        "raw_quantile_value",
+        "transformed_quantile_value",
+        "standardised_probability",
+        "n",
+        "districts",
+        "estimator",
+        "working_structure",
+        "covariance_method",
+        "reference_distribution"
+      ],
+      "path": "data/authorities/publication/supplement_s5_rq3.csv",
+      "rows": 104,
+      "sha256": "b6e06bf13f30396d1cb8d3e0662bb9b0643d3c2969d304c956584dc128e75681",
+      "size_bytes": 16024
+    },
+    "table1_acz_summary": {
+      "columns": [
+        "parent_code",
+        "parent_name",
+        "direct_long_run_rate",
+        "district_rate_median",
+        "district_rate_iqr",
+        "district_rate_gini",
+        "circular_mean_month",
+        "mean_resultant_length",
+        "sen_slope",
+        "trend_permutation_p",
+        "trend_bh_q"
+      ],
+      "path": "data/authorities/publication/table1_acz_summary.csv",
+      "rows": 5,
+      "sha256": "2e55704316ecf2b2e085862bcaaafc0bfa8b1839613dd9b8d9cc4026a9575ad7",
+      "size_bytes": 1163
+    },
+    "table2_rq3_model": {
+      "columns": [
+        "term",
+        "predictor_role",
+        "beta",
+        "corrected_se",
+        "z",
+        "p",
+        "adjusted_or",
+        "or_lower_95",
+        "or_upper_95",
+        "n",
+        "districts",
+        "estimator",
+        "working_structure",
+        "covariance_method",
+        "reference_distribution"
+      ],
+      "path": "data/authorities/publication/table2_rq3_model.csv",
+      "rows": 3,
+      "sha256": "450f6c3b75315e5cbe76b9c336e41fa02eac94dbd68f51e39e1b3f555c1deb9a",
+      "size_bytes": 952
+    }
+  }
+}

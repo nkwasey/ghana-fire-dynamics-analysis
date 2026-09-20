@@ -1,0 +1,19 @@
+{
+  "schema": "rq3-pgee-reference-v1",
+  "coefficient_reference": {
+    "authority": "Mondol and Rahman (2019) Firth-type penalised GEE under working independence; coefficient equivalence to Firth logistic",
+    "doi": "10.1002/sim.8126",
+    "recognised_implementation": "mhmondol/geefirthr::geefirth, corstr='independence'",
+    "source_semantics": "Jeffreys/Firth adjusted score under working independence"
+  },
+  "covariance_reference": {
+    "authority": "Morel, Bokossa and Neerchal (2003) small-sample corrected sandwich",
+    "doi": "10.1002/bimj.200390021",
+    "recognised_implementations": [
+      "mhmondol/geefirthr::geefirth bias-corrected sandwich",
+      "geesmv::GEE.var.mbn"
+    ],
+    "source_semantics": "centred cluster-score meat with finite-sample scale plus additive Morel design-effect term"
+  },
+  "runtime_note": "The product reference suite is independent Python. R is qualification-only and is not a production dependency."
+}

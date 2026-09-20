@@ -1,0 +1,57 @@
+{
+  "expected": [
+    {
+      "local_morans_i": 0.6695652173913044,
+      "permutation_p": 0.26,
+      "unit_id": "A"
+    },
+    {
+      "local_morans_i": 0.3043478260869565,
+      "permutation_p": 0.335,
+      "unit_id": "B"
+    },
+    {
+      "local_morans_i": 0.04347826086956522,
+      "permutation_p": 0.33,
+      "unit_id": "C"
+    },
+    {
+      "local_morans_i": 0.14782608695652175,
+      "permutation_p": 0.3,
+      "unit_id": "D"
+    }
+  ],
+  "input": {
+    "ids": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "neighbours": {
+      "A": [
+        "B"
+      ],
+      "B": [
+        "A",
+        "C"
+      ],
+      "C": [
+        "B",
+        "D"
+      ],
+      "D": [
+        "C"
+      ]
+    },
+    "permutations": 199,
+    "seed": 20260819,
+    "values": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "provenance": "independent population-standardised Local Moran formula with deterministic conditional randomisation and smaller-tail pseudo p-values"
+}

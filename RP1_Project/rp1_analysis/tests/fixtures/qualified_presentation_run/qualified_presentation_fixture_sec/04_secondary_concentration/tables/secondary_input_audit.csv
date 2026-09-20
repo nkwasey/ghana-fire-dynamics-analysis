@@ -1,0 +1,3 @@
+model_id,eligible_districts,excluded_districts,exclusion_reasons,months,unit_month_rows,positive_case_rows,zero_case_rows,total_cases,population_rows,coordinate_rows,stp_exposure_absent
+MCD64A1_POISSON_PRIMARY,250,10,primary_denominator_zero_or_nonpositive:10,288,72000,12248,59752,5935920,72000,250,True
+VIIRS_STP_PRIMARY,249,11,primary_denominator_zero_or_nonpositive:11,155,38595,22939,15656,2229039,0,249,True

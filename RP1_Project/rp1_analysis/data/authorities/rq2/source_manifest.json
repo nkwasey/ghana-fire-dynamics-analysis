@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "path": "annual_acz_fixed_support_rates.csv",
+      "sha256": "dd2972f130f8153a7b2ad81ff12c62c0110499d84c8cdd3d5a29b4fdacb31ac2",
+      "size": 11080
+    },
+    {
+      "path": "annual_trend_source.csv",
+      "sha256": "d3c1f4bec69cac8927dd1b2ef48da6925d070d5d2e6b09bcfa32047fa1e4d785",
+      "size": 9423
+    },
+    {
+      "path": "realised_run_metadata.json",
+      "sha256": "95de2e5e120e86f83d480cedb398bbbf97063fe72e9a9b5e6ed61df51a62c4d2",
+      "size": 10564
+    },
+    {
+      "path": "rq2_full_authority.csv",
+      "sha256": "70f697395a47ee60826fa5276a12c5f36a857235825b0a13b17dac80846bb018",
+      "size": 54849
+    },
+    {
+      "path": "rq2_trend_authority.csv",
+      "sha256": "3ce3d71b372c3f85612ff4836e20f78ed68e0cf611d6fc060c986163e357868e",
+      "size": 2390
+    }
+  ],
+  "schema": "rp1-rq2-source-manifest-v1"
+}

@@ -1,0 +1,486 @@
+# file: configs/example_project.yaml
+#
+# Full production configuration for Ghana-wide combined MODIS + VIIRS monthly panels.
+#
+# Purpose
+# -------
+# This config is intended for the canonical Ghana full-span run of the
+# mv_firms_panels pipeline, covering:
+#   - MODIS: 2000-11 to 2025-12
+#   - VIIRS: 2012-01 to 2025-12
+#
+# Design intent
+# -------------
+# 1) Build annual canonical fires tables for each enabled sensor-year.
+# 2) Aggregate those annual files to sensor-specific monthly unit panels.
+# 3) Combine the sensor panels into a balanced unit-month spine.
+# 4) Preserve structural missingness before sensor coverage begins
+#    (for example, VIIRS fields stay null before 2012-01).
+# 5) Emit deterministic, audit-friendly outputs and QA sidecars.
+#
+# Important notes
+# ---------------
+# - All paths below are repo-relative.
+# - Unknown YAML keys are rejected by the config loader.
+# - Runtime CLI flags such as:
+#     --run-id
+#     --force
+#     --skip-existing
+#     --years
+#     --years-modis
+#     --years-viirs
+#     --start-yyyymm
+#     --end-yyyymm
+#   are not configured here because they are command-line arguments.
+# - This file is intended to be the production counterpart to smaller smoke-test
+#   configs such as configs/my_project.yaml.
+#
+# Recommended full-run command
+# ----------------------------
+# python -m mv_firms_panels.cli.main \
+#   --config configs/ghana_full.yaml \
+#   --run-id ghana_combined_v2 \
+#   pipeline \
+#   --years-modis 2000-2025 \
+#   --years-viirs 2012-2025
+#
+# Scientific/operational conventions encoded here
+# -----------------------------------------------
+# - The project-level time_range is set to the full intended production span
+#   (200001 to 202512). This avoids accidental truncation in commands that rely
+#   on processing.time_range when explicit CLI bounds are not supplied.
+# - sensor_time_ranges define the intended processing window for each sensor.
+# - sensor_coverage defines the structural availability window for each sensor in
+#   the combined panel:
+#     * outside coverage -> sensor fields remain null
+#     * inside coverage but with no detections -> count/sum fields become zero,
+#       while means may remain null depending on configuration
+# - monthly panel output prefers csv.gz first because full Ghana runs are large.
+#   Plain csv remains enabled as a supported fallback/inspection format.
+
+project:
+  # Human-readable project name used in manifests, provenance, and run metadata.
+  name: "mv_firms_panels"
+
+  # Free-form version string for this production config.
+  version: "0.2.0-ghana-full"
+
+  run_id_strategy:
+    # Current supported method in the codebase.
+    method: "config_hash8"
+
+    # When true, auto-derived run IDs may include a UTC timestamp suffix.
+    timestamp_utc: true
+
+
+io:
+  inputs:
+    # Canonical unit universe used to build the balanced unit-month spine.
+    # This should contain one row per analysis unit, including both district and ACZ.
+    unit_universe_csv: "data/metadata/unit_universe.csv"
+
+    # Canonical Ghana land-only boundary used by prepare_year for land masking.
+    # Set to null only if you intentionally want to disable path-based land masking.
+    land_mask: "data/raw/boundaries/gha_admin0.shp"
+
+    # Polygon layers to which cleaned FIRMS points are spatially joined.
+    # These unit IDs/names must align with the unit_universe definitions.
+    polygons:
+      - level: "district"
+        path: "data/raw/boundaries/districts_within_acz.shp"
+        unit_id_field: "dist_id"
+        unit_name_field: "dist_name"
+
+        # Optional metadata-only boundary vintage field.
+        # Leave null if your polygon file does not carry a vintage/version attribute.
+        boundary_vintage_field: null
+
+      - level: "acz"
+        path: "data/raw/boundaries/acz.shp"
+        unit_id_field: "zone_id"
+        unit_name_field: "zone_name"
+        boundary_vintage_field: null
+
+    firms_points:
+      viirs:
+        # Glob pattern locating raw annual VIIRS point files.
+        file_glob: "data/raw/viirs/*.shp"
+
+        # Mapping from canonical internal field names to source columns.
+        column_map:
+          latitude: "LATITUDE"
+          longitude: "LONGITUDE"
+          acq_date: "ACQ_DATE"
+          acq_time: "ACQ_TIME"
+          confidence: "CONFIDENCE"
+          frp: "FRP"
+          daynight: "DAYNIGHT"
+          satellite: "SATELLITE"
+          type: "TYPE"
+
+      modis:
+        # Glob pattern locating raw annual MODIS point files.
+        file_glob: "data/raw/modis/*.shp"
+
+        # Mapping from canonical internal field names to source columns.
+        column_map:
+          latitude: "LATITUDE"
+          longitude: "LONGITUDE"
+          acq_date: "ACQ_DATE"
+          acq_time: "ACQ_TIME"
+          confidence: "CONFIDENCE"
+          frp: "FRP"
+          daynight: "DAYNIGHT"
+          satellite: "SATELLITE"
+          type: "TYPE"
+
+
+processing:
+  # Enabled sensors. Supported values are exactly:
+  #   - viirs
+  #   - modis
+  sensors_enabled: ["viirs", "modis"]
+
+  time_range:
+    # Project-level default time span for production Ghana runs.
+    #
+    # This is the safe default for commands that rely on processing.time_range
+    # when explicit stage or CLI bounds are not supplied.
+    #
+    # Full production window:
+    #   2000-01 through 2025-12
+    start_yyyymm: 200011
+    end_yyyymm: 202512
+    timezone: "UTC"
+
+  sensor_time_ranges:
+    # Intended processing windows by sensor.
+    #
+    # These windows are used by the codebase to resolve each sensor's effective
+    # aggregate bounds when explicit aggregate CLI bounds are not supplied.
+    #
+    # Validation rules in the codebase:
+    # - both start_yyyymm and end_yyyymm are required for each sensor entry
+    # - start_yyyymm must be <= end_yyyymm
+
+    modis:
+      # MODIS FIRMS availability in this project context.
+      start_yyyymm: 200011
+      end_yyyymm: 202512
+      timezone: "UTC"
+
+    viirs:
+      # VIIRS FIRMS availability in this project context.
+      start_yyyymm: 201201
+      end_yyyymm: 202512
+      timezone: "UTC"
+
+  sensor_coverage:
+    # Structural coverage windows used mainly by combine_panels.
+    #
+    # Semantics:
+    # - outside coverage:
+    #     sensor fields remain null in the balanced combined panel
+    # - inside coverage with no detections:
+    #     count and sum fields can be zero-filled according to the
+    #     missingness_semantics section below
+    #
+    # Validation rules in the codebase:
+    # - start_yyyymm is required
+    # - end_yyyymm is optional
+    # - if end_yyyymm is supplied, start_yyyymm must be <= end_yyyymm
+
+    modis:
+      start_yyyymm: 200011
+      end_yyyymm: null
+      timezone: "UTC"
+
+    viirs:
+      start_yyyymm: 201201
+      end_yyyymm: null
+      timezone: "UTC"
+
+  confidence_model:
+    # Case-insensitive mapping from raw VIIRS confidence labels to the harmonised
+    # internal classes:
+    #   l = low
+    #   n = nominal
+    #   h = high
+    viirs_map:
+      l: "l"
+      n: "n"
+      h: "h"
+      low: "l"
+      nominal: "n"
+      high: "h"
+
+    # MODIS confidence thresholds in percent.
+    #
+    # Required keys:
+    #   - low_lt
+    #   - high_ge
+    #
+    # Interpretation:
+    #   confidence < low_lt   -> low
+    #   confidence >= high_ge -> high
+    #   otherwise             -> nominal
+    modis_thresholds_pct:
+      low_lt: 30
+      high_ge: 80
+
+    # If false, low-confidence detections are excluded from harmonised outputs.
+    # Keep true for full scientific traceability unless you explicitly want a
+    # stricter filtered pipeline.
+    include_low: true
+
+  deduplication:
+    # Decimal places used to round latitude/longitude inside the deterministic
+    # deduplication key.
+    latlon_round_decimals: 6
+
+    # When true, satellite identifier is included in the deduplication key.
+    include_satellite_in_key: true
+
+    # Ordered tie-break rules applied when multiple detections collapse to the
+    # same deduplication key.
+    #
+    # The current codebase recognises this ordering convention.
+    tie_break:
+      - "max_frp_mw"
+      - "max_conf_cat_rank"
+      - "stable_first"
+
+  land_mask_policy:
+    # When true, prepare_year applies land masking automatically if
+    # io.inputs.land_mask is present.
+    enabled_if_path_provided: true
+
+    # Supported values in the config model:
+    #   - intersects
+    #   - within
+    spatial_predicate: "intersects"
+
+    # If true, points outside the land mask are dropped from fires_canonical.
+    # If false, they are retained but still counted in QA diagnostics.
+    require_land_intersection: true
+
+    # Warn when the fraction of outside-land points exceeds this threshold.
+    outside_land_warn_threshold_fraction: 0.0001
+
+    # Warn when the estimated outside-land area exceeds this threshold (km²).
+    outside_land_warn_threshold_abs_km2: 0.0
+
+  frp_policy:
+    # Minimum FRP retained for processing.
+    min_frp_mw: 0.0
+
+    # Current codebase supports only:
+    #   - max
+    daily_stat: "max"
+
+    # Current codebase supports only:
+    #   - frp_active_days
+    monthly_mean_denominator: "frp_active_days"
+
+
+outputs:
+  # Root directory under which per-run outputs are created.
+  base_dir: "out/runs"
+
+  write_formats:
+    # Contracted format(s) for annual fires_canonical artefacts.
+    # Current project usage writes csv.
+    canonical_detections: ["csv"]
+
+    # Preferred output order for monthly panels.
+    #
+    # For a full Ghana production run, csv.gz first is sensible because:
+    # - panels are large
+    # - it reduces disk usage
+    # - downstream tools can still read gzip-compressed CSV where supported
+    #
+    # Keep plain csv second as a supported fallback.
+    # monthly_panels: ["csv.gz", "csv"]
+    monthly_panels: ["csv", "csv.gz"]
+
+  schemas:
+    # JSON Schemas used to validate contracted outputs.
+    fires_canonical: "configs/schemas/fires_canonical.schema.json"
+    panel_monthly: "configs/schemas/panel_monthly.schema.json"
+    rp1_af_monthly_base: "configs/schemas/rp1_af_monthly_base_viirs.schema.json"
+    rp1_af_monthly_ext: "configs/schemas/rp1_af_monthly_ext_viirs.schema.json"
+
+  rp1_exports:
+    # Formal merger-ready RP1 export contract.
+    #
+    # Design notes:
+    # - The export family name remains rp1_af_exports for both sensors.
+    # - Sensor identity stays in output paths/manifests rather than the CSV body.
+    # - The flat rp1_af_monthly_base / rp1_af_monthly_ext aliases above are
+    #   aligned to the VIIRS schemas because both sensor branches use the same
+    #   public export-column contract. Sensor-specific paths remain explicit.
+    family_name: "rp1_af_exports"
+    sensors:
+      viirs:
+        window:
+          start_yyyymm: 201201
+          end_yyyymm: 202412
+          timezone: "UTC"
+        schemas:
+          base: "configs/schemas/rp1_af_monthly_base_viirs.schema.json"
+          ext: "configs/schemas/rp1_af_monthly_ext_viirs.schema.json"
+
+      modis:
+        window:
+          start_yyyymm: 200101
+          end_yyyymm: 202412
+          timezone: "UTC"
+        schemas:
+          base: "configs/schemas/rp1_af_monthly_base_modis.schema.json"
+          ext: "configs/schemas/rp1_af_monthly_ext_modis.schema.json"
+
+  # When true, combine_panels also writes per-level subsets such as:
+  #   panel_monthly_district.csv.gz
+  #   panel_monthly_acz.csv.gz
+  split_panels_by_level: true
+
+  # When true, combine_panels also writes additive range-tagged outputs such as:
+  #   panel_monthly_200011_202512.csv.gz
+  #   panel_monthly_ext_200011_202512.csv.gz
+  #   panel_monthly_qc_200011_202512.csv.gz
+  write_range_tagged_panels: true
+
+  prepare_year_qa_exports:
+    # Optional additive QA artefacts from prepare_year.
+    #
+    # These must not modify the contracted fires_canonical output.
+    enabled: true
+
+    # Write cleaned/deduplicated points to a GeoPackage.
+    write_geopackage: false
+
+    # Optionally also write a Shapefile copy.
+    # Keep false unless you explicitly need Shapefile compatibility.
+    also_write_shapefile: false
+
+    # If land masking is active, optionally export the outside-land points
+    # themselves as a geospatial QA artefact.
+    #
+    # Keeping this false reduces artefact size while retaining the plot-based QA.
+    export_outside_land_points: false
+
+    # Write a PNG diagnostic plot of outside-land points.
+    plot_outside_land_points_png: true
+
+    # Optional PDF version of the same plot.
+    plot_outside_land_points_pdf: false
+
+    # Hard cap for plotted points. If exceeded, the code applies deterministic
+    # downsampling before plotting.
+    plot_max_points: 500000
+
+
+determinism:
+  # Stable sorting before write improves byte-level reproducibility.
+  stable_sort_before_write: true
+
+  # Enforce fixed column order for contracted outputs.
+  fixed_column_order_enforced: true
+
+  sort_keys:
+    # Stable sort keys for fires_canonical outputs.
+    fires_canonical:
+      - "level"
+      - "unit_id"
+      - "acq_datetime_utc"
+      - "latitude"
+      - "longitude"
+      - "sensor"
+
+    # Stable sort keys for balanced panel outputs.
+    panel_monthly:
+      - "level"
+      - "unit_id"
+      - "yyyymm"
+
+  column_order:
+    # Contracted column order for fires_canonical outputs.
+    fires_canonical:
+      - "run_id"
+      - "source_file"
+      - "sensor"
+      - "level"
+      - "unit_id"
+      - "acq_datetime_utc"
+      - "acq_date"
+      - "acq_time_utc"
+      - "yyyymm"
+      - "date_utc"
+      - "latitude"
+      - "longitude"
+      - "conf_cat"
+      - "frp_mw"
+      - "daynight"
+      - "satellite"
+      - "type"
+      - "dedup_key"
+      - "was_dedup_kept"
+
+    # Contracted column order for the combined balanced panel.
+    panel_monthly:
+      - "run_id"
+      - "level"
+      - "unit_id"
+      - "unit_name"
+      - "yyyymm"
+      - "year"
+      - "month"
+      - "viirs_det_low"
+      - "viirs_det_nominal"
+      - "viirs_det_high"
+      - "viirs_det_nh"
+      - "viirs_frp_active_days"
+      - "viirs_frp_sum_daily_max_mw"
+      - "viirs_frp_mean_mw"
+      - "modis_det_low"
+      - "modis_det_nominal"
+      - "modis_det_high"
+      - "modis_det_nh"
+      - "modis_frp_active_days"
+      - "modis_frp_sum_daily_max_mw"
+      - "modis_frp_mean_mw"
+
+
+missingness_semantics:
+  # Within sensor coverage, months with no detections should have count fields set to zero.
+  counts_zero_when_no_detections: true
+
+  # Within sensor coverage, months with no detections should have FRP sums set to zero.
+  frp_sum_zero_when_no_detections: true
+
+  # FRP means remain null when there are no active days in the month.
+  frp_mean_null_when_no_active_days: true
+
+
+qc:
+  # When true, combine_panels writes a separate panel_monthly_qc sidecar.
+  #
+  # This is an additive diagnostic artefact and must not alter the contracted
+  # panel_monthly schema.
+  write_panel_monthly_qc_sidecar: true
+
+  sensors:
+    viirs:
+      # Flag month-unit rows with fewer than this many detections as low-information.
+      low_information_min_detections: 3
+
+      # FRP is considered OK only if active days meet or exceed this threshold.
+      frp_ok_min_active_days: 1
+
+      # FRP is considered OK only if the monthly sum of daily maxima meets or exceeds this value.
+      frp_ok_min_sum_daily_max_mw: 0.0
+
+    modis:
+      low_information_min_detections: 3
+      frp_ok_min_active_days: 1
+      frp_ok_min_sum_daily_max_mw: 0.0

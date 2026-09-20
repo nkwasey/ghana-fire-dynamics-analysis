@@ -1,0 +1,45 @@
+{
+  "configuration_sha256": "990102ad6a39a6b3dfb1ac6b44cf92a5decc0757b3a9e852de65a4aa1fc793f9",
+  "crosswalk": {
+    "analysis_crs": "EPSG:32630",
+    "sha256": "fb42b79ca19ab2a620cac7484c4d92c785374d39b78c52c18618be18e35772d0",
+    "source_acz_geometry_bundle_sha256": "a5ad37a9b8c9cb0763997aa124268b78162f53e32c863d82c6a8ad86969b58ef",
+    "source_district_geometry_bundle_sha256": "b4d3050dc9f239df67c7a84fcd5bce52a306d32c450db2e80e2175909e663272"
+  },
+  "deterministic_rerun": true,
+  "execution_seconds_first": 5.525962,
+  "execution_seconds_second": 5.434363,
+  "governed_data_archive_sha256": "6fac5e8eb14f899f1be61277df6aaaa9415ddc71d715d12f7645b1cb20c1a722",
+  "methods_spec_sha256": "fccbed270a4c1c1c238d6f5e01c35471a4f40269d02351b704170cba24634a80",
+  "population": {
+    "acz_units": 5,
+    "climatology_months": 12,
+    "district_months": 72000,
+    "district_units": 250,
+    "years": 24
+  },
+  "rate": {
+    "annual_rate_field": "annual_ba_per100km2_fixed_support",
+    "long_run_rate_field": "mean_annual_ba_per100km2_fixed_support"
+  },
+  "schema_version": "rp1-rq1-realised-run-v1",
+  "spatial": {
+    "candidate_units": 250,
+    "global_permutations": 9999,
+    "island_count": 1,
+    "island_ids": [
+      "Accra_Metropolis"
+    ],
+    "island_policy": "exclude_from_inference",
+    "local_bh_family_size": 249,
+    "local_p_value_method": "local_moran_smaller_tail_plus_one",
+    "local_permutation_scheme": "conditional_without_replacement",
+    "local_permutations": 9999,
+    "multiplicity_method": "benjamini_hochberg",
+    "non_island_units": 249,
+    "seed": 20260822,
+    "weight_method": "queen_contiguity",
+    "weight_order": "first_order",
+    "weight_transform": "row_standardised"
+  }
+}

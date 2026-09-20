@@ -1,0 +1,6 @@
+population_id,source_population,units,rows,start,end,eligibility_rule,exclusion_reason
+acz_monthly,acz_monthly,5,1440,2001-01,2024-12,complete_balanced_panel,
+district_monthly,district_monthly,260,74880,2001-01,2024-12,complete_balanced_panel,
+long_run_district,district_monthly,250,72000,2001-01,2024-12,positive_fixed_ba2001_burnable_area_all_months,ineligible rows/units excluded prospectively by the stated rule
+paired_overlap,district_monthly,249,38595,2012-02,2024-12,paired_supported_positive_fixed_ba2012_burnable_area,ineligible rows/units excluded prospectively by the stated rule
+rq3_model,paired_overlap,249,22939,2012-02,2024-12,viirs_detection_count_positive,ineligible rows/units excluded prospectively by the stated rule

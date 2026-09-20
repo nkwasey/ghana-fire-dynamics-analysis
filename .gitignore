@@ -1,0 +1,104 @@
+# ----------------------------------------------------------------------
+# Repository hygiene for the public GitHub projection
+# ----------------------------------------------------------------------
+# This repository contains Python packages, notebooks, generated figures,
+# geospatial artefacts, exported panel bundles, and large raw data folders.
+# The defaults below are intentionally stricter than a generic Python template.
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.cache/
+
+# Test / coverage artefacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+pytestdebug.log
+
+# Build / packaging artefacts
+build/
+dist/
+site/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# Virtual environments / local environment markers
+.venv/
+venv/
+env/
+ENV/
+.python-version
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Logs / temporary files
+*.log
+tmp/
+temp/
+
+# ----------------------------------------------------------------------
+# Project-specific generated or bulky artefacts
+# ----------------------------------------------------------------------
+# Stage 1 geodata outputs and bundled raw boundary inputs
+geo_data_prep/out/
+geo_data_prep/data/raw/
+
+# Active-fire pipeline raw inputs and generated outputs
+RP1_Project/rp1_mv_firms_panels/data/raw/
+RP1_Project/rp1_mv_firms_panels/out/
+
+# Notebook-generated outputs and checkpoints
+RP1_Project/rp1_analysis/out/
+RP1_Project/rp1_analysis/.ipynb_checkpoints/
+
+# Public GitHub projection: track only the five canonical consolidated analysis
+# inputs required for standalone normal analysis. Any other files later created
+# in this raw-input directory remain ignored unless deliberately reviewed.
+RP1_Project/rp1_analysis/data/raw/*
+!RP1_Project/rp1_analysis/data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv
+!RP1_Project/rp1_analysis/data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv
+!RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv
+!RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json
+!RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json
+
+# Earth Engine export bundles are large generated artefacts, not source code
+RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/
+RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/
+
+# Optional: if additional Earth Engine export folders are created later
+RP1_Project/rp1_gee_ba_scripts/**/exports/
+RP1_Project/rp1_gee_ba_scripts/**/out/
+
+# Common geospatial outputs and scratch files
+*.aux.xml
+*.lock
+
+# ----------------------------------------------------------------------
+# Keep configuration, docs, tests, and source controlled.
+# If a generated directory must remain present, commit a .gitkeep file and
+# unignore it explicitly below.
+# ----------------------------------------------------------------------
+!.gitkeep

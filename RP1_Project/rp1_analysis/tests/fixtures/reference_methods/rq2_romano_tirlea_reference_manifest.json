@@ -1,0 +1,33 @@
+{
+  "schema": "rp1-rq2-romano-tirlea-reference-v2",
+  "authority": "Independent exact-rank direct-loop implementation within the Romano-Tirlea no-ties theoretical reference setting",
+  "production_import_prohibited": true,
+  "reference_admissibility": {
+    "requires_distinct_observations": true,
+    "on_ties": "fail_closed"
+  },
+  "cases": [
+    "strictly_increasing",
+    "strictly_decreasing",
+    "no_obvious_trend_tie_free",
+    "weak_serial_dependence_tie_free",
+    "variance_floor_tie_free",
+    "hand_calculable_n4",
+    "deterministic_permutations",
+    "plus_one_p",
+    "zero_p_impossible",
+    "n24_bandwidth_two",
+    "bh_exactly_five",
+    "forest_exact_boundary_24_rank",
+    "ghana_five_series_tie_free_parity",
+    "strict_production_ties_fail_closed"
+  ],
+  "exact_boundary_case": {
+    "ranks": [17, 6, 8, 19, 21, 18, 9, 15, 13, 10, 14, 7, 11, 5, 23, 16, 3, 12, 1, 22, 4, 24, 2, 20],
+    "replications": 9999,
+    "seed": 20260822,
+    "extremeness": "abs(T_perm) >= abs(T_obs)",
+    "expected_extreme_count": 5740,
+    "expected_p_value": 0.5741
+  }
+}

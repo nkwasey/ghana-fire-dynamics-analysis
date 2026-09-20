@@ -1,0 +1,98 @@
+schema_version: rp1-execution-contract-v1
+contract_id: rp1-run-completion-v1
+closeout:
+  section: 99_closeout
+  artifact_roles:
+    canonical_gate: M_CANONICAL_EXECUTION_GATE.json
+    reproducibility_manifest: M_REPRODUCIBILITY_MANIFEST.json
+    execution_record: M_NOTEBOOK_EXECUTION.json
+    executed_notebook: RP1_Analysis_v1.executed.ipynb
+  required_final_gate: PASS
+  execution_record_schema: rp1-notebook-execution-v3
+secondary_completion:
+  allowed_states:
+  - EXTERNAL_RESULTS_REQUIRED
+  - RESULTS_VALIDATED
+  results_validated_required_integration_state: INTEGRATED
+validation:
+  unknown_mode_policy: fail_closed
+  missing_mode_policy: fail_closed
+modes:
+  controlled_nbclient:
+    required_artifact_roles:
+    - canonical_gate
+    - reproducibility_manifest
+    - execution_record
+    - executed_notebook
+    optional_artifact_roles: []
+    required_record_fields:
+    - schema
+    - status
+    - run_id
+    - execution_mode
+    - canonical_notebook
+    - package_version
+    - analysis_schema_version
+    - data_schema_version
+    - configuration_sha256
+    - operational_configuration_sha256
+    - final_section_reached
+    - canonical_gate_status
+    - canonical_gate_sha256
+    - reproducibility_manifest_sha256
+    - publication_gate_status
+    - section_gates
+    - input_validation_status
+    - canonical_input_identity
+    - secondary_execution_state
+    - secondary_integration_state
+    - secondary_validated_model_count
+    - satscan_execution_performed
+    - notebook_snapshot_required
+    - notebook_snapshot_available
+    - completion_timestamp_utc
+    - kernel_name
+    - execution_cwd_policy
+    - code_cells
+    - executed_code_cells
+    - executed_notebook_sha256
+    notebook_snapshot_required: true
+    notebook_snapshot_sha256_required: true
+    code_cell_completion_rule: executed_equals_total
+  interactive_jupyter:
+    required_artifact_roles:
+    - canonical_gate
+    - reproducibility_manifest
+    - execution_record
+    optional_artifact_roles:
+    - executed_notebook
+    required_record_fields:
+    - schema
+    - status
+    - run_id
+    - execution_mode
+    - canonical_notebook
+    - package_version
+    - analysis_schema_version
+    - data_schema_version
+    - configuration_sha256
+    - operational_configuration_sha256
+    - final_section_reached
+    - canonical_gate_status
+    - canonical_gate_sha256
+    - reproducibility_manifest_sha256
+    - publication_gate_status
+    - section_gates
+    - input_validation_status
+    - canonical_input_identity
+    - secondary_execution_state
+    - secondary_integration_state
+    - secondary_validated_model_count
+    - satscan_execution_performed
+    - notebook_snapshot_required
+    - notebook_snapshot_available
+    - completion_timestamp_utc
+    - provenance_limitations
+    notebook_snapshot_required: false
+    notebook_snapshot_sha256_required: false
+    code_cell_completion_rule: not_required

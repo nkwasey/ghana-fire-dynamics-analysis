@@ -1,0 +1,37 @@
+name: rp_ghana_fire
+channels:
+  - conda-forge
+
+dependencies:
+  - python>=3.13,<3.14
+  - pip
+  - numpy>=1.24,<3
+  - pandas>=2,<3
+  - scipy>=1.11,<2
+  - matplotlib>=3.8,<4
+  - statsmodels>=0.14,<0.15
+  - geopandas>=1,<2
+  - shapely>=2,<3
+  - pyproj>=3.5,<4
+  - fiona>=1.9,<2
+  - pyogrio
+  - pyyaml>=6,<7
+  - pydantic>=2,<3
+  - jsonschema>=4,<5
+  - typer>=0.12,<1
+  - rich>=13,<14
+  - nbformat>=5,<6
+  - nbclient>=0.10,<1
+  - ipykernel>=6,<8
+  - ipython
+  - jupyterlab>=4,<5
+  - pytest>=7,<10
+  - pypdf>=5,<7
+  - pillow>=10,<13
+  - python-build>=1,<2
+  - setuptools>=68
+  - wheel
+  - pip:
+      - -e ./geo_data_prep
+      - -e ./RP1_Project/rp1_mv_firms_panels
+      - -e ./RP1_Project/rp1_analysis

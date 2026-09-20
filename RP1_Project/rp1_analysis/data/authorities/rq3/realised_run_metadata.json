@@ -1,0 +1,66 @@
+{
+  "config_sha256": "d33d2c86a5e179a632b1f19c739ae29aaf16f6f933b9df99e7e4138debe888dc",
+  "data_sha256": "6fac5e8eb14f899f1be61277df6aaaa9415ddc71d715d12f7645b1cb20c1a722",
+  "factor_references": {
+    "acz": "CZ",
+    "month": 1,
+    "year": 2013
+  },
+  "methods_spec_sha256": "fccbed270a4c1c1c238d6f5e01c35471a4f40269d02351b704170cba24634a80",
+  "realised_permutation_counts": {},
+  "realised_sample_sizes": {
+    "rq3_model_districts": 249,
+    "rq3_model_rows": 22939,
+    "rq3_outcome_y0": 6128,
+    "rq3_outcome_y1": 16811,
+    "rq3_paired_districts": 249,
+    "rq3_paired_rows": 38595
+  },
+  "rq2_realised_bandwidth": null,
+  "rq3_design_columns": [
+    "Intercept",
+    "log2_viirs_det_primary",
+    "log2_viirs_frp_mean_mw",
+    "log2_modis_burnable_km2_union_ba2012",
+    "month_2",
+    "month_3",
+    "month_4",
+    "month_5",
+    "month_6",
+    "month_7",
+    "month_8",
+    "month_9",
+    "month_10",
+    "month_11",
+    "month_12",
+    "year_2012",
+    "year_2014",
+    "year_2015",
+    "year_2016",
+    "year_2017",
+    "year_2018",
+    "year_2019",
+    "year_2020",
+    "year_2021",
+    "year_2022",
+    "year_2023",
+    "year_2024",
+    "acz_FZ",
+    "acz_GS",
+    "acz_SS",
+    "acz_TZ"
+  ],
+  "rq3_reporting_roles": {
+    "log2_modis_burnable_km2_union_ba2012": "adjustment",
+    "log2_viirs_det_primary": "focal",
+    "log2_viirs_frp_mean_mw": "focal"
+  },
+  "rq3_transformations": {
+    "log2_modis_burnable_km2_union_ba2012": "log2_positive",
+    "log2_viirs_det_primary": "log2_positive",
+    "log2_viirs_frp_mean_mw": "log2_positive"
+  },
+  "satscan_parameter_hashes": {},
+  "schema_version": "rp1-realised-run-v1",
+  "spatial_weight_parameters": {}
+}

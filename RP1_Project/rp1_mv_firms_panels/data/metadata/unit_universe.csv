@@ -1,0 +1,266 @@
+unit_type,level,unit_id,unit_code,unit_name,parent_level,parent_id,parent_code,parent_name,area_sqkm
+zone,acz,coastal_zone,CZ,COASTAL ZONE,,,,,16779.263404
+zone,acz,forest_zone,FZ,FOREST ZONE,,,,,73653.228450
+zone,acz,guinea_savannah,GS,GUINEA SAVANNAH,,,,,103606.626557
+zone,acz,sudan_savannah,SS,SUDAN SAVANNAH,,,,,17512.143525
+zone,acz,transition_zone,TZ,TRANSITION ZONE,,,,,28033.310649
+district,district,Ablekuma_Central_Municipal,,ABLEKUMA CENTRAL MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,14.169646
+district,district,Ablekuma_North_Municipal,,ABLEKUMA NORTH MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,29.562281
+district,district,Ablekuma_West_Municipal,,ABLEKUMA WEST MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,12.630158
+district,district,Abura_Asebu_Kwamankese,,ABURA-ASEBU-KWAMANKESE,acz,coastal_zone,CZ,COASTAL ZONE,377.163607
+district,district,Accra_Metropolis,,ACCRA METROPOLIS,acz,coastal_zone,CZ,COASTAL ZONE,5.596848
+district,district,Ada_East,,ADA EAST,acz,coastal_zone,CZ,COASTAL ZONE,290.477585
+district,district,Ada_West,,ADA WEST,acz,coastal_zone,CZ,COASTAL ZONE,324.452358
+district,district,Adenta_Municipal,,ADENTA MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,78.158816
+district,district,Ahanta_West_Municipal,,AHANTA WEST MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,554.185442
+district,district,Ajumako_Enyan_Essiam,,AJUMAKO-ENYAN-ESSIAM,acz,coastal_zone,CZ,COASTAL ZONE,521.929564
+district,district,Akatsi_North,,AKATSI NORTH,acz,coastal_zone,CZ,COASTAL ZONE,314.961053
+district,district,Akatsi_South,,AKATSI SOUTH,acz,coastal_zone,CZ,COASTAL ZONE,538.164849
+district,district,Anloga,,ANLOGA,acz,coastal_zone,CZ,COASTAL ZONE,236.679465
+district,district,Ashaiman_Municipal,,ASHAIMAN MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,18.545553
+district,district,Awutu_Senya,,AWUTU SENYA,acz,coastal_zone,CZ,COASTAL ZONE,245.014581
+district,district,Awutu_Senya_East,,AWUTU SENYA EAST,acz,coastal_zone,CZ,COASTAL ZONE,107.888387
+district,district,Ayawaso_Central_Municipal,,AYAWASO CENTRAL MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,1.519557
+district,district,Ayawaso_East_Municipal,,AYAWASO EAST MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,6.238329
+district,district,Ayawaso_North_Municipal,,AYAWASO NORTH MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,4.899313
+district,district,Ayawaso_West,,AYAWASO WEST,acz,coastal_zone,CZ,COASTAL ZONE,32.781488
+district,district,Cape_Coast_Metropolitan,,CAPE COAST METROPOLITAN,acz,coastal_zone,CZ,COASTAL ZONE,122.149986
+district,district,Central_Tongu,,CENTRAL TONGU,acz,coastal_zone,CZ,COASTAL ZONE,684.237459
+district,district,Effia_Kwesimintsim_Municipal,,EFFIA KWESIMINTSIM MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,104.827870
+district,district,Effutu_Municipal,,EFFUTU MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,85.451490
+district,district,Ekumfi,,EKUMFI,acz,coastal_zone,CZ,COASTAL ZONE,276.798097
+district,district,Ellembelle,,ELLEMBELLE,acz,coastal_zone,CZ,COASTAL ZONE,995.067638
+district,district,Ga_Central_Municipal,,GA CENTRAL MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,49.136216
+district,district,Ga_East,,GA EAST,acz,coastal_zone,CZ,COASTAL ZONE,85.994343
+district,district,Ga_North_Municipal,,GA NORTH MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,124.851007
+district,district,Ga_South_Municipal,,GA SOUTH MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,178.333004
+district,district,Ga_West_Municipal,,GA WEST MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,175.202615
+district,district,Gomoa_Central,,GOMOA CENTRAL,acz,coastal_zone,CZ,COASTAL ZONE,121.479683
+district,district,Gomoa_East,,GOMOA EAST,acz,coastal_zone,CZ,COASTAL ZONE,540.583147
+district,district,Gomoa_West,,GOMOA WEST,acz,coastal_zone,CZ,COASTAL ZONE,337.338104
+district,district,Jomoro,,JOMORO,acz,coastal_zone,CZ,COASTAL ZONE,1493.376148
+district,district,Keta_Municipal,,KETA MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,518.668031
+district,district,Ketu_North,,KETU NORTH,acz,coastal_zone,CZ,COASTAL ZONE,425.178815
+district,district,Ketu_South,,KETU SOUTH,acz,coastal_zone,CZ,COASTAL ZONE,278.926863
+district,district,Komenda_Edina_Eguafo_Abirem_Municipal,,KOMENDA-EDINA-EGUAFO-ABIREM MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,452.677194
+district,district,Korle_Klottey_Municipal,,KORLE KLOTTEY MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,9.791926
+district,district,Kpone_Katamanso,,KPONE KATAMANSO,acz,coastal_zone,CZ,COASTAL ZONE,240.526245
+district,district,Krowor_Municipal,,KROWOR MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,18.159754
+district,district,La_Dade_Kotopon,,LA DADE-KOTOPON,acz,coastal_zone,CZ,COASTAL ZONE,36.166611
+district,district,La_Nkwantanang_Madina,,LA-NKWANTANANG-MADINA,acz,coastal_zone,CZ,COASTAL ZONE,71.060131
+district,district,Ledzokuku_Municipal,,LEDZOKUKU MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,29.150400
+district,district,Mfantseman_Municipal,,MFANTSEMAN MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,300.711759
+district,district,Mpohor,,MPOHOR,acz,coastal_zone,CZ,COASTAL ZONE,524.639762
+district,district,Ningo_Prampram,,NINGO/PRAMPRAM,acz,coastal_zone,CZ,COASTAL ZONE,623.703337
+district,district,Nzema_East,,NZEMA EAST,acz,coastal_zone,CZ,COASTAL ZONE,1083.548219
+district,district,Okaikwei_North_Municipal,,OKAIKWEI NORTH MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,22.494269
+district,district,Sekondi_Takoradi_Metropolis,,SEKONDI TAKORADI METROPOLIS,acz,coastal_zone,CZ,COASTAL ZONE,86.552416
+district,district,Shai_Osudoku,,SHAI OSUDOKU,acz,coastal_zone,CZ,COASTAL ZONE,971.286846
+district,district,Shama,,SHAMA,acz,coastal_zone,CZ,COASTAL ZONE,193.829356
+district,district,South_Tongu,,SOUTH TONGU,acz,coastal_zone,CZ,COASTAL ZONE,645.418895
+district,district,Tarkwa_Nsuaem,,TARKWA NSUAEM,acz,coastal_zone,CZ,COASTAL ZONE,904.911538
+district,district,Tema_Metropolitan,,TEMA METROPOLITAN,acz,coastal_zone,CZ,COASTAL ZONE,42.610045
+district,district,Tema_West_Municipal,,TEMA WEST MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,45.336497
+district,district,Weija_Gbawe_Municipal,,WEIJA GBAWE MUNICIPAL,acz,coastal_zone,CZ,COASTAL ZONE,164.068816
+district,district,Abuakwa_North,,ABUAKWA NORTH,acz,forest_zone,FZ,FOREST ZONE,158.981342
+district,district,Abuakwa_South,,ABUAKWA SOUTH,acz,forest_zone,FZ,FOREST ZONE,349.823633
+district,district,Achiase,,ACHIASE,acz,forest_zone,FZ,FOREST ZONE,414.753501
+district,district,Adaklu,,ADAKLU,acz,forest_zone,FZ,FOREST ZONE,803.298710
+district,district,Adansi_Akrofuom,,ADANSI AKROFUOM,acz,forest_zone,FZ,FOREST ZONE,568.076186
+district,district,Adansi_Asokwa,,ADANSI ASOKWA,acz,forest_zone,FZ,FOREST ZONE,595.528695
+district,district,Adansi_North,,ADANSI NORTH,acz,forest_zone,FZ,FOREST ZONE,258.069619
+district,district,Adansi_South,,ADANSI SOUTH,acz,forest_zone,FZ,FOREST ZONE,761.067499
+district,district,Afadzato_South,,AFADZATO SOUTH,acz,forest_zone,FZ,FOREST ZONE,554.406630
+district,district,Afigya_Kwabre_North,,AFIGYA KWABRE NORTH,acz,forest_zone,FZ,FOREST ZONE,186.685469
+district,district,Afigya_Kwabre_South,,AFIGYA KWABRE SOUTH,acz,forest_zone,FZ,FOREST ZONE,223.299533
+district,district,Agona_East,,AGONA EAST,acz,forest_zone,FZ,FOREST ZONE,327.771748
+district,district,Agona_West_Municipal,,AGONA WEST MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,356.409636
+district,district,Agotime_Ziope,,AGOTIME ZIOPE,acz,forest_zone,FZ,FOREST ZONE,316.322584
+district,district,Ahafo_Ano_North,,AHAFO ANO NORTH,acz,forest_zone,FZ,FOREST ZONE,593.264651
+district,district,Ahafo_Ano_South_East,,AHAFO ANO SOUTH EAST,acz,forest_zone,FZ,FOREST ZONE,685.765958
+district,district,Ahafo_Ano_South_West,,AHAFO ANO SOUTH WEST,acz,forest_zone,FZ,FOREST ZONE,504.461090
+district,district,Akwapem_North,,AKWAPEM NORTH,acz,forest_zone,FZ,FOREST ZONE,307.221240
+district,district,Akwapem_South,,AKWAPEM SOUTH,acz,forest_zone,FZ,FOREST ZONE,224.547888
+district,district,Akyem_Mansa,,AKYEM MANSA,acz,forest_zone,FZ,FOREST ZONE,611.955862
+district,district,Amansie_Central,,AMANSIE CENTRAL,acz,forest_zone,FZ,FOREST ZONE,849.405338
+district,district,Amansie_South,,AMANSIE SOUTH,acz,forest_zone,FZ,FOREST ZONE,593.119720
+district,district,Amansie_West,,AMANSIE WEST,acz,forest_zone,FZ,FOREST ZONE,637.681288
+district,district,Aowin,,AOWIN,acz,forest_zone,FZ,FOREST ZONE,2607.569198
+district,district,Asante_Akim_Central_Municipal,,ASANTE AKIM CENTRAL MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,300.301071
+district,district,Asante_Akim_North,,ASANTE AKIM NORTH,acz,forest_zone,FZ,FOREST ZONE,1126.514408
+district,district,Asante_Akim_South,,ASANTE AKIM SOUTH,acz,forest_zone,FZ,FOREST ZONE,1154.043164
+district,district,Asene_Akroso_Manso,,ASENE AKROSO MANSO,acz,forest_zone,FZ,FOREST ZONE,419.343953
+district,district,Asikuma_Odoben_Brakwa,,ASIKUMA-ODOBEN-BRAKWA,acz,forest_zone,FZ,FOREST ZONE,773.618354
+district,district,Asokore_Mampong_Municipal,,ASOKORE MAMPONG MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,23.757569
+district,district,Asokwa_Municipal,,ASOKWA MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,26.821135
+district,district,Assin_Fosu,,ASSIN FOSU,acz,forest_zone,FZ,FOREST ZONE,279.040838
+district,district,Assin_North,,ASSIN NORTH,acz,forest_zone,FZ,FOREST ZONE,725.945944
+district,district,Assin_South,,ASSIN SOUTH,acz,forest_zone,FZ,FOREST ZONE,1101.054320
+district,district,Asunafo_South,,ASUNAFO SOUTH,acz,forest_zone,FZ,FOREST ZONE,922.926789
+district,district,Asuogyaman,,ASUOGYAMAN,acz,forest_zone,FZ,FOREST ZONE,767.795037
+district,district,Atiwa_East,,ATIWA EAST,acz,forest_zone,FZ,FOREST ZONE,580.750482
+district,district,Atiwa_West,,ATIWA WEST,acz,forest_zone,FZ,FOREST ZONE,586.492395
+district,district,Atwima_Kwanwoma,,ATWIMA KWANWOMA,acz,forest_zone,FZ,FOREST ZONE,251.497680
+district,district,Atwima_Mponua,,ATWIMA MPONUA,acz,forest_zone,FZ,FOREST ZONE,1882.079802
+district,district,Atwima_Nwabiagya_North,,ATWIMA NWABIAGYA NORTH,acz,forest_zone,FZ,FOREST ZONE,212.602268
+district,district,Atwima_Nwabiagya_South,,ATWIMA NWABIAGYA SOUTH,acz,forest_zone,FZ,FOREST ZONE,366.294927
+district,district,Ayensuano,,AYENSUANO,acz,forest_zone,FZ,FOREST ZONE,500.060960
+district,district,Bekwai_Municipal,,BEKWAI MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,535.479828
+district,district,Bia_West,,BIA WEST,acz,forest_zone,FZ,FOREST ZONE,1285.400885
+district,district,Biakoye,,BIAKOYE,acz,forest_zone,FZ,FOREST ZONE,1108.765924
+district,district,Bibiani_Anhwiaso_Bekwai_Municipal,,BIBIANI-ANHWIASO-BEKWAI MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,833.352233
+district,district,Birim_Central_Municipal,,BIRIM CENTRAL MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,106.690787
+district,district,Birim_North,,BIRIM NORTH,acz,forest_zone,FZ,FOREST ZONE,567.390377
+district,district,Birim_South,,BIRIM SOUTH,acz,forest_zone,FZ,FOREST ZONE,311.848589
+district,district,Bodi,,BODI,acz,forest_zone,FZ,FOREST ZONE,661.468114
+district,district,Bosome_Freho,,BOSOME FREHO,acz,forest_zone,FZ,FOREST ZONE,568.813212
+district,district,Bosomtwe,,BOSOMTWE,acz,forest_zone,FZ,FOREST ZONE,422.702812
+district,district,Denkyembour,,DENKYEMBOUR,acz,forest_zone,FZ,FOREST ZONE,436.869781
+district,district,Ejisu_Municipal,,EJISU MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,411.460333
+district,district,Fanteakwa_North,,FANTEAKWA NORTH,acz,forest_zone,FZ,FOREST ZONE,838.074955
+district,district,Fanteakwa_South,,FANTEAKWA SOUTH,acz,forest_zone,FZ,FOREST ZONE,262.641283
+district,district,Ho_Municipal,,HO MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,575.298694
+district,district,Ho_West,,HO WEST,acz,forest_zone,FZ,FOREST ZONE,1005.102442
+district,district,Hohoe_Municipal,,HOHOE MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,685.976090
+district,district,Jasikan,,JASIKAN,acz,forest_zone,FZ,FOREST ZONE,557.417485
+district,district,Juaben_Municipal,,JUABEN MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,171.247851
+district,district,Juaboso,,JUABOSO,acz,forest_zone,FZ,FOREST ZONE,1367.939337
+district,district,Kpando_Municipal,,KPANDO MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,314.669646
+district,district,Kumasi_Metropolitan,,KUMASI METROPOLITAN,acz,forest_zone,FZ,FOREST ZONE,21.643783
+district,district,Kwabre_East,,KWABRE EAST,acz,forest_zone,FZ,FOREST ZONE,123.054618
+district,district,Kwadaso_Municipal,,KWADASO MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,64.109845
+district,district,Kwaebibirem,,KWAEBIBIREM,acz,forest_zone,FZ,FOREST ZONE,803.958445
+district,district,Kwahu_Afram_Plains_North,,KWAHU AFRAM PLAINS NORTH,acz,forest_zone,FZ,FOREST ZONE,2346.521718
+district,district,Kwahu_Afram_Plains_South,,KWAHU AFRAM PLAINS SOUTH,acz,forest_zone,FZ,FOREST ZONE,3100.420607
+district,district,Kwahu_East,,KWAHU EAST,acz,forest_zone,FZ,FOREST ZONE,624.162859
+district,district,Kwahu_South,,KWAHU SOUTH,acz,forest_zone,FZ,FOREST ZONE,796.777526
+district,district,Kwahu_West,,KWAHU WEST,acz,forest_zone,FZ,FOREST ZONE,401.135831
+district,district,Lower_Manya,,LOWER MANYA,acz,forest_zone,FZ,FOREST ZONE,305.220407
+district,district,Mampong_Municipal,,MAMPONG MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,670.447352
+district,district,New_Juaben_North_Municipal,,NEW JUABEN NORTH MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,105.631618
+district,district,New_Juaben_South_Municipal,,NEW JUABEN SOUTH MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,54.425737
+district,district,North_Dayi,,NORTH DAYI,acz,forest_zone,FZ,FOREST ZONE,464.262771
+district,district,North_Tongu,,NORTH TONGU,acz,forest_zone,FZ,FOREST ZONE,1134.074723
+district,district,Nsawam_Adoagyiri,,NSAWAM ADOAGYIRI,acz,forest_zone,FZ,FOREST ZONE,175.230795
+district,district,Obuasi_East,,OBUASI EAST,acz,forest_zone,FZ,FOREST ZONE,74.992085
+district,district,Obuasi_Municipal,,OBUASI MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,145.707091
+district,district,Offinso_Municipal,,OFFINSO MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,585.864685
+district,district,Oforikrom_Municipal,,OFORIKROM MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,45.332603
+district,district,Okere,,OKERE,acz,forest_zone,FZ,FOREST ZONE,307.204320
+district,district,Old_Tafo_Municipal,,OLD TAFO MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,29.070493
+district,district,Prestea_Huni_Valley,,PRESTEA/HUNI VALLEY,acz,forest_zone,FZ,FOREST ZONE,1808.522700
+district,district,Sefwi_Akontombra,,SEFWI AKONTOMBRA,acz,forest_zone,FZ,FOREST ZONE,1118.584126
+district,district,Sefwi_Wiawso,,SEFWI-WIAWSO,acz,forest_zone,FZ,FOREST ZONE,1010.592565
+district,district,Sekyere_Afram_Plains_North,,SEKYERE AFRAM PLAINS NORTH,acz,forest_zone,FZ,FOREST ZONE,3529.521711
+district,district,Sekyere_Central,,SEKYERE CENTRAL,acz,forest_zone,FZ,FOREST ZONE,1632.248491
+district,district,Sekyere_East,,SEKYERE EAST,acz,forest_zone,FZ,FOREST ZONE,239.168238
+district,district,Sekyere_Kumawu,,SEKYERE KUMAWU,acz,forest_zone,FZ,FOREST ZONE,576.747741
+district,district,Sekyere_South,,SEKYERE SOUTH,acz,forest_zone,FZ,FOREST ZONE,416.606989
+district,district,South_Dayi,,SOUTH DAYI,acz,forest_zone,FZ,FOREST ZONE,359.271884
+district,district,Suaman,,SUAMAN,acz,forest_zone,FZ,FOREST ZONE,399.551125
+district,district,Suame_Municipal,,SUAME MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,27.638366
+district,district,Suhum_Municipal,,SUHUM MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,359.243264
+district,district,Twifo_Atti_Morkwa,,TWIFO ATTI-MORKWA,acz,forest_zone,FZ,FOREST ZONE,956.067170
+district,district,Twifo_Hemang_Lower_Denkyira,,TWIFO HEMANG LOWER DENKYIRA,acz,forest_zone,FZ,FOREST ZONE,575.815944
+district,district,Upper_Denkyira_East_Municipal,,UPPER DENKYIRA EAST MUNICIPAL,acz,forest_zone,FZ,FOREST ZONE,501.700956
+district,district,Upper_Denkyira_West,,UPPER DENKYIRA WEST,acz,forest_zone,FZ,FOREST ZONE,579.012135
+district,district,Upper_Manya,,UPPER MANYA,acz,forest_zone,FZ,FOREST ZONE,860.690845
+district,district,Upper_West_Akim,,UPPER WEST AKIM,acz,forest_zone,FZ,FOREST ZONE,342.762804
+district,district,Wassa_Amenfi_Central,,WASSA AMENFI CENTRAL,acz,forest_zone,FZ,FOREST ZONE,1844.109034
+district,district,Wassa_Amenfi_East,,WASSA AMENFI EAST,acz,forest_zone,FZ,FOREST ZONE,1557.171766
+district,district,Wassa_Amenfi_West,,WASSA AMENFI WEST,acz,forest_zone,FZ,FOREST ZONE,1447.896733
+district,district,Wassa_East,,WASSA EAST,acz,forest_zone,FZ,FOREST ZONE,1651.843819
+district,district,West_Akim,,WEST AKIM,acz,forest_zone,FZ,FOREST ZONE,475.965234
+district,district,Yilo_Krobo,,YILO KROBO,acz,forest_zone,FZ,FOREST ZONE,484.206134
+district,district,Bole,,BOLE,acz,guinea_savannah,GS,GUINEA SAVANNAH,6165.533648
+district,district,Bunkpurugu_Nakpanduri,,BUNKPURUGU NAKPANDURI,acz,guinea_savannah,GS,GUINEA SAVANNAH,770.937506
+district,district,Central_Gonja,,CENTRAL GONJA,acz,guinea_savannah,GS,GUINEA SAVANNAH,7558.959965
+district,district,Chereponi,,CHEREPONI,acz,guinea_savannah,GS,GUINEA SAVANNAH,1378.250703
+district,district,Daffiama_Bussie_Issa,,DAFFIAMA BUSSIE ISSA,acz,guinea_savannah,GS,GUINEA SAVANNAH,1454.912253
+district,district,East_Gonja_Municipal,,EAST GONJA MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,2255.234272
+district,district,East_Mamprusi,,EAST MAMPRUSI,acz,guinea_savannah,GS,GUINEA SAVANNAH,1709.667617
+district,district,Gushegu,,GUSHEGU,acz,guinea_savannah,GS,GUINEA SAVANNAH,2678.454482
+district,district,Jirapa,,JIRAPA,acz,guinea_savannah,GS,GUINEA SAVANNAH,1187.326048
+district,district,Kadjebi,,KADJEBI,acz,guinea_savannah,GS,GUINEA SAVANNAH,691.835422
+district,district,Karaga,,KARAGA,acz,guinea_savannah,GS,GUINEA SAVANNAH,3124.322055
+district,district,Kintampo_North_Municipal,,KINTAMPO NORTH MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,4888.885635
+district,district,Kpandai,,KPANDAI,acz,guinea_savannah,GS,GUINEA SAVANNAH,1135.407744
+district,district,Krachi_East_Municipal,,KRACHI EAST MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,2765.790949
+district,district,Krachi_Nchumuru,,KRACHI NCHUMURU,acz,guinea_savannah,GS,GUINEA SAVANNAH,1197.268213
+district,district,Krachi_West,,KRACHI WEST,acz,guinea_savannah,GS,GUINEA SAVANNAH,930.807207
+district,district,Kumbungu,,KUMBUNGU,acz,guinea_savannah,GS,GUINEA SAVANNAH,1542.248594
+district,district,Mamprugu_Moagduri,,MAMPRUGU MOAGDURI,acz,guinea_savannah,GS,GUINEA SAVANNAH,2122.534044
+district,district,Mion,,MION,acz,guinea_savannah,GS,GUINEA SAVANNAH,2718.674848
+district,district,Nadowli_Kaleo,,NADOWLI-KALEO,acz,guinea_savannah,GS,GUINEA SAVANNAH,1130.879790
+district,district,Nanton,,NANTON,acz,guinea_savannah,GS,GUINEA SAVANNAH,477.125421
+district,district,Nanumba_North,,NANUMBA NORTH,acz,guinea_savannah,GS,GUINEA SAVANNAH,2265.565359
+district,district,Nanumba_South,,NANUMBA SOUTH,acz,guinea_savannah,GS,GUINEA SAVANNAH,1792.627582
+district,district,Nkwanta_North,,NKWANTA NORTH,acz,guinea_savannah,GS,GUINEA SAVANNAH,1100.630851
+district,district,Nkwanta_South_Municipal,,NKWANTA SOUTH MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,2740.456708
+district,district,North_East_Gonja,,NORTH EAST GONJA,acz,guinea_savannah,GS,GUINEA SAVANNAH,6096.536054
+district,district,North_Gonja,,NORTH GONJA,acz,guinea_savannah,GS,GUINEA SAVANNAH,4846.135873
+district,district,Pru_East,,PRU EAST,acz,guinea_savannah,GS,GUINEA SAVANNAH,1653.095342
+district,district,Saboba,,SABOBA,acz,guinea_savannah,GS,GUINEA SAVANNAH,1755.379255
+district,district,Sagnerigu,,SAGNERIGU,acz,guinea_savannah,GS,GUINEA SAVANNAH,200.583885
+district,district,Savelugu,,SAVELUGU,acz,guinea_savannah,GS,GUINEA SAVANNAH,1547.610710
+district,district,Sawla_Tuna_Kalba,,SAWLA-TUNA-KALBA,acz,guinea_savannah,GS,GUINEA SAVANNAH,4223.874855
+district,district,Sene_East,,SENE EAST,acz,guinea_savannah,GS,GUINEA SAVANNAH,4400.720078
+district,district,Sene_West,,SENE WEST,acz,guinea_savannah,GS,GUINEA SAVANNAH,3266.734868
+district,district,Tamale_Metropolitan,,TAMALE METROPOLITAN,acz,guinea_savannah,GS,GUINEA SAVANNAH,648.087862
+district,district,Tatale_Sanguli,,TATALE SANGULI,acz,guinea_savannah,GS,GUINEA SAVANNAH,1092.843354
+district,district,Tolon,,TOLON,acz,guinea_savannah,GS,GUINEA SAVANNAH,1354.443433
+district,district,Wa_East,,WA EAST,acz,guinea_savannah,GS,GUINEA SAVANNAH,4295.944992
+district,district,Wa_Municipal,,WA MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,579.152729
+district,district,Wa_West,,WA WEST,acz,guinea_savannah,GS,GUINEA SAVANNAH,1490.398089
+district,district,West_Gonja,,WEST GONJA,acz,guinea_savannah,GS,GUINEA SAVANNAH,4715.982356
+district,district,West_Mamprusi_Municipal,,WEST MAMPRUSI MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,2613.678703
+district,district,Yendi_Municipal,,YENDI MUNICIPAL,acz,guinea_savannah,GS,GUINEA SAVANNAH,1449.606356
+district,district,Yunyoo_Nasuan,,YUNYOO-NASUAN,acz,guinea_savannah,GS,GUINEA SAVANNAH,488.775539
+district,district,Zabzugu,,ZABZUGU,acz,guinea_savannah,GS,GUINEA SAVANNAH,1102.705318
+district,district,Bawku_Municipal,,BAWKU MUNICIPAL,acz,sudan_savannah,SS,SUDAN SAVANNAH,247.600472
+district,district,Bawku_West,,BAWKU WEST,acz,sudan_savannah,SS,SUDAN SAVANNAH,1072.881595
+district,district,Binduri,,BINDURI,acz,sudan_savannah,SS,SUDAN SAVANNAH,392.441230
+district,district,Bolga_East,,BOLGA EAST,acz,sudan_savannah,SS,SUDAN SAVANNAH,71.867277
+district,district,Bolgatanga_Municipal,,BOLGATANGA MUNICIPAL,acz,sudan_savannah,SS,SUDAN SAVANNAH,325.369811
+district,district,Bongo,,BONGO,acz,sudan_savannah,SS,SUDAN SAVANNAH,415.159341
+district,district,Builsa_North,,BUILSA NORTH,acz,sudan_savannah,SS,SUDAN SAVANNAH,816.665468
+district,district,Builsa_South,,BUILSA SOUTH,acz,sudan_savannah,SS,SUDAN SAVANNAH,1241.892253
+district,district,Garu,,GARU,acz,sudan_savannah,SS,SUDAN SAVANNAH,676.653318
+district,district,Kasena_Nankana_East,,KASENA NANKANA EAST,acz,sudan_savannah,SS,SUDAN SAVANNAH,767.545652
+district,district,Kasena_Nankana_West,,KASENA NANKANA WEST,acz,sudan_savannah,SS,SUDAN SAVANNAH,873.199837
+district,district,Lambussie_Karni,,LAMBUSSIE-KARNI,acz,sudan_savannah,SS,SUDAN SAVANNAH,810.804725
+district,district,Lawra,,LAWRA,acz,sudan_savannah,SS,SUDAN SAVANNAH,526.681919
+district,district,Nabdam,,NABDAM,acz,sudan_savannah,SS,SUDAN SAVANNAH,245.225154
+district,district,Nandom,,NANDOM,acz,sudan_savannah,SS,SUDAN SAVANNAH,404.018209
+district,district,Pusiga,,PUSIGA,acz,sudan_savannah,SS,SUDAN SAVANNAH,256.070202
+district,district,Sissala_East,,SISSALA EAST,acz,sudan_savannah,SS,SUDAN SAVANNAH,5093.571381
+district,district,Sissala_West,,SISSALA WEST,acz,sudan_savannah,SS,SUDAN SAVANNAH,2048.888788
+district,district,Talensi,,TALENSI,acz,sudan_savannah,SS,SUDAN SAVANNAH,839.215309
+district,district,Tempane,,TEMPANE,acz,sudan_savannah,SS,SUDAN SAVANNAH,386.391588
+district,district,Asunafo_North_Municipal,,ASUNAFO NORTH MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,1410.420314
+district,district,Asutifi_North,,ASUTIFI NORTH,acz,transition_zone,TZ,TRANSITION ZONE,935.090756
+district,district,Asutifi_South,,ASUTIFI SOUTH,acz,transition_zone,TZ,TRANSITION ZONE,597.044848
+district,district,Atebubu_Amantin,,ATEBUBU AMANTIN,acz,transition_zone,TZ,TRANSITION ZONE,2626.207502
+district,district,Banda,,BANDA,acz,transition_zone,TZ,TRANSITION ZONE,2296.256515
+district,district,Berekum_East_Municipal,,BEREKUM EAST MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,461.598867
+district,district,Berekum_West,,BEREKUM WEST,acz,transition_zone,TZ,TRANSITION ZONE,401.030315
+district,district,Bia_East,,BIA EAST,acz,transition_zone,TZ,TRANSITION ZONE,782.640891
+district,district,Dormaa_East,,DORMAA EAST,acz,transition_zone,TZ,TRANSITION ZONE,569.701783
+district,district,Dormaa_Municipal,,DORMAA MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,1208.334631
+district,district,Dormaa_West,,DORMAA WEST,acz,transition_zone,TZ,TRANSITION ZONE,380.010603
+district,district,Ejura_Sekyedumase,,EJURA-SEKYEDUMASE,acz,transition_zone,TZ,TRANSITION ZONE,1340.628108
+district,district,Jaman_North,,JAMAN NORTH,acz,transition_zone,TZ,TRANSITION ZONE,1029.543337
+district,district,Jaman_South_Municipal,,JAMAN SOUTH MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,754.312030
+district,district,Kintampo_South,,KINTAMPO SOUTH,acz,transition_zone,TZ,TRANSITION ZONE,1513.524204
+district,district,Nkoranza_North,,NKORANZA NORTH,acz,transition_zone,TZ,TRANSITION ZONE,1386.658405
+district,district,Nkoranza_South,,NKORANZA SOUTH,acz,transition_zone,TZ,TRANSITION ZONE,922.608831
+district,district,Offinso_North,,OFFINSO NORTH,acz,transition_zone,TZ,TRANSITION ZONE,946.134023
+district,district,Pru_West,,PRU WEST,acz,transition_zone,TZ,TRANSITION ZONE,1569.622004
+district,district,Sunyani_Municipal,,SUNYANI MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,506.306068
+district,district,Sunyani_West,,SUNYANI WEST,acz,transition_zone,TZ,TRANSITION ZONE,1058.386409
+district,district,Tain,,TAIN,acz,transition_zone,TZ,TRANSITION ZONE,1828.722081
+district,district,Tano_North_Municipal,,TANO NORTH MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,837.157168
+district,district,Tano_South_Municipal,,TANO SOUTH MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,488.739031
+district,district,Techiman_Municipal,,TECHIMAN MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,648.782481
+district,district,Techiman_North,,TECHIMAN NORTH,acz,transition_zone,TZ,TRANSITION ZONE,389.389184
+district,district,Wenchi_Municipal,,WENCHI MUNICIPAL,acz,transition_zone,TZ,TRANSITION ZONE,1144.460261

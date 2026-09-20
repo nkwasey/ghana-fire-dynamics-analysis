@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mv_firms_panels/rp1_af_monthly_ext.schema.json",
+  "title": "RP1 AF monthly merger-ready extended export with QC and provenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "schema_version",
+    "level",
+    "unit_id",
+    "unit_code",
+    "unit_name",
+    "parent_level",
+    "parent_id",
+    "parent_code",
+    "parent_name",
+    "yyyymm",
+    "year",
+    "month",
+    "viirs_det_low",
+    "viirs_det_nominal",
+    "viirs_det_high",
+    "viirs_det_all",
+    "viirs_det_nh",
+    "viirs_pct_high_conf",
+    "viirs_days_active_nh",
+    "viirs_streak_max_nh",
+    "viirs_frp_active_days",
+    "viirs_frp_sum_daily_max_mw",
+    "viirs_frp_mean_mw",
+    "viirs_frp_p95_daily_max_mw",
+    "viirs_has_any",
+    "viirs_in_coverage_flag",
+    "viirs_structural_missing_flag",
+    "viirs_low_information_month_flag",
+    "viirs_frp_ok_flag",
+    "sensor_coverage_start_yyyymm",
+    "sensor_coverage_end_yyyymm",
+    "year_rows_in_panel",
+    "year_rows_in_sensor_coverage",
+    "year_rows_structural_missing",
+    "year_coverage_complete_flag"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "level": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unit_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "unit_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parent_level": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "yyyymm": {
+      "type": "integer",
+      "minimum": 201201,
+      "maximum": 202412
+    },
+    "year": {
+      "type": "integer",
+      "minimum": 2012,
+      "maximum": 2024
+    },
+    "month": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "viirs_det_low": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_nominal": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_high": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_all": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_pct_high_conf": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_days_active_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_streak_max_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_active_days": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_sum_daily_max_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_mean_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_p95_daily_max_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_has_any": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "viirs_in_coverage_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "viirs_structural_missing_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "viirs_low_information_month_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "viirs_frp_ok_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "sensor_coverage_start_yyyymm": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 190001,
+      "maximum": 210012
+    },
+    "sensor_coverage_end_yyyymm": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 190001,
+      "maximum": 210012
+    },
+    "year_rows_in_panel": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "year_rows_in_sensor_coverage": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "year_rows_structural_missing": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "year_coverage_complete_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  }
+}

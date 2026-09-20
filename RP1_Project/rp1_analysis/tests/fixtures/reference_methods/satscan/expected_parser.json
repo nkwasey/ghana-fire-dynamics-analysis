@@ -1,0 +1,9 @@
+{
+  "significant_cluster_ids": [1],
+  "membership": {"1": ["1", "2"]},
+  "case_count": 5.0,
+  "expected_count": 2.0,
+  "relative_risk": 2.5,
+  "likelihood_ratio": 12.3,
+  "p_value": 0.01
+}

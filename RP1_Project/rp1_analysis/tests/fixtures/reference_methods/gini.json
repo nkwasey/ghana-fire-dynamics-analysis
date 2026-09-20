@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "gini": 0.5
+  },
+  "input": {
+    "values": [
+      0,
+      1,
+      3,
+      6
+    ]
+  },
+  "provenance": "pairwise absolute-difference Gini definition evaluated independently"
+}

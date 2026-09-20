@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mv_firms_panels/panel_monthly.schema.json",
+  "title": "Balanced monthly panel by polygon unit (wide; VIIRS + MODIS metrics sensor-prefixed)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "level",
+    "unit_id",
+    "yyyymm",
+    "year",
+    "month",
+
+    "viirs_det_low",
+    "viirs_det_nominal",
+    "viirs_det_high",
+    "viirs_det_nh",
+    "viirs_frp_active_days",
+    "viirs_frp_sum_daily_max_mw",
+    "viirs_frp_mean_mw",
+
+    "modis_det_low",
+    "modis_det_nominal",
+    "modis_det_high",
+    "modis_det_nh",
+    "modis_frp_active_days",
+    "modis_frp_sum_daily_max_mw",
+    "modis_frp_mean_mw"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Deterministic run identifier."
+    },
+    "level": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Polygon level name supplied in config (user-defined)."
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Authoritative unit identifier. Panels must be balanced over the unit universe."
+    },
+    "unit_name": {
+      "type": ["string", "null"],
+      "description": "Human-readable unit name from unit universe metadata (optional)."
+    },
+
+    "yyyymm": {
+      "type": "integer",
+      "minimum": 190001,
+      "maximum": 210012,
+      "description": "Month key (UTC month)."
+    },
+    "year": {
+      "type": "integer",
+      "minimum": 1900,
+      "maximum": 2100
+    },
+    "month": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+
+    "viirs_det_low": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "VIIRS: number of low-confidence detections in this unit-month. Zero when none."
+    },
+    "viirs_det_nominal": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "VIIRS: number of nominal-confidence detections in this unit-month. Zero when none."
+    },
+    "viirs_det_high": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "VIIRS: number of high-confidence detections in this unit-month. Zero when none."
+    },
+    "viirs_det_nh": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "VIIRS: det_nominal + det_high. Binding contract. Must never be replaced by det_all."
+    },
+
+    "viirs_frp_active_days": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "VIIRS: number of UTC days in the month with >=1 detection (post-filter, post-dedup). Zero when none."
+    },
+    "viirs_frp_sum_daily_max_mw": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "VIIRS: sum over days of the daily maximum FRP (MW) within unit-day. Zero when none."
+    },
+    "viirs_frp_mean_mw": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "VIIRS: frp_sum_daily_max_mw / frp_active_days. Must be null when frp_active_days=0 (NA vs 0 semantics)."
+    },
+
+    "modis_det_low": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "MODIS: number of low-confidence detections in this unit-month. Zero when none."
+    },
+    "modis_det_nominal": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "MODIS: number of nominal-confidence detections in this unit-month. Zero when none."
+    },
+    "modis_det_high": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "MODIS: number of high-confidence detections in this unit-month. Zero when none."
+    },
+    "modis_det_nh": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "MODIS: det_nominal + det_high. Binding contract. Must never be replaced by det_all."
+    },
+
+    "modis_frp_active_days": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "MODIS: number of UTC days in the month with >=1 detection (post-filter, post-dedup). Zero when none."
+    },
+    "modis_frp_sum_daily_max_mw": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "MODIS: sum over days of the daily maximum FRP (MW) within unit-day. Zero when none."
+    },
+    "modis_frp_mean_mw": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "MODIS: frp_sum_daily_max_mw / frp_active_days. Must be null when frp_active_days=0 (NA vs 0 semantics)."
+    }
+  }
+}

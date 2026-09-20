@@ -1,0 +1,100 @@
+{
+  "files": [
+    {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv",
+      "sha256": "c40f2adcdb405addb273ea61a4af32e73a38d88ce229786cbf42f0975dc5c171",
+      "size_bytes": 1058317,
+      "staged_path": "data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv"
+    },
+    {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv",
+      "sha256": "057c0c50864e21b51e2ccc49b96761a8ba991513b48936808d5c1b3ca314c2f7",
+      "size_bytes": 41279042,
+      "staged_path": "data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv"
+    },
+    {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv",
+      "sha256": "e1a17c6c876cc51cec5be377d8ebe4fc758f0c9ded2298f9a72a4722f01d0bec",
+      "size_bytes": 214,
+      "staged_path": "data/raw/fire_panel_key_audit.csv"
+    },
+    {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json",
+      "sha256": "0237f2e29831d8113fe3b74131eee2dda4ed6b4c5b5a3bd187e3fb877babaf5f",
+      "size_bytes": 39142,
+      "staged_path": "data/raw/fire_panel_manifest.json"
+    },
+    {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json",
+      "sha256": "c0610f6331322368302299536972997f4f7a7201c136c92aa91405739215f5b0",
+      "size_bytes": 740,
+      "staged_path": "data/raw/fire_panel_merge_summary.json"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/acz.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "size_bytes": 5,
+      "staged_path": "data/geo/acz.cpg"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/acz.dbf",
+      "sha256": "c5d54dcc695e416fab61d925bf08c3f93ad1a58ca604cd1b6232b44184451917",
+      "size_bytes": 1335,
+      "staged_path": "data/geo/acz.dbf"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/acz.prj",
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b",
+      "size_bytes": 401,
+      "staged_path": "data/geo/acz.prj"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/acz.shp",
+      "sha256": "7d27f24361390fa7aff3596c05ca038d1582b621ac00e5cced68733a69e06c34",
+      "size_bytes": 260260,
+      "staged_path": "data/geo/acz.shp"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/acz.shx",
+      "sha256": "6ae6b7fd32490c9c7473994a42f42f58fc2ad1f2e0e761e58eecce6ad9e4b925",
+      "size_bytes": 140,
+      "staged_path": "data/geo/acz.shx"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/districts_within_acz.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "size_bytes": 5,
+      "staged_path": "data/geo/districts_within_acz.cpg"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/districts_within_acz.dbf",
+      "sha256": "c6bc82a37b129d8a5ecd9a7eb0bda82014904d23036d98209f7bfe2f076d1991",
+      "size_bytes": 110726,
+      "staged_path": "data/geo/districts_within_acz.dbf"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/districts_within_acz.prj",
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b",
+      "size_bytes": 401,
+      "staged_path": "data/geo/districts_within_acz.prj"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/districts_within_acz.shp",
+      "sha256": "dd25240fa6301bf808ff87645430dbc128d020f67057649ae292a8d0fd3d65a7",
+      "size_bytes": 1227360,
+      "staged_path": "data/geo/districts_within_acz.shp"
+    },
+    {
+      "origin_path": "geo_data_prep/out/example_acz/boundaries/districts_within_acz.shx",
+      "sha256": "347ab01d9aaec5f0b6132863a8dd2eff82bc7aba1c8d0a7606b851c1de67a8bf",
+      "size_bytes": 2180,
+      "staged_path": "data/geo/districts_within_acz.shx"
+    }
+  ],
+  "path_semantics": {
+    "origin_path": "Repository-relative source/original path from which the governed input was staged; provenance only and never resolved as a runtime dependency.",
+    "staged_path": "Path relative to RP1_Project/rp1_analysis used for runtime access in the release; it must resolve to a governed file inside that subproject."
+  },
+  "provenance_schema_version": "rp1-input-provenance-v2",
+  "schema_version": "rp1-analysis-v1.1"
+}

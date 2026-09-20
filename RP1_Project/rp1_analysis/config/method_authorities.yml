@@ -1,0 +1,376 @@
+schema_version: rp1-analysis-v1.1
+provenance_classes:
+- method_defined
+- study_design_defined
+- data_defined
+- computational_reproducibility_only
+authorities:
+- method_id: within_acz_rate_difference
+  implementation_id: spatial.within_acz_rate_difference.v1
+  family: spatial_contrast
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: cross-scale departure'
+  authoritative_reference: 2026-08-22 scientific specification; raw district minus
+    directly aggregated parent-ACZ long-run rate
+  doi: null
+  governed_variant: Raw rate-unit difference with no standardisation or thresholding
+  parameter_provenance:
+    definition: method_defined
+    parent_assignment: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: median_iqr
+  implementation_id: summary.median_iqr.v1
+  family: descriptive_summary
+  status: implemented
+  qualification_status: standard_definition
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: within-ACZ heterogeneity'
+  authoritative_reference: Standard median and interquartile range definitions
+  doi: null
+  governed_variant: Median and IQR of district long-run rates within parent ACZ
+  parameter_provenance:
+    summary_definition: method_defined
+  outcome_tuning_allowed: false
+- method_id: gini_coefficient
+  implementation_id: summary.gini_nonnegative.v1
+  family: inequality
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: within-ACZ heterogeneity'
+  authoritative_reference: Lian et al. (2024), Ecology and Evolution
+  doi: 10.1002/ece3.70637
+  governed_variant: Non-negative Gini coefficient of district long-run rates; no arbitrary
+    top-k threshold
+  parameter_provenance:
+    definition: method_defined
+  outcome_tuning_allowed: false
+- method_id: circular_mean_resultant
+  implementation_id: season.circular_mean_resultant.v1
+  family: seasonality
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: circular seasonality'
+  authoritative_reference: Otieno and Anderson-Cook (2006), Environmental and Ecological
+    Statistics
+  doi: 10.1007/s10651-004-0014-5
+  governed_variant: Twelve-month circular mean direction and mean resultant length
+  parameter_provenance:
+    month_angle_mapping: method_defined
+  outcome_tuning_allowed: false
+- method_id: queen_contiguity
+  implementation_id: spatial.queen_contiguity.v1
+  family: spatial_weights
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: spatial weights'
+  authoritative_reference: Bivand and Wong (2018), TEST
+  doi: 10.1007/s11749-018-0599-x
+  governed_variant: First-order Queen polygon contiguity; row-standardised; islands
+    excluded from inference
+  parameter_provenance:
+    adjacency: study_design_defined
+    transform: study_design_defined
+    island_policy: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: global_morans_i
+  implementation_id: spatial.global_moran_permutation.v1
+  family: spatial_autocorrelation
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: one national Global Moran'
+  authoritative_reference: Moran (1950), Biometrika
+  doi: 10.1093/biomet/37.1-2.17
+  governed_variant: One national Moran I on eligible district departures with permutation
+    inference
+  parameter_provenance:
+    permutations: study_design_defined
+    random_seed: computational_reproducibility_only
+    alternative: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: local_morans_i
+  implementation_id: spatial.local_moran_conditional.v1
+  family: spatial_autocorrelation
+  status: implemented
+  qualification_status: frozen_conditional_convention_qualified
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ1: Local Moran conditional randomisation authority'
+  authoritative_reference: Anselin (1995); Castro and Singer (2006)
+  doi: 10.1111/j.1538-4632.1995.tb00338.x
+  governed_variant: Conditional Local Moran with the frozen pseudo-p, tie, quadrant
+    and BH-family convention
+  parameter_provenance:
+    permutations: study_design_defined
+    random_seed: computational_reproducibility_only
+    conditional_mechanism: study_design_defined
+    p_value_convention: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: permutation
+  implementation_id: inference.randomisation_permutation.v1
+  family: inference
+  status: implemented
+  qualification_status: definition_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ1 randomisation framework
+  authoritative_reference: Method-specific randomisation definitions in the scientific
+    specification
+  doi: null
+  governed_variant: Fixed-seed randomisation only where selected by the executable
+    analysis contract
+  parameter_provenance:
+    replication_count: study_design_defined
+    random_seed: computational_reproducibility_only
+  outcome_tuning_allowed: false
+- method_id: sens_slope
+  implementation_id: trend.sen1968.v1
+  family: trend_effect
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ2: effect size'
+  authoritative_reference: Sen (1968), Journal of the American Statistical Association
+  doi: 10.1080/01621459.1968.10480934
+  governed_variant: Median pairwise temporal slope; point estimate reported without an interval requirement
+    in the current scientific authority
+  parameter_provenance:
+    slope_definition: method_defined
+  outcome_tuning_allowed: false
+- method_id: studentized_global_mann_kendall_permutation
+  implementation_id: trend.romano_tirlea_studentized_global_mk.v1
+  family: trend_test
+  status: implemented
+  qualification_status: independent_reference_qualified
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ2: Romano–Tirlea studentized permutation authority'
+  authoritative_reference: Romano and Tirlea (2024), Permutation Testing for Monotone
+    “Trend”, Journal of Time Series Analysis
+  doi: 10.1111/jtsa.12850
+  governed_variant: Studentized global Mann-Kendall permutation test with ECDF, long-run
+    variance, rule-derived bandwidth, per-permutation re-studentisation and plus-one
+    absolute-tail Monte Carlo p-value
+  parameter_provenance:
+    bandwidth_rule: study_design_defined
+    variance_floor: study_design_defined
+    permutations: study_design_defined
+    random_seed: computational_reproducibility_only
+    studentisation: method_defined
+    p_value_construction: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: benjamini_hochberg
+  implementation_id: multiplicity.bh1995.v1
+  family: multiplicity
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ1/RQ2 multiplicity
+  authoritative_reference: Benjamini and Hochberg (1995), JRSS B
+  doi: 10.1111/j.2517-6161.1995.tb02031.x
+  governed_variant: Step-up BH adjustment within the family explicitly selected by
+    analysis_contract.yml
+  parameter_provenance:
+    alpha: study_design_defined
+    family_membership: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: firth_penalized_gee
+  implementation_id: gee.firth_penalized_independence.v1
+  family: repeated_measure_model
+  status: implemented
+  qualification_status: reference_parity_qualified
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ3: separation-resistant marginal estimator'
+  authoritative_reference: Mondol and Rahman (2019), Statistics in Medicine
+  doi: 10.1002/sim.8126
+  governed_variant: Firth-type penalised binomial-logit GEE with the working structure
+    supplied by configuration
+  parameter_provenance:
+    estimator_definition: method_defined
+    working_structure: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: binomial
+  implementation_id: family.binomial.v1
+  family: response_family
+  status: implemented
+  qualification_status: standard_definition
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ3: binomial marginal response family'
+  authoritative_reference: Standard Bernoulli/binomial response-family definition
+    for a binary marginal outcome
+  doi: null
+  governed_variant: Binary response family; link is separately configured
+  parameter_provenance:
+    family: method_defined
+  outcome_tuning_allowed: false
+- method_id: logit
+  implementation_id: link.logit.v1
+  family: link
+  status: implemented
+  qualification_status: standard_link_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3
+  authoritative_reference: Liang and Zeger (1986), Biometrika
+  doi: 10.1093/biomet/73.1.13
+  governed_variant: Canonical logit link
+  parameter_provenance:
+    link: method_defined
+  outcome_tuning_allowed: false
+- method_id: independence
+  implementation_id: gee.working_independence.v1
+  family: working_correlation
+  status: implemented
+  qualification_status: qualified_reference
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3
+  authoritative_reference: Liang and Zeger (1986); Pepe and Anderson (1994)
+  doi: null
+  governed_variant: Working independence; clustering remains at district level for
+    covariance
+  parameter_provenance:
+    working_structure: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: morel_bokossa_neerchal
+  implementation_id: covariance.mbn2003.v1
+  family: covariance
+  status: implemented
+  qualification_status: reference_parity_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3
+  authoritative_reference: Morel, Bokossa and Neerchal (2003), Biometrical Journal
+  doi: 10.1002/bimj.200390021
+  governed_variant: Morel-Bokossa-Neerchal bias-corrected cluster sandwich covariance
+  parameter_provenance:
+    covariance_definition: method_defined
+  outcome_tuning_allowed: false
+- method_id: standard_normal_wald
+  implementation_id: inference.standard_normal_wald.v1
+  family: coefficient_inference
+  status: implemented
+  qualification_status: standard_reference_qualified
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification RQ3: coefficient inference'
+  authoritative_reference: Standard large-cluster Wald normal-reference inference
+  doi: null
+  governed_variant: Two-sided standard-normal Wald coefficient inference and confidence
+    intervals
+  parameter_provenance:
+    reference_distribution: study_design_defined
+    alpha: study_design_defined
+    confidence_level: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: log2_positive
+  implementation_id: transform.log2_positive.v1
+  family: transformation
+  status: implemented
+  qualification_status: definition_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3 predictors
+  authoritative_reference: 'Scientific specification: strictly positive model population
+    permits log2 without offset'
+  doi: null
+  governed_variant: Base-2 logarithm of strictly positive predictor values
+  parameter_provenance:
+    base: method_defined
+    positivity: data_defined
+  outcome_tuning_allowed: false
+- method_id: categorical
+  implementation_id: factor.categorical_reference.v1
+  family: factor_parameterisation
+  status: implemented
+  qualification_status: contract_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3 adjustment factors
+  authoritative_reference: 'Scientific specification: categorical month, year and
+    ACZ factors'
+  doi: null
+  governed_variant: Categorical factor coding with reference levels supplied exclusively
+    by analysis_contract.yml
+  parameter_provenance:
+    reference_category: study_design_defined
+    observed_domain: data_defined
+  outcome_tuning_allowed: false
+- method_id: variance_inflation_factor
+  implementation_id: diagnostic.vif.v1
+  family: diagnostic
+  status: implemented
+  qualification_status: standard_definition
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3 diagnostic
+  authoritative_reference: Standard variance-inflation-factor diagnostic for the final
+    continuous design columns
+  doi: null
+  governed_variant: Diagnostic only; cannot delete or select predictors
+  parameter_provenance:
+    diagnostic_definition: method_defined
+    predictor_set: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: observed_covariate_predictive_standardisation
+  implementation_id: prediction.observed_covariate_standardisation.v1
+  family: prediction
+  status: implemented
+  qualification_status: independent_manual_reference_qualified
+  authority_scope: scientific_contract
+  protocol_reference: Specification RQ3 standardised probabilities
+  authoritative_reference: 'Scientific specification: observed-covariate predictive
+    standardisation'
+  doi: null
+  governed_variant: Set one focal predictor to an observed quantile, retain each row’s
+    remaining observed covariates, predict and average across the governed model population
+  parameter_provenance:
+    quantiles: study_design_defined
+    averaging_distribution: study_design_defined
+  outcome_tuning_allowed: false
+- method_id: discrete_poisson
+  implementation_id: scan.discrete_poisson_input_prequalification.v1
+  family: scan_statistic
+  status: implemented
+  qualification_status: python_interface_qualified_external_execution_deferred
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification Secondary: MCD64A1'
+  authoritative_reference: Kulldorff retrospective space-time discrete Poisson scan
+    statistic
+  doi: null
+  governed_variant: MCD64A1 burned-pixel cases with configured fixed burnable-area
+    exposure; external SaTScan execution
+  parameter_provenance:
+    case_field: study_design_defined
+    exposure_field: study_design_defined
+    scan_controls: study_design_defined
+    engine_execution: computational_reproducibility_only
+  outcome_tuning_allowed: false
+- method_id: space_time_permutation
+  implementation_id: scan.space_time_permutation_input_prequalification.v1
+  family: scan_statistic
+  status: implemented
+  qualification_status: python_interface_qualified_external_execution_deferred
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification Secondary: VIIRS'
+  authoritative_reference: Kulldorff et al. (2005), PLoS Medicine
+  doi: 10.1371/journal.pmed.0020059
+  governed_variant: VIIRS case-count space-time permutation scan with no exposure
+    file
+  parameter_provenance:
+    case_field: study_design_defined
+    external_exposure: study_design_defined
+    scan_controls: study_design_defined
+    engine_execution: computational_reproducibility_only
+  outcome_tuning_allowed: false
+- method_id: hierarchical_non_overlapping
+  implementation_id: scan.hierarchical_nonoverlap.v1
+  family: cluster_reporting
+  status: implemented
+  qualification_status: configuration_interface_qualified
+  authority_scope: scientific_contract
+  protocol_reference: 'Specification Secondary: hierarchical non-overlapping cluster
+    reporting'
+  authoritative_reference: SaTScan hierarchical secondary-cluster reporting semantics
+  doi: null
+  governed_variant: Hierarchical secondary clusters with geographical overlap disabled;
+    no Gini optimisation
+  parameter_provenance:
+    reporting_rule: study_design_defined
+    geographical_overlap: study_design_defined
+  outcome_tuning_allowed: false

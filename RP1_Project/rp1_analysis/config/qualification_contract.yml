@@ -1,0 +1,92 @@
+schema_version: rp1-qualification-contract-v1
+contract_id: rp1-source-qualification-v1
+
+repository:
+  include_roots:
+    - .editorconfig
+    - .gitattributes
+    - .gitignore
+    - CONTRIBUTING.md
+    - LICENSE
+    - README.md
+    - environment.yml
+    - pyproject.toml
+    - docs
+    - geo_data_prep
+    - RP1_Project
+    - tools
+  paths_must_be_repository_relative: true
+  forbid_parent_traversal: true
+  forbid_symlinks: true
+
+packages:
+  - module: rp1_analysis_v1
+    distribution: rp1-analysis-v1
+    project_root: RP1_Project/rp1_analysis
+    source_root: RP1_Project/rp1_analysis/src
+  - module: mv_firms_panels
+    distribution: mv-firms-panels
+    project_root: RP1_Project/rp1_mv_firms_panels
+    source_root: RP1_Project/rp1_mv_firms_panels/src
+  - module: geo_data_prep
+    distribution: geo_data_prep_stage1
+    project_root: geo_data_prep
+    source_root: geo_data_prep/src
+
+generated_artifacts:
+  directory_names:
+    - __pycache__
+    - .pytest_cache
+    - .mypy_cache
+    - .ruff_cache
+    - .ipynb_checkpoints
+    - build
+    - dist
+    - out
+    - htmlcov
+    - .git
+    - .tox
+    - .nox
+    - .venv
+  directory_suffixes:
+    - .egg-info
+  file_suffixes:
+    - .pyc
+    - .pyo
+  file_names:
+    - .coverage
+    - .DS_Store
+  policy: exclude_from_projection_record_every_exclusion_never_delete_governed_source
+
+projection:
+  root_policy: external_to_repository
+  fresh_recreate_each_run: true
+  governed_set: all_regular_files_under_include_roots_after_generated_exclusions
+  pre_copy_inventory: sha256_and_size_required
+  post_copy_exact_inventory_comparison: true
+  unexpected_omission: FAIL
+  hash_or_size_mismatch: FAIL
+  clean_projection_subdirectory: clean_projection
+  allowed_temporary_subdirectories:
+    - clean_projection
+    - wheels
+    - isolated_install
+    - logs
+    - runtime
+
+imports:
+  operational_mode: verify_operational_checkout_source_roots
+  projected_mode: explicit_projected_pythonpath_with_origin_probe
+  isolated_mode: verify_isolated_install_target
+  wrong_origin: FAIL
+
+evidence:
+  must_be_external_to_operational_repository: true
+  logs_must_be_outside_clean_projection: true
+  stale_runtime_removed_before_run: true
+  evidence_subdirectory: evidence
+
+build:
+  wheel_sources: clean_projected_project_roots
+  build_isolation_policy: product_declared_no_stale_wheels
+  isolated_install_target: fresh_external_runtime_target

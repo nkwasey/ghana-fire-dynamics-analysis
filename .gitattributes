@@ -1,2 +1,47 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalise line endings for text files
+* text=auto eol=lf
+
+# Source and documentation
+*.py text eol=lf
+*.js text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.ipynb text eol=lf
+
+# Binary / geospatial artefacts
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.shp binary
+*.shx binary
+*.dbf binary
+*.gpkg binary
+*.tif binary
+*.tiff binary
+*.feather binary
+*.parquet binary
+*.xlsx binary
+# Preserve the exact qualified bytes of the five canonical consolidated analysis
+# inputs tracked in the public GitHub projection. These path-specific rules
+# override the generic CSV/JSON LF-normalisation rules above so a clean clone
+# can retain canonical_input_identity=MATCH.
+RP1_Project/rp1_analysis/data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv -text
+RP1_Project/rp1_analysis/data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv -text
+RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv -text
+RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json -text
+RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json -text
+
+# Preserve archived line endings in the four tracked SaTScan fixture result files.
+# These fixtures are source-controlled qualification/test evidence in the v1.2.3 tree.
+RP1_Project/rp1_analysis/tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec/04_secondary_concentration/satscan/MCD64A1_POISSON_PRIMARY/results/MCD64A1_POISSON_PRIMARY.col.txt -text
+RP1_Project/rp1_analysis/tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec/04_secondary_concentration/satscan/MCD64A1_POISSON_PRIMARY/results/MCD64A1_POISSON_PRIMARY.gis.txt -text
+RP1_Project/rp1_analysis/tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec/04_secondary_concentration/satscan/VIIRS_STP_PRIMARY/results/VIIRS_STP_PRIMARY.col.txt -text
+RP1_Project/rp1_analysis/tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec/04_secondary_concentration/satscan/VIIRS_STP_PRIMARY/results/VIIRS_STP_PRIMARY.gis.txt -text

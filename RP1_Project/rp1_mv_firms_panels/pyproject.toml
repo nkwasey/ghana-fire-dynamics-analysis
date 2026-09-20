@@ -1,0 +1,77 @@
+# =====================================================================
+# RP1_Project/rp1_mv_firms_panels/pyproject.toml
+# ---------------------------------------------------------------------
+# Packaging manifest for the RP1 active-fire monthly panel pipeline.
+#
+# The repository directory is rp1_mv_firms_panels/, while the Python
+# package name is mv_firms_panels. This distinction is intentional:
+# repository paths and import package names use different identifiers.
+# =====================================================================
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mv-firms-panels"
+description = "Audit-grade pipeline for NASA FIRMS VIIRS and MODIS active-fire detections into balanced monthly polygon panels."
+readme = "MV-FIRMS_README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "BSD-3-Clause" }
+authors = [
+  { name = "mv_firms_panels contributors" }
+]
+keywords = ["FIRMS", "VIIRS", "MODIS", "geopandas", "active fire", "panel"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+dynamic = ["version"]
+
+dependencies = [
+  "pandas>=2.0,<3.0",
+  "pyyaml>=6.0",
+  "pydantic>=2.0,<3.0",
+  "jsonschema>=4.0,<5.0",
+  "numpy>=1.24,<3",
+  "geopandas>=1,<2",
+  "matplotlib>=3.8,<4",
+  "shapely>=2,<3",
+  "pyproj>=3.5,<4",
+  "pyogrio",
+]
+
+[project.scripts]
+mv-firms-panels = "mv_firms_panels.cli.main:main"
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7,<10",
+]
+dev = [
+  "pytest>=7,<10",
+  "ruff>=0.6,<1",
+  "black>=24,<26",
+  "mypy>=1.8,<2",
+  "types-PyYAML>=6,<7",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mv_firms_panels*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "mv_firms_panels.version.__version__" }
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "native_plot_smoke: opt-in native GeoPandas/Matplotlib rendering tests that are excluded from the default QA gate",
+]

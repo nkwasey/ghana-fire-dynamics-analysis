@@ -1,0 +1,105 @@
+record_type,scope,parent_code,parent_name,state,count,denominator_n,proportion,month,y1,y0,term,term_role,beta,corrected_se,z,p,adjusted_or,or_lower_95,or_upper_95,diagnostic_name,diagnostic_value,comparison_variable,correlation,vif,predictor_id,quantile,raw_quantile_value,transformed_quantile_value,standardised_probability,n,districts,estimator,working_structure,covariance_method,reference_distribution
+four_state,acz,CZ,COASTAL ZONE,both_zero,3671.0,7595.0,0.4833443054641211,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,CZ,COASTAL ZONE,mcd64a1_positive_viirs_zero,14.0,7595.0,0.0018433179723502,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,CZ,COASTAL ZONE,viirs_positive_mcd64a1_zero,3561.0,7595.0,0.4688610928242264,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,CZ,COASTAL ZONE,both_positive,349.0,7595.0,0.0459512837393021,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,FZ,FOREST ZONE,both_zero,6523.0,16740.0,0.3896654719235364,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,FZ,FOREST ZONE,mcd64a1_positive_viirs_zero,22.0,16740.0,0.0013142174432497,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,FZ,FOREST ZONE,viirs_positive_mcd64a1_zero,8669.0,16740.0,0.5178614097968935,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,FZ,FOREST ZONE,both_positive,1526.0,16740.0,0.0911589008363201,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,GS,GUINEA SAVANNAH,both_zero,2651.0,6975.0,0.3800716845878136,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,GS,GUINEA SAVANNAH,mcd64a1_positive_viirs_zero,93.0,6975.0,0.0133333333333333,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,GS,GUINEA SAVANNAH,viirs_positive_mcd64a1_zero,1639.0,6975.0,0.2349820788530465,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,GS,GUINEA SAVANNAH,both_positive,2592.0,6975.0,0.3716129032258064,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,SS,SUDAN SAVANNAH,both_zero,1559.0,3100.0,0.5029032258064516,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,SS,SUDAN SAVANNAH,mcd64a1_positive_viirs_zero,76.0,3100.0,0.024516129032258,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,SS,SUDAN SAVANNAH,viirs_positive_mcd64a1_zero,648.0,3100.0,0.2090322580645161,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,SS,SUDAN SAVANNAH,both_positive,817.0,3100.0,0.2635483870967741,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,TZ,TRANSITION ZONE,both_zero,1043.0,4185.0,0.2492234169653524,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,TZ,TRANSITION ZONE,mcd64a1_positive_viirs_zero,4.0,4185.0,0.0009557945041816,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,TZ,TRANSITION ZONE,viirs_positive_mcd64a1_zero,2294.0,4185.0,0.548148148148148,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,acz,TZ,TRANSITION ZONE,both_positive,844.0,4185.0,0.2016726403823178,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,overall,,Overall,both_zero,15447.0,38595.0,0.4002331908278274,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,overall,,Overall,mcd64a1_positive_viirs_zero,209.0,38595.0,0.0054152092239927,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,overall,,Overall,viirs_positive_mcd64a1_zero,16811.0,38595.0,0.4355745562896748,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+four_state,overall,,Overall,both_positive,6128.0,38595.0,0.1587770436585049,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+month_outcome,,,,,,,,1.0,1353.0,1390.0,,,,,,,,,,,,,,,,,,,,2743.0,,,,,
+month_outcome,,,,,,,,2.0,1596.0,1412.0,,,,,,,,,,,,,,,,,,,,3008.0,,,,,
+month_outcome,,,,,,,,3.0,2381.0,584.0,,,,,,,,,,,,,,,,,,,,2965.0,,,,,
+month_outcome,,,,,,,,4.0,2649.0,94.0,,,,,,,,,,,,,,,,,,,,2743.0,,,,,
+month_outcome,,,,,,,,5.0,2135.0,5.0,,,,,,,,,,,,,,,,,,,,2140.0,,,,,
+month_outcome,,,,,,,,6.0,755.0,2.0,,,,,,,,,,,,,,,,,,,,757.0,,,,,
+month_outcome,,,,,,,,7.0,644.0,0.0,,,,,,,,,,,,,,,,,,,,644.0,,,,,
+month_outcome,,,,,,,,8.0,1216.0,1.0,,,,,,,,,,,,,,,,,,,,1217.0,,,,,
+month_outcome,,,,,,,,9.0,1109.0,0.0,,,,,,,,,,,,,,,,,,,,1109.0,,,,,
+month_outcome,,,,,,,,10.0,911.0,369.0,,,,,,,,,,,,,,,,,,,,1280.0,,,,,
+month_outcome,,,,,,,,11.0,922.0,928.0,,,,,,,,,,,,,,,,,,,,1850.0,,,,,
+month_outcome,,,,,,,,12.0,1140.0,1343.0,,,,,,,,,,,,,,,,,,,,2483.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,log2_viirs_det_primary,1.0,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,log2_viirs_frp_mean_mw,0.7913770849731264,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,0.3835607202394579,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,log2_viirs_det_primary,0.7913770849731264,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,log2_viirs_frp_mean_mw,1.0,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,0.4230509107910136,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,,,,,,,,,,,log2_viirs_det_primary,0.3835607202394579,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,,,,,,,,,,,log2_viirs_frp_mean_mw,0.4230509107910136,,,,,,,22939.0,,,,,
+correlation,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,1.0,,,,,,,22939.0,,,,,
+vif,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,,,2.6966857252811027,,,,,,22939.0,,,,,
+vif,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,,,2.8013084716030114,,,,,,22939.0,,,,,
+vif,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,,,,,,,,,,,,,1.227499801077174,,,,,,22939.0,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,observations,22939,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,districts,249,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,outcome_y1,16811,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,outcome_y0,6128,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,outcome_prevalence_y1,0.7328567069183487,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,model_columns,31,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,model_rank,31,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,complete_separation_levels,month=7|month=9,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,all_y1_clusters,29,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,all_y0_clusters,0,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,cluster_size_min,7,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,cluster_size_median,96.0,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,cluster_size_mean,92.12449799196787,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,cluster_size_max,147,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,estimator,firth_penalized_gee,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,working_structure,independence,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,covariance_estimator,morel_bokossa_neerchal,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,reference_distribution,standard_normal_wald,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,convergence,PASS,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,finite_coefficient_status,PASS,,,,,,,,,,,,,,
+diagnostic,,,,,,,,,,,,,,,,,,,,finite_covariance_status,PASS,,,,,,,,,,,,,,
+coefficient,,,,,,,,,,,Intercept,intercept,5.209371603002374,0.506745197840883,10.280061113944896,8.667262584116611e-25,,,,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,log2_viirs_det_primary,focal_predictor,-0.7843026825360361,0.0399247377445332,-19.644529353068275,6.439083909458447e-86,0.4564378729396108,0.4220828190165896,0.493589225780469,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,log2_viirs_frp_mean_mw,focal_predictor,-0.5011983313001792,0.0693817366830306,-7.223778983652368,5.05624111169361e-13,0.6058042703530587,0.5287793529104989,0.694049062161699,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,log2_modis_burnable_km2_union_ba2012,adjustment_predictor,0.0162542495722563,0.0598471029991115,0.2715962637739973,0.7859324725829303,1.0163870685352248,0.9038933358344474,1.142881169858337,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_2,adjustment_factor,0.4634543450013451,0.100575113132313,4.608041995355661,4.064785777688247e-06,1.5895553849189574,1.3051666653356897,1.9359108601467303,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_3,adjustment_factor,2.112917497190212,0.144893318533355,14.582573707177591,3.625852477673546e-48,8.27234064321017,6.227231246267772,10.989092425035707,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_4,adjustment_factor,3.701643746362504,0.2160733939107931,17.131418539622437,8.651920339517754e-66,40.513844141762405,26.52659132969648,61.8764599922608,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_5,adjustment_factor,4.802232857169376,0.5668951613695602,8.471112799000926,2.4305972271919508e-17,121.7820360554946,40.0904743164398,369.93486753884906,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_6,adjustment_factor,2.7348792876736527,0.6804118097941444,4.019447117622898,5.8334873129676864e-05,15.407883402217513,4.060461535394928,58.46696708413464,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_7,adjustment_factor,4.397373906114276,0.8757031244373862,5.021535019575795,5.126015532925544e-07,81.2372516487154,14.600084568606182,452.01731705220806,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_8,adjustment_factor,5.047401960373719,0.8906832313034041,5.666887826087704,1.4541447124831702e-08,155.61763804634427,27.158631243681683,891.6815083144867,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_9,adjustment_factor,5.340030041300857,0.8621804787596044,6.193633668189069,5.879278399971338e-10,208.5189743762487,38.4818751361066,1129.886797905186,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_10,adjustment_factor,-0.73317995183012,0.2669692123938356,-2.7463090041578493,0.0060269967605688,0.4803789766889744,0.2846684830617473,0.8106410613594036,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_11,adjustment_factor,-0.7422516609934166,0.2356863473712642,-3.149319717803538,0.0016365104701622,0.4760408252991154,0.299935324223709,0.7555457762035411,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,month_12,adjustment_factor,-0.9142852627689348,0.1435587963722683,-6.368716413573597,1.9061667342184236e-10,0.4008029925613447,0.3025056471798052,0.5310414544117431,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2012,adjustment_factor,0.0748480217967358,0.1515963119135807,0.4937324717992071,0.62149512934738,1.0777203484355693,0.8006949108955381,1.4505913970815991,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2014,adjustment_factor,-0.2879005448319441,0.1299996599192783,-2.2146253691026,0.0267857892399094,0.749836163612392,0.5811797461198255,0.9674361090777348,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2015,adjustment_factor,-0.1067440080129368,0.1339529694997806,-0.7968767576527044,0.4255226106239258,0.8987557178063201,0.6912269971663229,1.1685912784092116,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2016,adjustment_factor,0.1793439944009461,0.1379793087604256,1.2997890481705647,0.1936732801214143,1.1964322393792597,0.9129351035329758,1.567964796058874,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2017,adjustment_factor,-0.1666621572480683,0.1400333587712109,-1.1901603925702016,0.2339833572064998,0.8464855420396539,0.6433138976761134,1.1138229338283612,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2018,adjustment_factor,-0.2091685043578213,0.1331321266245884,-1.571134704004568,0.1161513630588264,0.811258523528907,0.624938097764771,1.053128932853168,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2019,adjustment_factor,0.0119503755318157,0.136971129255438,0.0872474045937771,0.9304748595709436,1.0120220665631166,0.7737487235090856,1.32367089223205,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2020,adjustment_factor,-0.5099212128416559,0.1398871574106948,-3.645232502255926,0.0002671501667746,0.6005428920163307,0.4565326754676605,0.7899801800208401,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2021,adjustment_factor,-0.1524384593324982,0.156939612186735,-0.9713192049380044,0.3313893481578801,0.8586117318696417,0.6312619000750718,1.1678419147686778,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2022,adjustment_factor,-0.5045211877413649,0.1419793138817516,-3.55348377131586,0.0003801646524706,0.6037946104859522,0.4571263133280849,0.7975212124580283,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2023,adjustment_factor,-0.0503138466035193,0.1416123612618686,-0.3552927594398292,0.722370279223294,0.9509309312196682,0.7204574118553485,1.2551326713699795,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,year_2024,adjustment_factor,0.0769618404183282,0.1425941546558356,0.5397264747919212,0.5893856791917907,1.0800008632251208,0.8166721359003648,1.4282376161653554,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,acz_FZ,adjustment_factor,0.1881543414536098,0.2240570950536432,0.8397606931776133,0.4010425763795327,1.2070197941635312,0.7780305444684396,1.8725444571047576,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,acz_GS,adjustment_factor,-1.5002609189659608,0.3167825428862828,-4.735933064040456,2.1804955190073176e-06,0.223071948852315,0.1198944754943272,0.415040761132687,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,acz_SS,adjustment_factor,-1.943782941328472,0.2714728991083775,-7.160136233534212,8.059692478855526e-13,0.1431613531197607,0.084090637301837,0.2437271696909008,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+coefficient,,,,,,,,,,,acz_TZ,adjustment_factor,-0.2528722092197274,0.2498698204207335,-1.0120158120494038,0.3115304931998208,0.7765671136005307,0.4758711959711586,1.2672683008164445,,,,,,,,,,,22939.0,249.0,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+standardised_probability,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,,,,viirs_detection_count,0.25,2.0,1.0,0.9185166447796452,22939.0,249.0,,,,
+standardised_probability,,,,,,,,,,,log2_viirs_det_primary,,,,,,,,,,,,,,viirs_detection_count,0.75,40.0,5.321928094887363,0.6128446058877899,22939.0,249.0,,,,
+standardised_probability,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,,,,viirs_mean_frp,0.25,4.09,2.032100843167024,0.7599209398023414,22939.0,249.0,,,,
+standardised_probability,,,,,,,,,,,log2_viirs_frp_mean_mw,,,,,,,,,,,,,,viirs_mean_frp,0.75,10.018712121212122,3.3246251607301693,0.7147889477059636,22939.0,249.0,,,,

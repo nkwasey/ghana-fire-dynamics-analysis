@@ -1,0 +1,71 @@
+# =====================================================================
+# geo_data_prep/pyproject.toml
+# ---------------------------------------------------------------------
+# Packaging manifest for the Stage 1 geography and metadata preparation
+# subproject.
+#
+# This file is intentionally local to geo_data_prep/ so that:
+#   - the subproject can be installed independently from this repository;
+#   - project-root discovery resolves the geo_data_prep project root;
+#   - the `geo-prep` console entry point is defined by this package.
+# =====================================================================
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geo_data_prep_stage1"
+version = "0.1.1"
+description = "Stage 1 geodata and metadata preparation. Config-driven, reproducible, and Shapefile-first."
+readme = "GEO-DATA-PREP_README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "BSD-3-Clause" }
+authors = [
+  { name = "Geo-Data Prep contributors" }
+]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "pydantic>=2.0,<3.0",
+  "pyyaml>=6.0",
+  "typer>=0.12,<1.0",
+  "rich>=13.0,<14.0",
+  "numpy>=1.24,<3",
+  "pandas>=2,<3",
+  "geopandas>=1,<2",
+  "matplotlib>=3.8,<4",
+  "pyproj>=3.5,<4",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7,<10",
+]
+
+[project.scripts]
+# Typer applications can be exposed directly as console scripts.
+geo-prep = "geo_data_prep.cli.app:app"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geo_data_prep*"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "native_plot_smoke: opt-in native GeoPandas/Matplotlib rendering tests that are excluded from the default QA gate",
+]
+
+

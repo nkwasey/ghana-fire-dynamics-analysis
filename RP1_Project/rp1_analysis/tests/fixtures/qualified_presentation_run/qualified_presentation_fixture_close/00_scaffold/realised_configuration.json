@@ -1,0 +1,4017 @@
+{
+  "analysis_schema_version": "rp1-analysis-v1.1",
+  "config_file_sha256": {
+    "analysis_contract.yml": "9692b53595028e3832c0106e3476edf5d83b7d7763830777bf9c97c9629569ec",
+    "data_schema_contract.yml": "d7b8ed574438804457e50d04b0135066161061976ca4aa8c6f0944b61a163abf",
+    "figure_contract.yml": "f6c549f558ac2ce62e27860dfb66ae2235c3e2ffe39faf41e3796eb1f89fa6a9",
+    "method_authorities.yml": "248bb4aa5f0d05c75fcfd402eb68446184f7486a1060980849c8bf62ab0bdd70",
+    "output_contract.yml": "ac4559a71526eb37969fdcd1f2572f7868ab8837a1aebc5cad9418eafab74c3d"
+  },
+  "configuration_sha256": "0b70aa4f3b4235a6f0b35e31200b61713889213f30240a686e984ed49c6fd01a",
+  "contracts": {
+    "analysis_contract.yml": {
+      "field_roles": {
+        "keys": {
+          "month": "month",
+          "parent_code": "parent_code",
+          "parent_name": "parent_name",
+          "unit_code": "unit_code",
+          "unit_id": "unit_id",
+          "unit_name": "unit_name",
+          "year": "year",
+          "yyyymm": "yyyymm"
+        },
+        "rq1": {
+          "burned_area": "modis_ba_km2_ba2001",
+          "fixed_burnable_area": "modis_burnable_km2_union_ba2001"
+        },
+        "rq2": {
+          "burned_area": "modis_ba_km2_ba2001",
+          "fixed_burnable_area": "modis_burnable_km2_union_ba2001"
+        },
+        "rq3": {
+          "ba2012_support": "ba2012_supported_flag",
+          "ba_area": "modis_ba_km2_ba2012",
+          "ba_presence": "modis_ba_any_ba2012",
+          "burnable_area": "modis_burnable_km2_union_ba2012",
+          "mean_frp": "viirs_frp_mean_mw",
+          "viirs_count": "viirs_det_primary",
+          "viirs_presence": "viirs_det_primary_any",
+          "viirs_support": "viirs_supported_flag"
+        },
+        "secondary": {
+          "mcd64a1_cases": "modis_burned_pixel_count_ba2001",
+          "mcd64a1_exposure": "modis_burnable_km2_union_ba2001",
+          "viirs_cases": "viirs_det_primary"
+        }
+      },
+      "product_semantics": {
+        "mcd64a1": "mapped_burned_surface_evidence",
+        "product_relationship": "complementary_non_ground_truth",
+        "snpp_viirs_active_fire": "thermal_detection_evidence",
+        "validation_direction": "none"
+      },
+      "project": {
+        "analysis_schema": "rp1-analysis-v1.1",
+        "canonical_notebook": "RP1_Analysis_v1.ipynb",
+        "data_schema": "rp1-data-schema-v1.1",
+        "distribution": "rp1-analysis-v1",
+        "name": "Ghana Fire RP1 Analysis",
+        "package_namespace": "rp1_analysis_v1"
+      },
+      "reproducibility": {
+        "alpha": 0.05,
+        "confidence_level": 0.95,
+        "primary_seed": 20260822
+      },
+      "research_questions": {
+        "rq1": {
+          "annual_rate": {
+            "annual_aggregation": "sum",
+            "denominator_role": "rq1.fixed_burnable_area",
+            "denominator_support": "fixed_ba2001_burnable_union",
+            "long_run_summary": "arithmetic_mean",
+            "numerator_role": "rq1.burned_area",
+            "scale_per_km2": 100
+          },
+          "arbitrary_departure_thresholds_primary_evidence": false,
+          "district_departure": {
+            "method": "within_acz_rate_difference",
+            "metric": "district_long_run_rate_minus_direct_parent_acz_long_run_rate",
+            "standardisation": "none"
+          },
+          "identity": "spatial_support_heterogeneity_seasonality_spatial_organisation",
+          "population": "long_run_district",
+          "seasonality": {
+            "climatology_months": 12,
+            "full_climatology_retained": true,
+            "mean_direction_role": "primary_timing",
+            "method": "circular_mean_resultant",
+            "peak_month_role": "descriptive_only",
+            "resultant_length_role": "primary_concentration",
+            "zero_total_policy": "undefined_fail_closed"
+          },
+          "spatial": {
+            "global": {
+              "alternative": "two_sided_centered_on_randomisation_expectation",
+              "inference_method": "permutation",
+              "method": "global_morans_i",
+              "permutations": 9999,
+              "reporting_scope": "one_national_result",
+              "seed_source": "reproducibility.primary_seed"
+            },
+            "local": {
+              "candidate_pool": "all_other_non_island_standardised_values",
+              "classification": "bh_supported_hh_ll_hl_lh_only",
+              "focal_value_policy": "fixed",
+              "method": "local_morans_i",
+              "multiplicity_family": "all_non_island_eligible_districts",
+              "multiplicity_method": "benjamini_hochberg",
+              "multiply_smaller_tail_by_two": false,
+              "p_value_method": "local_moran_smaller_tail_plus_one",
+              "permutation_scheme": "conditional_without_replacement",
+              "permutations": 9999,
+              "seed_source": "reproducibility.primary_seed",
+              "standardisation": "population_sd_ddof0",
+              "statistic": "z_i_times_row_standardised_spatial_lag",
+              "tie_allocation": "upper_tail",
+              "upper_tail_comparison": "greater_than_or_equal"
+            },
+            "variable": "district_departure",
+            "weights": {
+              "artificial_links": false,
+              "island_policy": "exclude_from_inference",
+              "method": "queen_contiguity",
+              "order": "first_order",
+              "transform": "row_standardised"
+            }
+          },
+          "supports": [
+            "acz",
+            "district"
+          ],
+          "within_acz": {
+            "concentration_method": "gini_coefficient",
+            "metric": "district_long_run_rate",
+            "summaries": [
+              "median",
+              "iqr"
+            ]
+          }
+        },
+        "rq2": {
+          "analysis_unit": "acz_annual_fixed_support_series",
+          "authority_status": "frozen",
+          "effect_estimator": "sens_slope",
+          "effect_uncertainty": "none_required",
+          "expected_n_per_series": 24,
+          "expected_series_count": 5,
+          "identity": "monotonic_acz_rate_change_under_serial_dependence",
+          "inferential_test": {
+            "alternative": "two_sided_absolute",
+            "bandwidth_rule": "floor_n_power_one_third",
+            "empirical_cdf": "less_than_or_equal_ecdf",
+            "method": "studentized_global_mann_kendall_permutation",
+            "p_value_method": "monte_carlo_plus_one",
+            "permutations": 9999,
+            "rank_tie_contribution": "zero",
+            "reference_admissibility": {
+              "on_ties": "fail_closed",
+              "requires_distinct_observations": true
+            },
+            "seed_source": "reproducibility.primary_seed",
+            "studentisation": "recompute_for_each_permutation",
+            "variance_floor": 0.001
+          },
+          "multiple_testing": {
+            "alpha_source": "reproducibility.alpha",
+            "family": "exactly_five_acz_raw_p_values",
+            "family_size": 5,
+            "method": "benjamini_hochberg"
+          },
+          "population": "acz_monthly",
+          "rate": {
+            "denominator_role": "rq2.fixed_burnable_area",
+            "denominator_support": "fixed_ba2001_burnable_union",
+            "numerator_role": "rq2.burned_area",
+            "scale_per_km2": 100
+          }
+        },
+        "rq3": {
+          "authority_status": "frozen",
+          "cluster": {
+            "id_role": "keys.unit_id",
+            "unit": "district"
+          },
+          "computational_controls": {
+            "max_iterations": 250,
+            "max_step_halvings": 40,
+            "tolerance": 1e-08
+          },
+          "covariance": "morel_bokossa_neerchal",
+          "descriptive_population": "paired_overlap",
+          "diagnostics": {
+            "separation_audit": true,
+            "vif": {
+              "deletion_authority": false,
+              "enabled": true,
+              "fields": "final_continuous_predictor_set",
+              "method": "variance_inflation_factor"
+            }
+          },
+          "estimator": "firth_penalized_gee",
+          "excluded_predictor_roles": [
+            "rq3.active_days",
+            "rq3.modis_af_presence"
+          ],
+          "factors": [
+            {
+              "coding": "categorical",
+              "factor_id": "month",
+              "field_role": "keys.month",
+              "reference": 1,
+              "reference_label": "January",
+              "role": "adjustment",
+              "term_prefix": "month"
+            },
+            {
+              "coding": "categorical",
+              "factor_id": "year",
+              "field_role": "keys.year",
+              "reference": 2013,
+              "reference_label": "2013",
+              "role": "adjustment",
+              "term_prefix": "year"
+            },
+            {
+              "coding": "categorical",
+              "factor_id": "acz",
+              "field_role": "keys.parent_code",
+              "reference": "CZ",
+              "reference_label": "Coastal Zone",
+              "role": "adjustment",
+              "term_prefix": "acz"
+            }
+          ],
+          "family": "binomial",
+          "four_state_correspondence": {
+            "enabled": true,
+            "states": [
+              "both_zero",
+              "mcd64a1_positive_viirs_zero",
+              "viirs_positive_mcd64a1_zero",
+              "both_positive"
+            ]
+          },
+          "identity": "viirs_positive_mcd64a1_absence_association",
+          "interactions": false,
+          "intercept": true,
+          "link": "logit",
+          "model_population": "rq3_model",
+          "outcome": {
+            "burned_area_presence_role": "rq3.ba_presence",
+            "one": "mcd64a1_absent",
+            "zero": "mcd64a1_present"
+          },
+          "outcome_driven_tuning": false,
+          "predictors": [
+            {
+              "field_role": "rq3.viirs_count",
+              "predictor_id": "viirs_detection_count",
+              "role": "focal",
+              "term_name": "log2_viirs_det_primary",
+              "transform": "log2_positive"
+            },
+            {
+              "field_role": "rq3.mean_frp",
+              "predictor_id": "viirs_mean_frp",
+              "role": "focal",
+              "term_name": "log2_viirs_frp_mean_mw",
+              "transform": "log2_positive"
+            },
+            {
+              "field_role": "rq3.burnable_area",
+              "predictor_id": "fixed_ba2012_burnable_area",
+              "role": "adjustment",
+              "term_name": "log2_modis_burnable_km2_union_ba2012",
+              "transform": "log2_positive"
+            }
+          ],
+          "reference_distribution": "standard_normal_wald",
+          "standardised_probabilities": {
+            "averaging_distribution": "observed_remaining_covariates",
+            "focal_predictor_quantiles": [
+              0.25,
+              0.75
+            ],
+            "method": "observed_covariate_predictive_standardisation"
+          },
+          "stepwise_selection": false,
+          "working_correlation": "independence"
+        }
+      },
+      "schema_version": "rp1-analysis-v1.1",
+      "secondary_analysis": {
+        "common": {
+          "alpha_source": "reproducibility.alpha",
+          "analysis_type": "retrospective",
+          "cluster_type": "high_only",
+          "geographical_overlap": false,
+          "gini_optimised_reporting": false,
+          "max_spatial_percent": 50,
+          "max_temporal_months": 12,
+          "monte_carlo_replicates": 999,
+          "report_cluster_rank": true,
+          "reporting_method": "hierarchical_non_overlapping"
+        },
+        "external_execution": {
+          "engine": "SaTScan",
+          "engine_rng_behaviour": "same_internal_seed_for_identical_input",
+          "engine_version_authority": "10.3.3",
+          "execution_required_for_cluster_claims": true,
+          "missing_result_policy": "EXTERNAL_RESULTS_REQUIRED",
+          "rng_authority": "engine_deterministic_internal_seed",
+          "scientific_seed_source": "reproducibility.primary_seed",
+          "user_defined_random_seed_parameter": null,
+          "user_defined_random_seed_supported": false
+        },
+        "identity": "spatiotemporal_concentration",
+        "role": "secondary_noncausal",
+        "scenarios": [
+          {
+            "case_role": "secondary.mcd64a1_cases",
+            "exposure_role": "secondary.mcd64a1_exposure",
+            "model": "discrete_poisson",
+            "population": "long_run_district",
+            "product": "mcd64a1",
+            "scenario_id": "MCD64A1_POISSON_PRIMARY",
+            "temporal_window": "long_run"
+          },
+          {
+            "case_role": "secondary.viirs_cases",
+            "exposure_role": null,
+            "model": "space_time_permutation",
+            "population": "paired_overlap",
+            "product": "viirs",
+            "scenario_id": "VIIRS_STP_PRIMARY",
+            "temporal_window": "overlap_monthly"
+          }
+        ],
+        "spatial_support": {
+          "coordinate_anchor_method": "centroid_inside_else_point_on_surface",
+          "coordinate_crs": "EPSG:32630",
+          "spatial_window_shape": "circular",
+          "unit": "district"
+        },
+        "temporal_support": {
+          "aggregation": "month",
+          "precision_case_times": "month"
+        }
+      },
+      "study": {
+        "causal_driver_inference": false,
+        "design_type": "observational",
+        "district_parent_acz": {
+          "analysis_crs": "EPSG:32630",
+          "crosswalk_path": "data/reference/district_to_acz_max_overlap.csv",
+          "dominant_overlap_share_column": "dominant_overlap_share",
+          "method": "maximum_original_polygon_overlap",
+          "whole_district_units": true
+        },
+        "populations": {
+          "acz_monthly": {
+            "eligibility": "complete_balanced_panel",
+            "end": "2024-12",
+            "rows": 1440,
+            "source_panel": "acz_monthly",
+            "start": "2001-01",
+            "units": 5
+          },
+          "district_monthly": {
+            "eligibility": "complete_balanced_panel",
+            "end": "2024-12",
+            "rows": 74880,
+            "source_panel": "district_monthly",
+            "start": "2001-01",
+            "units": 260
+          },
+          "long_run_district": {
+            "denominator_role": "rq1.fixed_burnable_area",
+            "eligibility": "positive_fixed_ba2001_burnable_area_all_months",
+            "end": "2024-12",
+            "rows": 72000,
+            "source_panel": "district_monthly",
+            "start": "2001-01",
+            "units": 250
+          },
+          "paired_overlap": {
+            "denominator_role": "rq3.burnable_area",
+            "eligibility": "paired_supported_positive_fixed_ba2012_burnable_area",
+            "end": "2024-12",
+            "rows": 38595,
+            "source_panel": "district_monthly",
+            "start": "2012-02",
+            "support_roles": [
+              "rq3.viirs_support",
+              "rq3.ba2012_support"
+            ],
+            "units": 249
+          },
+          "rq3_model": {
+            "eligibility": "viirs_detection_count_positive",
+            "end": "2024-12",
+            "positive_role": "rq3.viirs_count",
+            "rows": 22939,
+            "source_population": "paired_overlap",
+            "start": "2012-02",
+            "units": 249
+          }
+        },
+        "temporal_windows": {
+          "long_run": {
+            "end": "2024-12",
+            "start": "2001-01"
+          },
+          "overlap_complete_years": {
+            "end": 2024,
+            "start": 2013
+          },
+          "overlap_monthly": {
+            "end": "2024-12",
+            "start": "2012-02"
+          }
+        }
+      }
+    },
+    "data_schema_contract.yml": {
+      "additive_reconciliation": {
+        "district_to_acz": {
+          "absolute_tolerance": 1e-08,
+          "acz_key_field": "unit_code",
+          "district_parent_field": "parent_code",
+          "fields": [
+            "modis_ba_km2_ba2001",
+            "modis_ba_km2_ba2012",
+            "modis_burnable_km2_annual_ba2001",
+            "modis_burnable_km2_annual_ba2012",
+            "modis_burnable_km2_union_ba2001",
+            "modis_burnable_km2_union_ba2012",
+            "modis_det_primary",
+            "viirs_det_primary"
+          ],
+          "relative_tolerance": 1e-10,
+          "time_field": "yyyymm"
+        }
+      },
+      "auxiliary_inputs": {
+        "district_to_acz_crosswalk": {
+          "format": "csv",
+          "path": "data/reference/district_to_acz_max_overlap.csv"
+        },
+        "district_to_acz_crosswalk_provenance": {
+          "format": "json",
+          "path": "data/reference/district_to_acz_max_overlap.provenance.json"
+        },
+        "key_audit": {
+          "format": "csv",
+          "path": "data/raw/fire_panel_key_audit.csv"
+        },
+        "merge_summary": {
+          "format": "json",
+          "path": "data/raw/fire_panel_merge_summary.json"
+        },
+        "panel_manifest": {
+          "format": "json",
+          "path": "data/raw/fire_panel_manifest.json"
+        }
+      },
+      "categorical_domains": {
+        "acz_code": [
+          "CZ",
+          "FZ",
+          "GS",
+          "SS",
+          "TZ"
+        ],
+        "acz_name": [
+          "COASTAL ZONE",
+          "FOREST ZONE",
+          "GUINEA SAVANNAH",
+          "SUDAN SAVANNAH",
+          "TRANSITION ZONE"
+        ],
+        "acz_unit_id": [
+          "coastal_zone",
+          "forest_zone",
+          "guinea_savannah",
+          "sudan_savannah",
+          "transition_zone"
+        ],
+        "level": [
+          "acz",
+          "district"
+        ],
+        "month": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "panel_schema_version": [
+          "rp1_fire_panel_consolidated_v2"
+        ],
+        "year": [
+          2001,
+          2002,
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      },
+      "data_schema_version": "rp1-data-schema-v1.1",
+      "field_count": 111,
+      "fields": [
+        {
+          "additive": false,
+          "dtype": "string",
+          "name": "run_id",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "panel_schema_version",
+          "dtype": "string",
+          "name": "schema_version",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "level",
+          "dtype": "string",
+          "name": "level",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "dtype": "string",
+          "name": "unit_id",
+          "nullable": false,
+          "relationship_role": "panel_primary_unit_identifier",
+          "required_when_supported": true,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "acz_code",
+          "dtype": "string",
+          "name": "unit_code",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "dtype": "string",
+          "name": "unit_name",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "dtype": "string",
+          "name": "parent_level",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "acz_unit_id",
+          "dtype": "string",
+          "name": "parent_id",
+          "nullable": true,
+          "relationship_role": "foreign_key_to_acz_unit_id",
+          "required_when_supported": false,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "acz_code",
+          "dtype": "string",
+          "name": "parent_code",
+          "nullable": true,
+          "relationship_role": "foreign_key_to_acz_unit_code",
+          "required_when_supported": false,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "acz_name",
+          "dtype": "string",
+          "name": "parent_name",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "identifier_or_governance",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 202412,
+          "minimum": 200101,
+          "name": "yyyymm",
+          "nullable": false,
+          "relationship_role": "panel_primary_temporal_identifier",
+          "required_when_supported": true,
+          "semantic_type": "monthly_key",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "YYYYMM"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "year",
+          "dtype": "integer",
+          "maximum": 2024,
+          "minimum": 2001,
+          "name": "year",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "calendar_year",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "year"
+        },
+        {
+          "additive": false,
+          "categorical_domain": "month",
+          "dtype": "integer",
+          "maximum": 12,
+          "minimum": 1,
+          "name": "month",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "calendar_month",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "month"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_det_low",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_det_nominal",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_det_high",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_det_all",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_det_nh",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 100,
+          "minimum": 0,
+          "name": "modis_pct_high_conf",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "percentage",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "percent"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "modis_days_active_nh",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "duration_days",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "modis_streak_max_nh",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "duration_days",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "modis_frp_active_days",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "duration_days",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "MW"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_mean_mw",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "MW"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_p95_daily_max_mw",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "MW"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "viirs_det_low",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "viirs_det_nominal",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "viirs_det_high",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "viirs_det_all",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "viirs_det_nh",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 100,
+          "minimum": 0,
+          "name": "viirs_pct_high_conf",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "percentage",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "percent"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "viirs_days_active_nh",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "duration_days",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "viirs_streak_max_nh",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "duration_days",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 31,
+          "minimum": 0,
+          "name": "viirs_frp_active_days",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "duration_days",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "MW"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_mean_mw",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "MW"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_p95_daily_max_mw",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_mw",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "MW"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "km2"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_burned_pixel_count_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_any_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_aoi_area_land_km2_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "km2"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_burnable_km2_union_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "km2"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_burnable_km2_annual_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_burned_frac_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_burned_frac_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_zero_union_den_flag_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_zero_annual_den_flag_ba2001",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "1"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "km2"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "minimum": 0,
+          "name": "modis_burned_pixel_count_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_any_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_aoi_area_land_km2_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "km2"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_burnable_km2_union_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "km2"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_burnable_km2_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "area_km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_burned_frac_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_burned_frac_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_zero_union_den_flag_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_zero_annual_den_flag_ba2012",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "numeric_measure",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_det_nh_share_of_all",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "modis_det_primary_any",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "modis_active_fire",
+          "structural_support": "modis_af_full",
+          "unit": "1"
+        },
+        {
+          "additive": true,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "count",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "count"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_det_nh_share_of_all",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "proportion",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_det_primary_any",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_per100km2_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_per100km2_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2001_full",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_per100km2_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_ba_km2_per100km2_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "mcd64a1_burned_area",
+          "structural_support": "ba2012_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary_per100km2_burnable_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary_per100km2_burnable_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary_per100km2_burnable_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "ba2012_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary_per100km2_burnable_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "ba2012_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary_per100km2_burnable_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary_per100km2_burnable_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary_per100km2_burnable_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary_per100km2_burnable_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_100km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "per_100_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "ba2012_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "ba2012_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_density_mw_per_km2",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "MW_per_km2"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_det_primary_per_active_day",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_active_day",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "per_day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_active_day",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_active_day",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "per_day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "modis_frp_sum_daily_max_mw_per_primary_det",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_per_detection",
+          "source_family": "derived_multi_source",
+          "structural_support": "modis_af_full",
+          "unit": "MW_per_detection"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_det_primary_per_active_day",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_active_day",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "per_day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_active_day",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "rate_per_active_day",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "per_day"
+        },
+        {
+          "additive": false,
+          "dtype": "number",
+          "minimum": 0,
+          "name": "viirs_frp_sum_daily_max_mw_per_primary_det",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "radiative_power_per_detection",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "MW_per_detection"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_supported_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba2012_supported_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "full_overlap_supported_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2001_and_viirs_primary_any_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2012_and_viirs_primary_any_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2001_and_modis_primary_any_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2012_and_modis_primary_any_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "ba2012_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2001_without_viirs_primary_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba_any_ba2012_without_viirs_primary_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_primary_without_ba_any_ba2001_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_primary_without_ba_any_ba2012_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "full_overlap_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_primary_any_and_modis_primary_any_flag",
+          "nullable": true,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "viirs_native",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "af_modis_source_present",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "af_viirs_source_present",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba2001_source_present",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba2012_source_present",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "row_in_canonical_spine",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "merge_key_complete_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "merge_duplicate_resolved_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "viirs_structural_missing_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "snpp_viirs_active_fire",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "integer",
+          "maximum": 1,
+          "minimum": 0,
+          "name": "ba2012_structural_missing_flag",
+          "nullable": false,
+          "required_when_supported": true,
+          "semantic_type": "binary_flag",
+          "source_family": "derived_multi_source",
+          "structural_support": "canonical_spine",
+          "unit": "1"
+        },
+        {
+          "additive": false,
+          "dtype": "string",
+          "name": "merge_note",
+          "nullable": true,
+          "required_when_supported": false,
+          "semantic_type": "audit_note",
+          "source_family": "merge_governance",
+          "structural_support": "canonical_spine",
+          "unit": "text"
+        }
+      ],
+      "geometries": {
+        "acz": {
+          "crs_epsg": 32630,
+          "expected_features": 5,
+          "geometry_types": [
+            "Polygon",
+            "MultiPolygon"
+          ],
+          "identifier_field": "zone_id",
+          "panel_identity_map": {
+            "unit_code": "zone_code",
+            "unit_id": "zone_id",
+            "unit_name": "zone_name"
+          },
+          "path": "data/geo/acz.shp",
+          "required_columns": [
+            "zone_id",
+            "zone_name",
+            "zone_code",
+            "geometry"
+          ],
+          "required_members": [
+            "data/geo/acz.shp",
+            "data/geo/acz.shx",
+            "data/geo/acz.dbf",
+            "data/geo/acz.prj",
+            "data/geo/acz.cpg"
+          ],
+          "unit_identities": {
+            "coastal_zone": {
+              "unit_code": "CZ",
+              "unit_name": "COASTAL ZONE"
+            },
+            "forest_zone": {
+              "unit_code": "FZ",
+              "unit_name": "FOREST ZONE"
+            },
+            "guinea_savannah": {
+              "unit_code": "GS",
+              "unit_name": "GUINEA SAVANNAH"
+            },
+            "sudan_savannah": {
+              "unit_code": "SS",
+              "unit_name": "SUDAN SAVANNAH"
+            },
+            "transition_zone": {
+              "unit_code": "TZ",
+              "unit_name": "TRANSITION ZONE"
+            }
+          }
+        },
+        "district": {
+          "crs_epsg": 32630,
+          "expected_features": 260,
+          "geometry_types": [
+            "Polygon",
+            "MultiPolygon"
+          ],
+          "identifier_field": "dist_id",
+          "panel_identity_map": {
+            "parent_code": "zone_code",
+            "parent_id": "zone_id",
+            "parent_name": "zone_name",
+            "unit_id": "dist_id",
+            "unit_name": "dist_name"
+          },
+          "parent_field": "zone_id",
+          "path": "data/geo/districts_within_acz.shp",
+          "required_columns": [
+            "dist_id",
+            "dist_name",
+            "zone_id",
+            "zone_name",
+            "zone_code",
+            "ovl_share",
+            "geometry"
+          ],
+          "required_members": [
+            "data/geo/districts_within_acz.shp",
+            "data/geo/districts_within_acz.shx",
+            "data/geo/districts_within_acz.dbf",
+            "data/geo/districts_within_acz.prj",
+            "data/geo/districts_within_acz.cpg"
+          ]
+        }
+      },
+      "panel_schema_version": "rp1_fire_panel_consolidated_v2",
+      "panels": {
+        "acz_monthly": {
+          "column_count": 111,
+          "end": "2024-12",
+          "expected_rows": 1440,
+          "expected_units": 5,
+          "level_value": "acz",
+          "path": "data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv",
+          "primary_key": [
+            "unit_id",
+            "yyyymm"
+          ],
+          "start": "2001-01",
+          "temporal_frequency": "monthly",
+          "unit_code_field": "unit_code",
+          "unit_id_field": "unit_id"
+        },
+        "district_monthly": {
+          "column_count": 111,
+          "end": "2024-12",
+          "expected_rows": 74880,
+          "expected_units": 260,
+          "level_value": "district",
+          "parent_code_field": "parent_code",
+          "parent_id_field": "parent_id",
+          "path": "data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv",
+          "primary_key": [
+            "unit_id",
+            "yyyymm"
+          ],
+          "start": "2001-01",
+          "temporal_frequency": "monthly",
+          "unit_id_field": "unit_id"
+        }
+      },
+      "provenance": {
+        "expected_governed_files": 15,
+        "inventory_path": "data/input_sha256.json",
+        "inventory_schema": "rp1-input-provenance-v2"
+      },
+      "relationships": [
+        {
+          "cardinality": "many_to_one",
+          "from_field": "parent_id",
+          "from_object": "district_monthly",
+          "relationship_id": "district_panel_parent_id_to_acz_unit_id",
+          "to_field": "unit_id",
+          "to_object": "acz_monthly"
+        },
+        {
+          "cardinality": "many_to_one",
+          "from_field": "parent_code",
+          "from_object": "district_monthly",
+          "relationship_id": "district_panel_parent_code_to_acz_unit_code",
+          "to_field": "unit_code",
+          "to_object": "acz_monthly"
+        },
+        {
+          "cardinality": "many_to_one",
+          "from_field": "zone_id",
+          "from_object": "district_geometry",
+          "relationship_id": "district_geometry_parent_to_acz_geometry",
+          "to_field": "zone_id",
+          "to_object": "acz_geometry"
+        },
+        {
+          "cardinality": "many_to_one",
+          "from_field": "unit_id",
+          "from_object": "district_monthly",
+          "relationship_id": "district_panel_to_district_geometry",
+          "to_field": "dist_id",
+          "to_object": "district_geometry"
+        },
+        {
+          "cardinality": "many_to_one",
+          "from_field": "unit_id",
+          "from_object": "acz_monthly",
+          "relationship_id": "acz_panel_to_acz_geometry",
+          "to_field": "zone_id",
+          "to_object": "acz_geometry"
+        }
+      ],
+      "schema_version": "rp1-analysis-v1.1",
+      "source_supports": {
+        "ba2001_full": {
+          "end": "2024-12",
+          "manifest_source_kind": "ba2001",
+          "start": "2001-01",
+          "structural_missing_flag": null,
+          "support_flag": "ba2001_source_present"
+        },
+        "ba2012_native": {
+          "end": "2024-12",
+          "manifest_source_kind": "ba2012",
+          "source_presence_flag": "ba2012_source_present",
+          "start": "2012-01",
+          "structural_missing_flag": "ba2012_structural_missing_flag",
+          "support_flag": "ba2012_supported_flag"
+        },
+        "canonical_spine": {
+          "end": "2024-12",
+          "start": "2001-01",
+          "structural_missing_flag": null,
+          "support_flag": null
+        },
+        "full_overlap_native": {
+          "end": "2024-12",
+          "start": "2012-01",
+          "structural_missing_flag": null,
+          "support_flag": "full_overlap_supported_flag"
+        },
+        "modis_af_full": {
+          "end": "2024-12",
+          "manifest_source_kind": "modis_af",
+          "start": "2001-01",
+          "structural_missing_flag": null,
+          "support_flag": "af_modis_source_present"
+        },
+        "viirs_native": {
+          "end": "2024-12",
+          "manifest_source_kind": "viirs_af",
+          "source_presence_flag": "af_viirs_source_present",
+          "start": "2012-01",
+          "structural_missing_flag": "viirs_structural_missing_flag",
+          "support_flag": "viirs_supported_flag"
+        }
+      },
+      "validation_rules": {
+        "denominators": [
+          {
+            "denominator": "modis_burnable_km2_union_ba2001",
+            "derived_fields": [
+              "modis_ba_km2_per100km2_union_ba2001"
+            ],
+            "support": "ba2001_full",
+            "zero_flag": "modis_zero_union_den_flag_ba2001"
+          },
+          {
+            "denominator": "modis_burnable_km2_annual_ba2001",
+            "derived_fields": [
+              "modis_ba_km2_per100km2_annual_ba2001"
+            ],
+            "support": "ba2001_full",
+            "zero_flag": "modis_zero_annual_den_flag_ba2001"
+          },
+          {
+            "denominator": "modis_burnable_km2_union_ba2012",
+            "derived_fields": [
+              "modis_ba_km2_per100km2_union_ba2012"
+            ],
+            "support": "ba2012_native",
+            "zero_flag": "modis_zero_union_den_flag_ba2012"
+          },
+          {
+            "denominator": "modis_burnable_km2_annual_ba2012",
+            "derived_fields": [
+              "modis_ba_km2_per100km2_annual_ba2012"
+            ],
+            "support": "ba2012_native",
+            "zero_flag": "modis_zero_annual_den_flag_ba2012"
+          }
+        ],
+        "temporal_consistency": [
+          {
+            "field": "modis_burnable_km2_union_ba2001",
+            "scope": "unit_constant",
+            "support": "ba2001_full"
+          },
+          {
+            "field": "modis_burnable_km2_union_ba2012",
+            "scope": "unit_constant",
+            "support": "ba2012_native"
+          },
+          {
+            "field": "modis_burnable_km2_annual_ba2001",
+            "scope": "unit_year_constant",
+            "support": "ba2001_full"
+          },
+          {
+            "field": "modis_burnable_km2_annual_ba2012",
+            "scope": "unit_year_constant",
+            "support": "ba2012_native"
+          }
+        ]
+      }
+    },
+    "figure_contract.yml": {
+      "dimensions_inches": {
+        "full_width_map": [
+          7.2,
+          7.2
+        ],
+        "single_panel": [
+          7.0,
+          5.0
+        ],
+        "wide_single_panel": [
+          7.2,
+          6.0
+        ]
+      },
+      "display_conventions": {
+        "circular_mean_month": {
+          "axis_label": "Circular mean month (cyclic coordinate; 0 ≡ 12)",
+          "axis_max": 12.0,
+          "axis_min": 0.0,
+          "legend_title": "μ = circular mean month (cyclic; 0 ≡ 12)",
+          "tick_labels": [
+            "12/0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12/0"
+          ],
+          "ticks": [
+            0.0,
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0
+          ]
+        }
+      },
+      "figures": [
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {
+            "panel_order": [
+              "direct_acz_long_run_rate",
+              "district_long_run_rate"
+            ]
+          },
+          "evidence_class": "DESCRIPTIVE",
+          "id": "F2",
+          "layout_role": "rectangular_one_by_two",
+          "panel_count": 2,
+          "panel_xlabels": [
+            "",
+            ""
+          ],
+          "panel_ylabels": [
+            "",
+            ""
+          ],
+          "renderer": "grid_composite",
+          "renderer_options": {
+            "panel_colorbar_labels": [
+              "Direct ACZ long-run BA rate (km² per 100 km² yr⁻¹)",
+              "District long-run BA rate (km² per 100 km² yr⁻¹)"
+            ],
+            "panel_colormaps": [
+              "viridis",
+              "viridis"
+            ],
+            "panel_column": "panel",
+            "panel_order": [
+              "direct_acz_long_run_rate",
+              "district_long_run_rate"
+            ],
+            "panel_renderers": [
+              "acz_choropleth",
+              "choropleth"
+            ]
+          },
+          "required_columns": [
+            "panel",
+            "unit_id",
+            "unit_name",
+            "parent_code",
+            "support_status",
+            "value",
+            "exclusion_reasons"
+          ],
+          "requires_results_validated": true,
+          "role": "manuscript",
+          "rq": "RQ1",
+          "source_attribute": "long_run_spatial_rate_presentation_source",
+          "title": "Spatial variation in long-run mapped burned-area rate",
+          "xlabel": null,
+          "ylabel": null
+        },
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {
+            "panel_order": [
+              "acz_seasonality",
+              "district_departure",
+              "local_moran"
+            ]
+          },
+          "evidence_class": "PRIMARY_AND_DESCRIPTIVE",
+          "id": "F3",
+          "layout_role": "rectangular_top_span_two_bottom",
+          "panel_count": 3,
+          "panel_xlabels": [
+            "Month",
+            "",
+            ""
+          ],
+          "panel_ylabels": [
+            "Mean monthly burned area\n(km²)\n",
+            "",
+            ""
+          ],
+          "renderer": "grid_composite",
+          "renderer_options": {
+            "panel_colorbar_labels": [
+              "",
+              "District − parent-ACZ BA rate (km² per 100 km² yr⁻¹)",
+              ""
+            ],
+            "panel_colormaps": [
+              "viridis",
+              "coolwarm",
+              "viridis"
+            ],
+            "panel_column": "panel",
+            "panel_order": [
+              "acz_seasonality",
+              "district_departure",
+              "local_moran"
+            ],
+            "panel_renderers": [
+              "seasonality_lines",
+              "choropleth",
+              "categorical_map"
+            ],
+            "seasonality_horizontal_inset_fraction": 0.05,
+            "seasonality_legend_band_fraction": 0.18,
+            "seasonality_legend_gap_fraction": 0.28,
+            "seasonality_legend_ncol": 3,
+            "seasonality_y_label_padding_pt": 2.0
+          },
+          "required_columns": [
+            "panel",
+            "record_type",
+            "unit_id",
+            "unit_name",
+            "parent_code",
+            "month",
+            "value",
+            "circular_mean_month",
+            "mean_resultant_length",
+            "local_class",
+            "support_status",
+            "exclusion_reasons"
+          ],
+          "requires_results_validated": true,
+          "role": "manuscript",
+          "rq": "RQ1",
+          "source_attribute": "seasonality_spatial_organisation_presentation_source",
+          "title": "RQ1 seasonality and spatial organisation",
+          "xlabel": null,
+          "ylabel": null
+        },
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {},
+          "evidence_class": "PRIMARY_INFERENCE",
+          "id": "F4",
+          "layout_role": "rectangular_three_by_two_with_key",
+          "panel_count": 5,
+          "panel_xlabels": [
+            "Year",
+            "Year",
+            "Year",
+            "Year",
+            "Year"
+          ],
+          "panel_ylabels": [
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "renderer": "grid_trajectory_with_sen",
+          "renderer_options": {
+            "annotation_fields": [
+              "sen_slope",
+              "raw_p",
+              "bh_q"
+            ],
+            "auxiliary_key": {
+              "cell_id": "shared_graphical_key",
+              "entries": [
+                {
+                  "kind": "observed_series",
+                  "label": "Annual fixed-support rate"
+                },
+                {
+                  "kind": "sen_slope",
+                  "label": "Sen slope"
+                }
+              ]
+            },
+            "group": "parent_name",
+            "panel_order": [
+              "COASTAL ZONE",
+              "FOREST ZONE",
+              "GUINEA SAVANNAH",
+              "SUDAN SAVANNAH",
+              "TRANSITION ZONE"
+            ],
+            "shared_ylabel_x_fraction": 0.018,
+            "slope": "sen_slope",
+            "trajectory_styles": {
+              "observed_series": {
+                "color": "#0072B2",
+                "linewidth": 0.8,
+                "marker": "o",
+                "markersize": 2.2
+              },
+              "sen_slope": {
+                "color": "#D55E00",
+                "linewidth": 1.2
+              }
+            },
+            "x": "year",
+            "y": "annual_rate"
+          },
+          "required_columns": [
+            "parent_code",
+            "parent_name",
+            "year",
+            "annual_rate",
+            "sen_slope",
+            "raw_p",
+            "bh_q"
+          ],
+          "requires_results_validated": true,
+          "role": "manuscript",
+          "rq": "RQ2",
+          "source_attribute": "annual_trend_source",
+          "title": "RQ2 annual burned-area-rate trends",
+          "xlabel": "Year",
+          "ylabel": "Burned area per 100 km² of fixed BA-2001 burnable area"
+        },
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {
+            "panel_order": [
+              "mismatch_geography",
+              "four_state_correspondence",
+              "focal_adjusted_associations"
+            ]
+          },
+          "evidence_class": "PRIMARY_AND_DESCRIPTIVE",
+          "id": "F5",
+          "layout_role": "rectangular_left_span_two_right",
+          "panel_count": 3,
+          "panel_xlabels": [
+            "",
+            "",
+            "Adjusted odds ratio (log scale)"
+          ],
+          "panel_ylabels": [
+            "",
+            "Proportion",
+            ""
+          ],
+          "renderer": "grid_composite",
+          "renderer_options": {
+            "effect_display_aliases": {
+              "Mean FRP (per doubling)": "Mean VIIRS FRP\n(per doubling)",
+              "VIIRS detection count (per doubling)": "VIIRS detection count\n(per doubling)"
+            },
+            "effect_label_gap_fraction": 0.02,
+            "effect_label_gutter_fraction": 0.56,
+            "panel_colorbar_labels": [
+              "VIIRS-positive / MCD64A1-absent proportion",
+              "",
+              ""
+            ],
+            "panel_colormaps": [
+              "viridis",
+              "viridis",
+              "viridis"
+            ],
+            "panel_column": "panel",
+            "panel_expected_rows": [
+              260,
+              20,
+              2
+            ],
+            "panel_order": [
+              "mismatch_geography",
+              "four_state_correspondence",
+              "focal_adjusted_associations"
+            ],
+            "panel_renderers": [
+              "choropleth",
+              "stacked_proportion",
+              "coefficient_or_plot"
+            ],
+            "state_display_aliases": {
+              "both_positive": "Both positive",
+              "both_zero": "Both zero",
+              "mcd64a1_positive_viirs_zero": "MCD64A1 only",
+              "viirs_positive_mcd64a1_zero": "VIIRS only"
+            },
+            "state_legend_band_fraction": 0.3,
+            "state_legend_gap_fraction": 0.07,
+            "state_legend_ncol": 2
+          },
+          "required_columns": [
+            "panel",
+            "record_type",
+            "unit_id",
+            "unit_name",
+            "parent_code",
+            "state",
+            "proportion",
+            "value",
+            "term",
+            "adjusted_or",
+            "or_lower_95",
+            "or_upper_95",
+            "p",
+            "support_status",
+            "exclusion_reasons"
+          ],
+          "requires_results_validated": true,
+          "role": "manuscript",
+          "rq": "RQ3",
+          "source_attribute": "cross_product_observability_presentation_source",
+          "title": "RQ3 cross-product observability",
+          "xlabel": null,
+          "ylabel": null
+        },
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {
+            "genuine_external_results_required": true
+          },
+          "evidence_class": "DESCRIPTIVE",
+          "id": "F6",
+          "layout_role": "rectangular_one_by_two",
+          "panel_count": 2,
+          "panel_xlabels": [
+            "",
+            ""
+          ],
+          "panel_ylabels": [
+            "",
+            ""
+          ],
+          "renderer": "cluster_recurrence_maps_grid",
+          "renderer_options": {
+            "cmap": "cividis",
+            "colorbar_label": "Distinct significant clusters containing district",
+            "colorbar_labelpad_pt": 2.0,
+            "panel_column": "product",
+            "panel_order": [
+              "mcd64a1",
+              "viirs"
+            ],
+            "panel_titles": [
+              "MCD64A1",
+              "VIIRS"
+            ],
+            "shared_colorbar": true,
+            "value_column": "significant_cluster_count"
+          },
+          "required_columns": [
+            "product",
+            "unit_id",
+            "significant_cluster_count",
+            "total_significant_clusters",
+            "significant_cluster_fraction",
+            "support_status",
+            "exclusion_reasons"
+          ],
+          "requires_results_validated": true,
+          "role": "manuscript",
+          "rq": "SECONDARY",
+          "source_attribute": "cluster_recurrence_source",
+          "title": "Recurrence of validated significant spatio-temporal cluster membership",
+          "xlabel": null,
+          "ylabel": null
+        },
+        {
+          "colorbar_label": null,
+          "data_builder": "source_frame",
+          "data_builder_options": {},
+          "evidence_class": "DESCRIPTIVE",
+          "id": "S1",
+          "layout_role": "supplementary_wide_top_two_bottom",
+          "panel_count": 3,
+          "panel_xlabels": [
+            "Month",
+            "Circular mean month (cyclic coordinate; 0 ≡ 12)",
+            "ACZ"
+          ],
+          "panel_ylabels": [
+            "Districts",
+            "Districts",
+            "Resultant length"
+          ],
+          "renderer": "grid_district_seasonal_diagnostics",
+          "renderer_options": {},
+          "required_columns": [
+            "record_type",
+            "unit_id",
+            "unit_name",
+            "parent_code",
+            "month",
+            "monthly_share",
+            "circular_mean_month",
+            "mean_resultant_length"
+          ],
+          "requires_results_validated": true,
+          "role": "supplementary",
+          "rq": "RQ1",
+          "source_attribute": "district_seasonal_diagnostics_source",
+          "title": "Full district seasonal diagnostics",
+          "xlabel": null,
+          "ylabel": null
+        }
+      ],
+      "font_sizes_pt": {
+        "axis_label": 9,
+        "base": 9,
+        "legend": 8,
+        "panel_label": 10,
+        "tick_label": 8
+      },
+      "formats": {
+        "raster": [
+          "png"
+        ],
+        "vector": [
+          "pdf"
+        ]
+      },
+      "grid_layouts": {
+        "full_width_map": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            }
+          ],
+          "columns": 1,
+          "height_ratios": [
+            1.0
+          ],
+          "rows": 1,
+          "size_role": "full_width_map",
+          "width_ratios": [
+            1.0
+          ]
+        },
+        "portrait_single_panel": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            }
+          ],
+          "columns": 1,
+          "height_ratios": [
+            1.0
+          ],
+          "rows": 1,
+          "size_role": "portrait_10x15_cm",
+          "width_ratios": [
+            1.0
+          ]
+        },
+        "rectangular_left_span_two_right": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 2
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 1,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 2,
+              "row": 1,
+              "row_span": 1
+            }
+          ],
+          "columns": 2,
+          "height_ratios": [
+            1.0,
+            1.0
+          ],
+          "rows": 2,
+          "size_role": "rectangular_landscape_20x15_cm",
+          "width_ratios": [
+            1.35,
+            1.0
+          ]
+        },
+        "rectangular_one_by_two": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 1,
+              "row": 0,
+              "row_span": 1
+            }
+          ],
+          "columns": 2,
+          "height_ratios": [
+            1.0
+          ],
+          "rows": 1,
+          "size_role": "rectangular_landscape_20x15_cm",
+          "width_ratios": [
+            1.0,
+            1.0
+          ]
+        },
+        "rectangular_three_by_two_with_key": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 1,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 2,
+              "row": 1,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 3,
+              "row": 1,
+              "row_span": 1
+            },
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 4,
+              "row": 2,
+              "row_span": 1
+            },
+            {
+              "auxiliary_id": "shared_graphical_key",
+              "column": 1,
+              "column_span": 1,
+              "kind": "auxiliary",
+              "row": 2,
+              "row_span": 1
+            }
+          ],
+          "columns": 2,
+          "height_ratios": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "rows": 3,
+          "size_role": "rectangular_landscape_20x15_cm",
+          "width_ratios": [
+            1.0,
+            1.0
+          ]
+        },
+        "rectangular_top_span_two_bottom": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 2,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 1,
+              "row": 1,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 2,
+              "row": 1,
+              "row_span": 1
+            }
+          ],
+          "columns": 2,
+          "height_ratios": [
+            1.0,
+            1.0
+          ],
+          "rows": 2,
+          "size_role": "rectangular_landscape_20x15_cm",
+          "width_ratios": [
+            1.0,
+            1.0
+          ]
+        },
+        "single_panel": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            }
+          ],
+          "columns": 1,
+          "height_ratios": [
+            1.0
+          ],
+          "rows": 1,
+          "size_role": "single_panel",
+          "width_ratios": [
+            1.0
+          ]
+        },
+        "supplementary_wide_top_two_bottom": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 2,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            },
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 1,
+              "row": 1,
+              "row_span": 1
+            },
+            {
+              "column": 1,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 2,
+              "row": 1,
+              "row_span": 1
+            }
+          ],
+          "columns": 2,
+          "height_ratios": [
+            1.2,
+            1.0
+          ],
+          "rows": 2,
+          "size_role": "rectangular_landscape_20x15_cm",
+          "width_ratios": [
+            1.0,
+            1.0
+          ]
+        },
+        "wide_single_panel": {
+          "cells": [
+            {
+              "column": 0,
+              "column_span": 1,
+              "kind": "data",
+              "panel_index": 0,
+              "row": 0,
+              "row_span": 1
+            }
+          ],
+          "columns": 1,
+          "height_ratios": [
+            1.0
+          ],
+          "rows": 1,
+          "size_role": "wide_single_panel",
+          "width_ratios": [
+            1.0
+          ]
+        }
+      },
+      "map_layout": {
+        "colorbar": {
+          "label_required": true,
+          "orientation": "horizontal",
+          "position": "below"
+        },
+        "distinguish_excluded_from_valid_zero": true,
+        "legend": {
+          "position": "below"
+        },
+        "north_arrow": {
+          "enabled": true,
+          "position": "upper_right"
+        },
+        "scale_bar": {
+          "enabled": true,
+          "horizontal_margin_fraction": 0.08,
+          "label": "100 km",
+          "length_km": 100,
+          "position": "lower_right",
+          "unit": "km",
+          "vertical_margin_fraction": 0.05
+        },
+        "shared_extent_for_comparable_maps": true
+      },
+      "panel_labels": {
+        "convention": "lowercase_parenthesised",
+        "font_weight": "bold",
+        "sequence_start": "a"
+      },
+      "panel_layout": {
+        "orientation": "grid",
+        "panel_descriptions": false,
+        "panel_titles": false
+      },
+      "physical_size_roles": {
+        "portrait_10x15_cm": {
+          "height_cm": 15.0,
+          "width_cm": 10.0
+        },
+        "rectangular_landscape_20x15_cm": {
+          "height_cm": 15.0,
+          "width_cm": 20.0
+        }
+      },
+      "pixel_rounding": {
+        "method": "half_up"
+      },
+      "publication_geometry": {
+        "axis_label_padding_pt": {
+          "x": 6.0,
+          "y": 8.0
+        },
+        "canvas": {
+          "height_cm": 15.0,
+          "orientation": "landscape",
+          "width_cm": 20.0
+        },
+        "effect_vertical_padding_rows": 0.45,
+        "heatmap_colorbar_band_fraction": 0.07,
+        "heatmap_colorbar_gap_fraction": 0.1,
+        "map_panel": {
+          "colourbar_band_height": 0.08,
+          "inter_band_spacing": 0.04,
+          "legend_band_height": 0.13,
+          "map_height_ratio": 1.0
+        },
+        "outer_margins": {
+          "bottom_fraction": 0.08,
+          "left_fraction": 0.08,
+          "right_fraction": 0.08,
+          "top_fraction": 0.05
+        },
+        "panel_label_offset_axes": {
+          "x": -0.02,
+          "y": 0.02
+        },
+        "spacing": {
+          "inter_column": 0.3,
+          "inter_row": 0.38
+        }
+      },
+      "resolution_dpi": 300,
+      "schema_version": "rp1-analysis-v1.1",
+      "semantic_styles": {
+        "excluded": {
+          "edge": "#666666",
+          "face": "#FFFFFF",
+          "hatch": "////"
+        },
+        "local_moran": {
+          "HH": {
+            "edge": "#666666",
+            "face": "#D55E00",
+            "hatch": ""
+          },
+          "HL": {
+            "edge": "#666666",
+            "face": "#CC79A7",
+            "hatch": ""
+          },
+          "ISLAND": {
+            "edge": "#666666",
+            "face": "#F0E442",
+            "hatch": ""
+          },
+          "LH": {
+            "edge": "#666666",
+            "face": "#009E73",
+            "hatch": ""
+          },
+          "LL": {
+            "edge": "#666666",
+            "face": "#0072B2",
+            "hatch": ""
+          },
+          "NS": {
+            "edge": "#666666",
+            "face": "#D9D9D9",
+            "hatch": ""
+          }
+        },
+        "not_significant": {
+          "edge": "#666666",
+          "face": "#D9D9D9"
+        },
+        "valid_zero": {
+          "edge": "#666666",
+          "face": "#BFD7EA"
+        }
+      },
+      "source_data_policy": {
+        "deterministic_filenames": true,
+        "format": "csv",
+        "required_for_manuscript_figures": true
+      },
+      "text_policy": {
+        "embedded_notes": false,
+        "title_inside_figure": false
+      }
+    },
+    "method_authorities.yml": {
+      "authorities": [
+        {
+          "authoritative_reference": "2026-08-22 scientific specification; raw district minus directly aggregated parent-ACZ long-run rate",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "spatial_contrast",
+          "governed_variant": "Raw rate-unit difference with no standardisation or thresholding",
+          "implementation_id": "spatial.within_acz_rate_difference.v1",
+          "method_id": "within_acz_rate_difference",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "definition": "method_defined",
+            "parent_assignment": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ1: cross-scale departure",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Standard median and interquartile range definitions",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "descriptive_summary",
+          "governed_variant": "Median and IQR of district long-run rates within parent ACZ",
+          "implementation_id": "summary.median_iqr.v1",
+          "method_id": "median_iqr",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "summary_definition": "method_defined"
+          },
+          "protocol_reference": "Specification RQ1: within-ACZ heterogeneity",
+          "qualification_status": "standard_definition",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Lian et al. (2024), Ecology and Evolution",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1002/ece3.70637",
+          "family": "inequality",
+          "governed_variant": "Non-negative Gini coefficient of district long-run rates; no arbitrary top-k threshold",
+          "implementation_id": "summary.gini_nonnegative.v1",
+          "method_id": "gini_coefficient",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "definition": "method_defined"
+          },
+          "protocol_reference": "Specification RQ1: within-ACZ heterogeneity",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Otieno and Anderson-Cook (2006), Environmental and Ecological Statistics",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1007/s10651-004-0014-5",
+          "family": "seasonality",
+          "governed_variant": "Twelve-month circular mean direction and mean resultant length",
+          "implementation_id": "season.circular_mean_resultant.v1",
+          "method_id": "circular_mean_resultant",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "month_angle_mapping": "method_defined"
+          },
+          "protocol_reference": "Specification RQ1: circular seasonality",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Bivand and Wong (2018), TEST",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1007/s11749-018-0599-x",
+          "family": "spatial_weights",
+          "governed_variant": "First-order Queen polygon contiguity; row-standardised; islands excluded from inference",
+          "implementation_id": "spatial.queen_contiguity.v1",
+          "method_id": "queen_contiguity",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "adjacency": "study_design_defined",
+            "island_policy": "study_design_defined",
+            "transform": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ1: spatial weights",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Moran (1950), Biometrika",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1093/biomet/37.1-2.17",
+          "family": "spatial_autocorrelation",
+          "governed_variant": "One national Moran I on eligible district departures with permutation inference",
+          "implementation_id": "spatial.global_moran_permutation.v1",
+          "method_id": "global_morans_i",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "alternative": "study_design_defined",
+            "permutations": "study_design_defined",
+            "random_seed": "computational_reproducibility_only"
+          },
+          "protocol_reference": "Specification RQ1: one national Global Moran",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Anselin (1995); Castro and Singer (2006)",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1111/j.1538-4632.1995.tb00338.x",
+          "family": "spatial_autocorrelation",
+          "governed_variant": "Conditional Local Moran with the frozen pseudo-p, tie, quadrant and BH-family convention",
+          "implementation_id": "spatial.local_moran_conditional.v1",
+          "method_id": "local_morans_i",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "conditional_mechanism": "study_design_defined",
+            "p_value_convention": "study_design_defined",
+            "permutations": "study_design_defined",
+            "random_seed": "computational_reproducibility_only"
+          },
+          "protocol_reference": "Specification RQ1: Local Moran conditional randomisation authority",
+          "qualification_status": "frozen_conditional_convention_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Method-specific randomisation definitions in the scientific specification",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "inference",
+          "governed_variant": "Fixed-seed randomisation only where selected by the executable analysis contract",
+          "implementation_id": "inference.randomisation_permutation.v1",
+          "method_id": "permutation",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "random_seed": "computational_reproducibility_only",
+            "replication_count": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ1 randomisation framework",
+          "qualification_status": "definition_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Sen (1968), Journal of the American Statistical Association",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1080/01621459.1968.10480934",
+          "family": "trend_effect",
+          "governed_variant": "Median pairwise temporal slope; point estimate reported without an interval requirement in the current scientific authority",
+          "implementation_id": "trend.sen1968.v1",
+          "method_id": "sens_slope",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "slope_definition": "method_defined"
+          },
+          "protocol_reference": "Specification RQ2: effect size",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Romano and Tirlea (2024), Permutation Testing for Monotone “Trend”, Journal of Time Series Analysis",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1111/jtsa.12850",
+          "family": "trend_test",
+          "governed_variant": "Studentized global Mann-Kendall permutation test with ECDF, long-run variance, rule-derived bandwidth, per-permutation re-studentisation and plus-one absolute-tail Monte Carlo p-value",
+          "implementation_id": "trend.romano_tirlea_studentized_global_mk.v1",
+          "method_id": "studentized_global_mann_kendall_permutation",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "bandwidth_rule": "study_design_defined",
+            "p_value_construction": "study_design_defined",
+            "permutations": "study_design_defined",
+            "random_seed": "computational_reproducibility_only",
+            "studentisation": "method_defined",
+            "variance_floor": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ2: Romano–Tirlea studentized permutation authority",
+          "qualification_status": "independent_reference_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Benjamini and Hochberg (1995), JRSS B",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1111/j.2517-6161.1995.tb02031.x",
+          "family": "multiplicity",
+          "governed_variant": "Step-up BH adjustment within the family explicitly selected by analysis_contract.yml",
+          "implementation_id": "multiplicity.bh1995.v1",
+          "method_id": "benjamini_hochberg",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "alpha": "study_design_defined",
+            "family_membership": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ1/RQ2 multiplicity",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Mondol and Rahman (2019), Statistics in Medicine",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1002/sim.8126",
+          "family": "repeated_measure_model",
+          "governed_variant": "Firth-type penalised binomial-logit GEE with the working structure supplied by configuration",
+          "implementation_id": "gee.firth_penalized_independence.v1",
+          "method_id": "firth_penalized_gee",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "estimator_definition": "method_defined",
+            "working_structure": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3: separation-resistant marginal estimator",
+          "qualification_status": "reference_parity_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Standard Bernoulli/binomial response-family definition for a binary marginal outcome",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "response_family",
+          "governed_variant": "Binary response family; link is separately configured",
+          "implementation_id": "family.binomial.v1",
+          "method_id": "binomial",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "family": "method_defined"
+          },
+          "protocol_reference": "Specification RQ3: binomial marginal response family",
+          "qualification_status": "standard_definition",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Liang and Zeger (1986), Biometrika",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1093/biomet/73.1.13",
+          "family": "link",
+          "governed_variant": "Canonical logit link",
+          "implementation_id": "link.logit.v1",
+          "method_id": "logit",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "link": "method_defined"
+          },
+          "protocol_reference": "Specification RQ3",
+          "qualification_status": "standard_link_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Liang and Zeger (1986); Pepe and Anderson (1994)",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "working_correlation",
+          "governed_variant": "Working independence; clustering remains at district level for covariance",
+          "implementation_id": "gee.working_independence.v1",
+          "method_id": "independence",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "working_structure": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3",
+          "qualification_status": "qualified_reference",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Morel, Bokossa and Neerchal (2003), Biometrical Journal",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1002/bimj.200390021",
+          "family": "covariance",
+          "governed_variant": "Morel-Bokossa-Neerchal bias-corrected cluster sandwich covariance",
+          "implementation_id": "covariance.mbn2003.v1",
+          "method_id": "morel_bokossa_neerchal",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "covariance_definition": "method_defined"
+          },
+          "protocol_reference": "Specification RQ3",
+          "qualification_status": "reference_parity_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Standard large-cluster Wald normal-reference inference",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "coefficient_inference",
+          "governed_variant": "Two-sided standard-normal Wald coefficient inference and confidence intervals",
+          "implementation_id": "inference.standard_normal_wald.v1",
+          "method_id": "standard_normal_wald",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "alpha": "study_design_defined",
+            "confidence_level": "study_design_defined",
+            "reference_distribution": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3: coefficient inference",
+          "qualification_status": "standard_reference_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Scientific specification: strictly positive model population permits log2 without offset",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "transformation",
+          "governed_variant": "Base-2 logarithm of strictly positive predictor values",
+          "implementation_id": "transform.log2_positive.v1",
+          "method_id": "log2_positive",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "base": "method_defined",
+            "positivity": "data_defined"
+          },
+          "protocol_reference": "Specification RQ3 predictors",
+          "qualification_status": "definition_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Scientific specification: categorical month, year and ACZ factors",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "factor_parameterisation",
+          "governed_variant": "Categorical factor coding with reference levels supplied exclusively by analysis_contract.yml",
+          "implementation_id": "factor.categorical_reference.v1",
+          "method_id": "categorical",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "observed_domain": "data_defined",
+            "reference_category": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3 adjustment factors",
+          "qualification_status": "contract_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Standard variance-inflation-factor diagnostic for the final continuous design columns",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "diagnostic",
+          "governed_variant": "Diagnostic only; cannot delete or select predictors",
+          "implementation_id": "diagnostic.vif.v1",
+          "method_id": "variance_inflation_factor",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "diagnostic_definition": "method_defined",
+            "predictor_set": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3 diagnostic",
+          "qualification_status": "standard_definition",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Scientific specification: observed-covariate predictive standardisation",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "prediction",
+          "governed_variant": "Set one focal predictor to an observed quantile, retain each row’s remaining observed covariates, predict and average across the governed model population",
+          "implementation_id": "prediction.observed_covariate_standardisation.v1",
+          "method_id": "observed_covariate_predictive_standardisation",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "averaging_distribution": "study_design_defined",
+            "quantiles": "study_design_defined"
+          },
+          "protocol_reference": "Specification RQ3 standardised probabilities",
+          "qualification_status": "independent_manual_reference_qualified",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Kulldorff retrospective space-time discrete Poisson scan statistic",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "scan_statistic",
+          "governed_variant": "MCD64A1 burned-pixel cases with configured fixed burnable-area exposure; external SaTScan execution",
+          "implementation_id": "scan.discrete_poisson_input_prequalification.v1",
+          "method_id": "discrete_poisson",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "case_field": "study_design_defined",
+            "engine_execution": "computational_reproducibility_only",
+            "exposure_field": "study_design_defined",
+            "scan_controls": "study_design_defined"
+          },
+          "protocol_reference": "Specification Secondary: MCD64A1",
+          "qualification_status": "python_interface_qualified_external_execution_deferred",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "Kulldorff et al. (2005), PLoS Medicine",
+          "authority_scope": "scientific_contract",
+          "doi": "10.1371/journal.pmed.0020059",
+          "family": "scan_statistic",
+          "governed_variant": "VIIRS case-count space-time permutation scan with no exposure file",
+          "implementation_id": "scan.space_time_permutation_input_prequalification.v1",
+          "method_id": "space_time_permutation",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "case_field": "study_design_defined",
+            "engine_execution": "computational_reproducibility_only",
+            "external_exposure": "study_design_defined",
+            "scan_controls": "study_design_defined"
+          },
+          "protocol_reference": "Specification Secondary: VIIRS",
+          "qualification_status": "python_interface_qualified_external_execution_deferred",
+          "status": "implemented"
+        },
+        {
+          "authoritative_reference": "SaTScan hierarchical secondary-cluster reporting semantics",
+          "authority_scope": "scientific_contract",
+          "doi": null,
+          "family": "cluster_reporting",
+          "governed_variant": "Hierarchical secondary clusters with geographical overlap disabled; no Gini optimisation",
+          "implementation_id": "scan.hierarchical_nonoverlap.v1",
+          "method_id": "hierarchical_non_overlapping",
+          "outcome_tuning_allowed": false,
+          "parameter_provenance": {
+            "geographical_overlap": "study_design_defined",
+            "reporting_rule": "study_design_defined"
+          },
+          "protocol_reference": "Specification Secondary: hierarchical non-overlapping cluster reporting",
+          "qualification_status": "configuration_interface_qualified",
+          "status": "implemented"
+        }
+      ],
+      "schema_version": "rp1-analysis-v1.1"
+    },
+    "output_contract.yml": {
+      "csv_column_orders": {
+        "output_hash_inventory": [
+          "path",
+          "sha256",
+          "size_bytes"
+        ],
+        "provenance_input_inventory": [
+          "path",
+          "sha256",
+          "size_bytes",
+          "mtime_ns"
+        ],
+        "realised_run_manifest": [
+          "schema_version",
+          "config_sha256",
+          "methods_spec_sha256",
+          "data_sha256",
+          "realised_sample_sizes",
+          "rq2_realised_bandwidth",
+          "realised_permutation_counts",
+          "rq3_design_columns",
+          "factor_references",
+          "rq3_transformations",
+          "rq3_reporting_roles",
+          "spatial_weight_parameters",
+          "satscan_parameter_hashes"
+        ]
+      },
+      "filename_policy": {
+        "allowed_pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+        "collision_policy": "error",
+        "deterministic_names": true
+      },
+      "hashing": {
+        "algorithm": "sha256",
+        "hash_generated_outputs": true
+      },
+      "latest_run_pointer": "out/latest_run",
+      "output_families": [
+        "tables",
+        "figures",
+        "figure_data",
+        "manifests",
+        "logs",
+        "evidence"
+      ],
+      "publication_outputs": {
+        "figure_formats": [
+          "png",
+          "pdf"
+        ],
+        "registries": [
+          "publication_output_registry.json",
+          "figure_source_registry.json",
+          "realised_run_manifest.json"
+        ],
+        "tables": [
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {},
+            "evidence_class": "PRIMARY_AND_DESCRIPTIVE",
+            "family_id": "T1",
+            "id": "T1",
+            "required_columns": [
+              "parent_code",
+              "parent_name",
+              "direct_long_run_rate",
+              "district_rate_median",
+              "district_rate_iqr",
+              "district_rate_gini",
+              "circular_mean_month",
+              "mean_resultant_length",
+              "sen_slope",
+              "trend_permutation_p",
+              "trend_bh_q"
+            ],
+            "requires_results_validated": true,
+            "role": "manuscript",
+            "rq": "INTEGRATED_RQ1_RQ2",
+            "source_attribute": "table1_acz_summary",
+            "title": "ACZ fire-regime summary"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "factor_coefficients_destination": "S5",
+              "focal_effects_per_doubling": true,
+              "row_count": 3,
+              "row_selector": "all_configured_continuous_predictors"
+            },
+            "evidence_class": "PRIMARY_INFERENCE",
+            "family_id": "T2",
+            "id": "T2",
+            "required_columns": [
+              "term",
+              "predictor_role",
+              "beta",
+              "corrected_se",
+              "adjusted_or",
+              "or_lower_95",
+              "or_upper_95",
+              "p"
+            ],
+            "requires_results_validated": true,
+            "role": "manuscript",
+            "rq": "RQ3",
+            "source_attribute": "table2_rq3_model",
+            "title": "RQ3 marginal model"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "genuine_external_results_required": true,
+              "stp_relative_risk": "not_applicable"
+            },
+            "evidence_class": "SECONDARY_INFERENCE",
+            "family_id": "T3",
+            "id": "T3",
+            "required_columns": [
+              "product",
+              "model",
+              "cluster_rank",
+              "district_membership",
+              "start_month",
+              "end_month",
+              "observed",
+              "expected",
+              "relative_risk",
+              "likelihood_ratio",
+              "p_value"
+            ],
+            "requires_results_validated": true,
+            "role": "manuscript",
+            "rq": "SECONDARY",
+            "source_attribute": "table3_satscan_clusters",
+            "title": "Significant SaTScan clusters"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {},
+            "evidence_class": "DATA_AUTHORITY",
+            "family_id": "S1",
+            "id": "S1",
+            "required_columns": [
+              "population_id",
+              "source_population",
+              "units",
+              "rows",
+              "start",
+              "end",
+              "eligibility_rule",
+              "exclusion_reason"
+            ],
+            "requires_results_validated": false,
+            "role": "supplementary",
+            "rq": "GENERAL",
+            "source_attribute": "supplement_s1_populations",
+            "title": "Data populations and eligibility"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {},
+            "evidence_class": "DESCRIPTIVE",
+            "family_id": "S2",
+            "id": "S2",
+            "required_columns": [
+              "unit_id",
+              "unit_name",
+              "parent_code",
+              "parent_name",
+              "dominant_overlap_share",
+              "long_run_rate",
+              "district_departure",
+              "circular_mean_month",
+              "mean_resultant_length"
+            ],
+            "requires_results_validated": true,
+            "role": "supplementary",
+            "rq": "RQ1",
+            "source_attribute": "supplement_s2_district_rq1",
+            "title": "District RQ1 metrics"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "global_rows": 1
+            },
+            "evidence_class": "PRIMARY_INFERENCE",
+            "family_id": "S3",
+            "id": "S3",
+            "required_columns": [
+              "record_type",
+              "unit_id",
+              "global_morans_i",
+              "global_permutation_p",
+              "local_morans_i",
+              "local_raw_p",
+              "local_bh_q",
+              "local_class",
+              "island",
+              "n_effective",
+              "permutations",
+              "random_seed"
+            ],
+            "requires_results_validated": true,
+            "role": "supplementary",
+            "rq": "RQ1",
+            "source_attribute": "supplement_s3_spatial",
+            "title": "Global and Local Moran diagnostics"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "years_per_acz": 24
+            },
+            "evidence_class": "PRIMARY_INFERENCE",
+            "family_id": "S4",
+            "id": "S4",
+            "required_columns": [
+              "parent_code",
+              "parent_name",
+              "year",
+              "annual_rate",
+              "sen_slope",
+              "u_n",
+              "long_run_variance",
+              "t_n",
+              "realised_bandwidth",
+              "permutation_count",
+              "seed",
+              "raw_p",
+              "bh_q"
+            ],
+            "requires_results_validated": true,
+            "role": "supplementary",
+            "rq": "RQ2",
+            "source_attribute": "supplement_s4_rq2",
+            "title": "Annual RQ2 rates and studentised-permutation authority"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "full_factor_coefficients": true,
+              "standardised_probability_cis": false
+            },
+            "evidence_class": "PRIMARY_INFERENCE_AND_DIAGNOSTIC",
+            "family_id": "S5",
+            "id": "S5",
+            "required_columns": [
+              "record_type",
+              "scope",
+              "parent_code",
+              "parent_name",
+              "state",
+              "count",
+              "denominator_n",
+              "proportion",
+              "month",
+              "y1",
+              "y0",
+              "term",
+              "term_role",
+              "beta",
+              "corrected_se",
+              "z",
+              "p",
+              "adjusted_or",
+              "or_lower_95",
+              "or_upper_95",
+              "diagnostic_name",
+              "diagnostic_value",
+              "comparison_variable",
+              "correlation",
+              "vif",
+              "predictor_id",
+              "quantile",
+              "raw_quantile_value",
+              "transformed_quantile_value",
+              "standardised_probability",
+              "n",
+              "districts",
+              "estimator",
+              "working_structure",
+              "covariance_method",
+              "reference_distribution"
+            ],
+            "requires_results_validated": true,
+            "role": "supplementary",
+            "rq": "RQ3",
+            "source_attribute": "supplement_s5_rq3",
+            "title": "RQ3 correspondence, diagnostics, coefficients and standardised probabilities"
+          },
+          {
+            "builder": "dataframe_csv",
+            "builder_options": {
+              "coordinate_provenance_required": true,
+              "genuine_external_results_required": true,
+              "parameter_files_required": true
+            },
+            "evidence_class": "SECONDARY_INFERENCE",
+            "family_id": "S6",
+            "id": "S6",
+            "required_columns": [
+              "record_type",
+              "model_id",
+              "product",
+              "model",
+              "cluster_rank",
+              "unit_id",
+              "unit_name",
+              "start_month",
+              "end_month",
+              "observed",
+              "expected",
+              "relative_risk",
+              "likelihood_ratio",
+              "p_value",
+              "parameter_name",
+              "parameter_value",
+              "anchor_method",
+              "x",
+              "y",
+              "file_role",
+              "file_path",
+              "sha256"
+            ],
+            "requires_results_validated": true,
+            "role": "supplementary",
+            "rq": "SECONDARY",
+            "source_attribute": "supplement_s6_satscan",
+            "title": "Complete SaTScan output and execution authority"
+          }
+        ]
+      },
+      "run_root": "out/runs",
+      "schema_version": "rp1-analysis-v1.1",
+      "secondary_outputs": [
+        {
+          "builder": "dataframe_csv",
+          "id": "rq1_long_run_district_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "district_scale_authority"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq1_local_moran_authority",
+          "output_type": "table",
+          "requires_results_validated": true,
+          "role": "internal_authority",
+          "source_attribute": "local_moran_authority"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq2_annual_series_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "annual_acz_series"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_paired_four_state_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "paired_four_state_source"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_model_population_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "model_population_source"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_design_metadata_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "design_metadata"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_factor_outcome_count_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "factor_outcome_counts"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_cluster_outcome_count_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "cluster_outcome_counts"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_predictor_vif_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "predictor_vif"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_full_coefficient_authority",
+          "output_type": "table",
+          "requires_results_validated": true,
+          "role": "internal_authority",
+          "source_attribute": "full_coefficient_source"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "rq3_standardised_probability_authority",
+          "output_type": "table",
+          "requires_results_validated": true,
+          "role": "internal_authority",
+          "source_attribute": "standardised_probability_source"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "secondary_location_authority",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "location_authority"
+        },
+        {
+          "builder": "json_manifest",
+          "id": "realised_run_manifest",
+          "output_type": "manifest",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "realised_run_metadata"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "secondary_scan_specification_registry",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "scan_specification_registry"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "secondary_input_audit",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "input_audit"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "secondary_run_registry",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "secondary_run_registry"
+        },
+        {
+          "builder": "dataframe_csv",
+          "id": "secondary_output_registry",
+          "output_type": "table",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "secondary_output_registry"
+        },
+        {
+          "builder": "json_manifest",
+          "id": "secondary_external_execution_status",
+          "output_type": "manifest",
+          "requires_results_validated": false,
+          "role": "internal_authority",
+          "source_attribute": "external_execution_status"
+        }
+      ],
+      "sections": [
+        "00_scaffold",
+        "01_rq1_spatial_scale",
+        "02_rq2_temporal_robustness",
+        "03_rq3_observability",
+        "04_secondary_concentration",
+        "90_integrated",
+        "99_closeout"
+      ],
+      "write_policy": {
+        "atomic_writes": true,
+        "csv_lineterminator": "lf",
+        "encoding": "utf-8",
+        "json_sort_keys": true,
+        "newline": "lf"
+      }
+    }
+  },
+  "data_schema_version": "rp1-data-schema-v1.1",
+  "package_version": "1.2.1"
+}

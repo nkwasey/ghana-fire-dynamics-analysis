@@ -1,0 +1,88 @@
+{
+  "engine_version_authority": "10.3.3",
+  "external_execution_state": "RESULTS_VALIDATED",
+  "external_provenance_sidecar_required": false,
+  "model_count": 2,
+  "result_family_contract": "ResultsFile + .col.txt + .gis.txt",
+  "satscan_execution_performed_by_notebook": false,
+  "schema": "rp1-satscan-run-local-publication-sources-v1",
+  "secondary_run_id": "qualified_presentation_fixture_sec",
+  "source_policy": "run_local_only",
+  "sources": {
+    "cluster_membership_source": {
+      "columns": [
+        "product",
+        "unit_id",
+        "cluster_id"
+      ],
+      "path": "04_secondary_concentration/publication_sources/cluster_membership_source.csv",
+      "rows": 5861,
+      "sha256": "857fc399ab87e97c0a3ff753628bf3f94171d206e23441ef3083a53359ee369b",
+      "size_bytes": 141585
+    },
+    "cluster_recurrence_source": {
+      "columns": [
+        "product",
+        "unit_id",
+        "significant_cluster_count",
+        "total_significant_clusters",
+        "significant_cluster_fraction",
+        "support_status",
+        "exclusion_reasons"
+      ],
+      "path": "04_secondary_concentration/publication_sources/cluster_recurrence_source.csv",
+      "rows": 520,
+      "sha256": "379df7566b6a3aa5428766fe142de9dc969bd6f19f5a424f40622baafc6d74aa",
+      "size_bytes": 33553
+    },
+    "supplement_s6_satscan": {
+      "columns": [
+        "record_type",
+        "model_id",
+        "product",
+        "model",
+        "cluster_rank",
+        "unit_id",
+        "unit_name",
+        "start_month",
+        "end_month",
+        "observed",
+        "expected",
+        "relative_risk",
+        "likelihood_ratio",
+        "p_value",
+        "parameter_name",
+        "parameter_value",
+        "anchor_method",
+        "x",
+        "y",
+        "file_role",
+        "file_path",
+        "sha256"
+      ],
+      "path": "04_secondary_concentration/publication_sources/supplement_s6_satscan.csv",
+      "rows": 6430,
+      "sha256": "395dd062170190a284701d4b24a5df9d296d4fe8352af648a8cdc3938d06ca22",
+      "size_bytes": 809086
+    },
+    "table3_satscan_clusters": {
+      "columns": [
+        "product",
+        "model",
+        "cluster_rank",
+        "district_membership",
+        "start_month",
+        "end_month",
+        "observed",
+        "expected",
+        "relative_risk",
+        "likelihood_ratio",
+        "p_value"
+      ],
+      "path": "04_secondary_concentration/publication_sources/table3_satscan_clusters.csv",
+      "rows": 212,
+      "sha256": "206caf5237fba6dd105d3b6e26cd568a27b7c29e1b5b06057eb0a232fe8ba27b",
+      "size_bytes": 101865
+    }
+  }
+}

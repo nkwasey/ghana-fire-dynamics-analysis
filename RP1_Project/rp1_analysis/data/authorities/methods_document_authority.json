@@ -1,0 +1,23 @@
+{
+  "alignment_scope": [
+    "scientific_documentation",
+    "reference_scope",
+    "method_provenance",
+    "presentation_outputs",
+    "optional_external_result_integration"
+  ],
+  "document_role": "current_methods_authority",
+  "docx": {
+    "filename": "Ghana_Fire_Scientific_Analysis_Methods_Specification_2026-08-28.docx",
+    "sha256": "7612727ee02abb027ab1a067989bbebda23965bcc5801a12d17781f7351235ef",
+    "size_bytes": 49892
+  },
+  "pdf": {
+    "filename": "Ghana_Fire_Scientific_Analysis_Methods_Specification_2026-08-28.pdf",
+    "sha256": "9aa80c508b6ad33a51e32478c7c6f74dc7e2a98bff2fe2056fa769392c3ae5fe",
+    "size_bytes": 256642
+  },
+  "schema": "rp1-methods-document-authority-v1",
+  "scientific_method_change": "NONE",
+  "scientific_run_provenance_policy": "Existing RQ scientific run metadata remain immutable snapshots of the scientific authority used when those authorities were materialised; presentation-only document alignment does not rewrite them."
+}

@@ -1,0 +1,415 @@
+schema_version: rp1-analysis-v1.1
+run_root: out/runs
+latest_run_pointer: out/latest_run
+sections:
+- 00_scaffold
+- 01_rq1_spatial_scale
+- 02_rq2_temporal_robustness
+- 03_rq3_observability
+- 04_secondary_concentration
+- 90_integrated
+- 99_closeout
+output_families:
+- tables
+- figures
+- figure_data
+- manifests
+- logs
+- evidence
+filename_policy:
+  allowed_pattern: ^[A-Za-z0-9][A-Za-z0-9._-]*$
+  collision_policy: error
+  deterministic_names: true
+write_policy:
+  atomic_writes: true
+  encoding: utf-8
+  newline: lf
+  json_sort_keys: true
+  csv_lineterminator: lf
+hashing:
+  algorithm: sha256
+  hash_generated_outputs: true
+csv_column_orders:
+  provenance_input_inventory:
+  - path
+  - sha256
+  - size_bytes
+  - mtime_ns
+  output_hash_inventory:
+  - path
+  - sha256
+  - size_bytes
+  realised_run_manifest:
+  - schema_version
+  - config_sha256
+  - methods_spec_sha256
+  - data_sha256
+  - realised_sample_sizes
+  - rq2_realised_bandwidth
+  - realised_permutation_counts
+  - rq3_design_columns
+  - factor_references
+  - rq3_transformations
+  - rq3_reporting_roles
+  - spatial_weight_parameters
+  - satscan_parameter_hashes
+publication_outputs:
+  tables:
+  - id: T1
+    rq: INTEGRATED_RQ1_RQ2
+    title: ACZ fire-regime summary
+    role: manuscript
+    family_id: T1
+    evidence_class: PRIMARY_AND_DESCRIPTIVE
+    builder: dataframe_csv
+    source_attribute: table1_acz_summary
+    required_columns:
+    - parent_code
+    - parent_name
+    - direct_long_run_rate
+    - district_rate_median
+    - district_rate_iqr
+    - district_rate_gini
+    - circular_mean_month
+    - mean_resultant_length
+    - sen_slope
+    - trend_permutation_p
+    - trend_bh_q
+    requires_results_validated: true
+    builder_options: {}
+  - id: T2
+    rq: RQ3
+    title: RQ3 marginal model
+    role: manuscript
+    family_id: T2
+    evidence_class: PRIMARY_INFERENCE
+    builder: dataframe_csv
+    source_attribute: table2_rq3_model
+    required_columns:
+    - term
+    - predictor_role
+    - beta
+    - corrected_se
+    - adjusted_or
+    - or_lower_95
+    - or_upper_95
+    - p
+    requires_results_validated: true
+    builder_options:
+      row_count: 3
+      focal_effects_per_doubling: true
+      factor_coefficients_destination: S5
+      row_selector: all_configured_continuous_predictors
+  - id: T3
+    rq: SECONDARY
+    title: Significant SaTScan clusters
+    role: manuscript
+    family_id: T3
+    evidence_class: SECONDARY_INFERENCE
+    builder: dataframe_csv
+    source_attribute: table3_satscan_clusters
+    required_columns:
+    - product
+    - model
+    - cluster_rank
+    - district_membership
+    - start_month
+    - end_month
+    - observed
+    - expected
+    - relative_risk
+    - likelihood_ratio
+    - p_value
+    requires_results_validated: true
+    builder_options:
+      stp_relative_risk: not_applicable
+      genuine_external_results_required: true
+  - id: S1
+    rq: GENERAL
+    title: Data populations and eligibility
+    role: supplementary
+    family_id: S1
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: supplement_s1_populations
+    required_columns:
+    - population_id
+    - source_population
+    - units
+    - rows
+    - start
+    - end
+    - eligibility_rule
+    - exclusion_reason
+    requires_results_validated: false
+    builder_options: {}
+  - id: S2
+    rq: RQ1
+    title: District RQ1 metrics
+    role: supplementary
+    family_id: S2
+    evidence_class: DESCRIPTIVE
+    builder: dataframe_csv
+    source_attribute: supplement_s2_district_rq1
+    required_columns:
+    - unit_id
+    - unit_name
+    - parent_code
+    - parent_name
+    - dominant_overlap_share
+    - long_run_rate
+    - district_departure
+    - circular_mean_month
+    - mean_resultant_length
+    requires_results_validated: true
+    builder_options: {}
+  - id: S3
+    rq: RQ1
+    title: Global and Local Moran diagnostics
+    role: supplementary
+    family_id: S3
+    evidence_class: PRIMARY_INFERENCE
+    builder: dataframe_csv
+    source_attribute: supplement_s3_spatial
+    required_columns:
+    - record_type
+    - unit_id
+    - global_morans_i
+    - global_permutation_p
+    - local_morans_i
+    - local_raw_p
+    - local_bh_q
+    - local_class
+    - island
+    - n_effective
+    - permutations
+    - random_seed
+    requires_results_validated: true
+    builder_options:
+      global_rows: 1
+  - id: S4
+    rq: RQ2
+    title: Annual RQ2 rates and studentised-permutation authority
+    role: supplementary
+    family_id: S4
+    evidence_class: PRIMARY_INFERENCE
+    builder: dataframe_csv
+    source_attribute: supplement_s4_rq2
+    required_columns:
+    - parent_code
+    - parent_name
+    - year
+    - annual_rate
+    - sen_slope
+    - u_n
+    - long_run_variance
+    - t_n
+    - realised_bandwidth
+    - permutation_count
+    - seed
+    - raw_p
+    - bh_q
+    requires_results_validated: true
+    builder_options:
+      years_per_acz: 24
+  - id: S5
+    rq: RQ3
+    title: RQ3 correspondence, diagnostics, coefficients and standardised probabilities
+    role: supplementary
+    family_id: S5
+    evidence_class: PRIMARY_INFERENCE_AND_DIAGNOSTIC
+    builder: dataframe_csv
+    source_attribute: supplement_s5_rq3
+    required_columns:
+    - record_type
+    - scope
+    - parent_code
+    - parent_name
+    - state
+    - count
+    - denominator_n
+    - proportion
+    - month
+    - y1
+    - y0
+    - term
+    - term_role
+    - beta
+    - corrected_se
+    - z
+    - p
+    - adjusted_or
+    - or_lower_95
+    - or_upper_95
+    - diagnostic_name
+    - diagnostic_value
+    - comparison_variable
+    - correlation
+    - vif
+    - predictor_id
+    - quantile
+    - raw_quantile_value
+    - transformed_quantile_value
+    - standardised_probability
+    - n
+    - districts
+    - estimator
+    - working_structure
+    - covariance_method
+    - reference_distribution
+    requires_results_validated: true
+    builder_options:
+      full_factor_coefficients: true
+      standardised_probability_cis: false
+  - id: S6
+    rq: SECONDARY
+    title: Complete SaTScan output and execution authority
+    role: supplementary
+    family_id: S6
+    evidence_class: SECONDARY_INFERENCE
+    builder: dataframe_csv
+    source_attribute: supplement_s6_satscan
+    required_columns:
+    - record_type
+    - model_id
+    - product
+    - model
+    - cluster_rank
+    - unit_id
+    - unit_name
+    - start_month
+    - end_month
+    - observed
+    - expected
+    - relative_risk
+    - likelihood_ratio
+    - p_value
+    - parameter_name
+    - parameter_value
+    - anchor_method
+    - x
+    - y
+    - file_role
+    - file_path
+    - sha256
+    requires_results_validated: true
+    builder_options:
+      genuine_external_results_required: true
+      parameter_files_required: true
+      coordinate_provenance_required: true
+  figure_formats:
+  - png
+  - pdf
+  registries:
+  - publication_output_registry.json
+  - figure_source_registry.json
+  - realised_run_manifest.json
+secondary_outputs:
+- id: rq1_long_run_district_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: district_scale_authority
+  requires_results_validated: false
+- id: rq1_local_moran_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: local_moran_authority
+  requires_results_validated: true
+- id: rq2_annual_series_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: annual_acz_series
+  requires_results_validated: false
+- id: rq3_paired_four_state_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: paired_four_state_source
+  requires_results_validated: false
+- id: rq3_model_population_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: model_population_source
+  requires_results_validated: false
+- id: rq3_design_metadata_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: design_metadata
+  requires_results_validated: false
+- id: rq3_factor_outcome_count_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: factor_outcome_counts
+  requires_results_validated: false
+- id: rq3_cluster_outcome_count_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: cluster_outcome_counts
+  requires_results_validated: false
+- id: rq3_predictor_vif_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: predictor_vif
+  requires_results_validated: false
+- id: rq3_full_coefficient_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: full_coefficient_source
+  requires_results_validated: true
+- id: rq3_standardised_probability_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: standardised_probability_source
+  requires_results_validated: true
+- id: secondary_location_authority
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: location_authority
+  requires_results_validated: false
+- id: realised_run_manifest
+  output_type: manifest
+  role: internal_authority
+  builder: json_manifest
+  source_attribute: realised_run_metadata
+  requires_results_validated: false
+- id: secondary_scan_specification_registry
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: scan_specification_registry
+  requires_results_validated: false
+- id: secondary_input_audit
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: input_audit
+  requires_results_validated: false
+- id: secondary_run_registry
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: secondary_run_registry
+  requires_results_validated: false
+- id: secondary_output_registry
+  output_type: table
+  role: internal_authority
+  builder: dataframe_csv
+  source_attribute: secondary_output_registry
+  requires_results_validated: false
+- id: secondary_external_execution_status
+  output_type: manifest
+  role: internal_authority
+  builder: json_manifest
+  source_attribute: external_execution_status
+  requires_results_validated: false

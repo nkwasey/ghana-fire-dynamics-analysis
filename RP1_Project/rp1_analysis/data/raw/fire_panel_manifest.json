@@ -1,0 +1,883 @@
+{
+  "families": [
+    {
+      "family_name": "ba2001_acz_base",
+      "files": [
+        {
+          "family_name": "ba2001_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_CZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "CZ",
+          "row_count": 288,
+          "run_id": "20260311T085602Z_acz_CZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "8a3cafccbee9902336b94c14bc59f73e5b5ab4e5ce0fa0ca7884db95629b2505",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_CZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_FZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "FZ",
+          "row_count": 288,
+          "run_id": "20260311T085602Z_acz_FZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "173c476f971429be90b0a173fb4c15919eea3411c3e088b86bb78fa29d0fe272",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_FZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_GS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "GS",
+          "row_count": 288,
+          "run_id": "20260311T085602Z_acz_GS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "80d2884c5a187c7d3f8fd5d161f608753b9a0a2014ac3fef74a2fb3548b412c4",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_GS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_SS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "SS",
+          "row_count": 288,
+          "run_id": "20260311T085602Z_acz_SS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "5d33d8590ce0fa5af3c4be0a669b18ebe0be83000fbb2f2820573482c8a9f1ba",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_SS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_TZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "TZ",
+          "row_count": 288,
+          "run_id": "20260311T085602Z_acz_TZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "bd1b75f695c13a7c523bd342ed22735439a960b87bb2d7d79f01c8449d0788df",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_acz_monthly_c1_TZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        }
+      ],
+      "level": "acz",
+      "root": {
+        "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001",
+        "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001"
+      },
+      "run_ids": [
+        "20260311T085602Z_acz_CZ_LW_OR_LC17",
+        "20260311T085602Z_acz_FZ_LW_OR_LC17",
+        "20260311T085602Z_acz_GS_LW_OR_LC17",
+        "20260311T085602Z_acz_SS_LW_OR_LC17",
+        "20260311T085602Z_acz_TZ_LW_OR_LC17"
+      ],
+      "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+      "source_kind": "ba2001",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 200101
+    },
+    {
+      "family_name": "ba2001_district_base",
+      "files": [
+        {
+          "family_name": "ba2001_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_CZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "CZ",
+          "row_count": 16704,
+          "run_id": "20260311T090346Z_district_CZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "1555b54423585f449e5f310cf55e090c45f6efb032fbe542e6a994d070e5ae4a",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_CZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_FZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "FZ",
+          "row_count": 31680,
+          "run_id": "20260311T090346Z_district_FZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "be9d511463f7a1d8a0b77fac817723d84324f6422f90e2d76d72ab139d25cfe8",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_FZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_GS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "GS",
+          "row_count": 12960,
+          "run_id": "20260311T090346Z_district_GS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "a1952ccd182edb62b9f4c9a4fbf6376f5a95a6ea9f62b867689a19005cf7c6af",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_GS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_SS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "SS",
+          "row_count": 5760,
+          "run_id": "20260311T090346Z_district_SS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "2e89c813c9b6c15c624d0cfbdf68cdda57a496c495306c5f2efd986ee9118adc",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_SS_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "ba2001_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_TZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "partition_code": "TZ",
+          "row_count": 7776,
+          "run_id": "20260311T090346Z_district_TZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "d34df20425d36e87196a2927e6a54d33d87f5f60f0d0ae2dc45d901379578517",
+          "source_kind": "ba2001",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001/rp1_ba_district_monthly_c1_TZ_LW_OR_LC17_2001-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        }
+      ],
+      "level": "district",
+      "root": {
+        "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001",
+        "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001"
+      },
+      "run_ids": [
+        "20260311T090346Z_district_CZ_LW_OR_LC17",
+        "20260311T090346Z_district_FZ_LW_OR_LC17",
+        "20260311T090346Z_district_GS_LW_OR_LC17",
+        "20260311T090346Z_district_SS_LW_OR_LC17",
+        "20260311T090346Z_district_TZ_LW_OR_LC17"
+      ],
+      "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+      "source_kind": "ba2001",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 200101
+    },
+    {
+      "family_name": "ba2012_acz_base",
+      "files": [
+        {
+          "family_name": "ba2012_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_CZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "CZ",
+          "row_count": 156,
+          "run_id": "20260311T083615Z_acz_CZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "600c579197502eee36e77a3d70a459063c55e3a7c323781863cd06533fd0e1fb",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_CZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_FZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "FZ",
+          "row_count": 156,
+          "run_id": "20260311T083615Z_acz_FZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "18c58e28b5e01e0063bb7f6dbdafdb0a92ffe8665979b17f3db832872402305e",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_FZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_GS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "GS",
+          "row_count": 156,
+          "run_id": "20260311T083615Z_acz_GS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "f6d81c4b87ec5975ec589a554d2c9970824ab5ff1be2d0087286bce186db8feb",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_GS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_SS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "SS",
+          "row_count": 156,
+          "run_id": "20260311T083615Z_acz_SS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "c4fa9a0aa60ab17ac8f8512aa91ded29c5aadad9154b8acce0788c5ec3f73bc4",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_SS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_TZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "TZ",
+          "row_count": 156,
+          "run_id": "20260311T083615Z_acz_TZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "f95587c3459b29c003d6767d2d0c0499b5ca4379609abb521911f5c5715ffec2",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_acz_monthly_c1_TZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        }
+      ],
+      "level": "acz",
+      "root": {
+        "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012",
+        "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012"
+      },
+      "run_ids": [
+        "20260311T083615Z_acz_CZ_LW_OR_LC17",
+        "20260311T083615Z_acz_FZ_LW_OR_LC17",
+        "20260311T083615Z_acz_GS_LW_OR_LC17",
+        "20260311T083615Z_acz_SS_LW_OR_LC17",
+        "20260311T083615Z_acz_TZ_LW_OR_LC17"
+      ],
+      "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+      "source_kind": "ba2012",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 201201
+    },
+    {
+      "family_name": "ba2012_district_base",
+      "files": [
+        {
+          "family_name": "ba2012_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_CZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "CZ",
+          "row_count": 9048,
+          "run_id": "20260311T083924Z_district_CZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "95033577106e7b1d3145ac9ab9c80b269735b874de8901a19c179ada3358327f",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_CZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_FZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "FZ",
+          "row_count": 17160,
+          "run_id": "20260311T083924Z_district_FZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "cae90699bfd1bf4965a8151aa6b50ba21a98ed5c92158852632e2b18ef40640b",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_FZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_GS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "GS",
+          "row_count": 7020,
+          "run_id": "20260311T083924Z_district_GS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "493101d5e99c1e703fc031bf59ce3c6b8b5ddc707b44d66c43a39c3ce3ebf311",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_GS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_SS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "SS",
+          "row_count": 3120,
+          "run_id": "20260311T083924Z_district_SS_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "adc882ba9676bc91c40c2d98e8367761c49be9e66b94f3e0c952f1ab42353f39",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_SS_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "ba2012_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_TZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "partition_code": "TZ",
+          "row_count": 4212,
+          "run_id": "20260311T214352Z_district_TZ_LW_OR_LC17",
+          "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+          "sha256": "09f0e786788d7a92df6ef543fb489d8fd493048493328d06efe61c95b8aca65b",
+          "source_kind": "ba2012",
+          "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012/rp1_ba_district_monthly_c1_TZ_LW_OR_LC17_2012-01_to_2024-12.csv",
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        }
+      ],
+      "level": "district",
+      "root": {
+        "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012",
+        "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012"
+      },
+      "run_ids": [
+        "20260311T083924Z_district_CZ_LW_OR_LC17",
+        "20260311T083924Z_district_FZ_LW_OR_LC17",
+        "20260311T083924Z_district_GS_LW_OR_LC17",
+        "20260311T083924Z_district_SS_LW_OR_LC17",
+        "20260311T214352Z_district_TZ_LW_OR_LC17"
+      ],
+      "schema_version": "rp1_ba_monthly_stage1_generic_v1",
+      "source_kind": "ba2012",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 201201
+    },
+    {
+      "family_name": "modis_af_acz_base",
+      "files": [
+        {
+          "family_name": "modis_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis/rp1_af_acz_acz_code_CZ.csv",
+          "partition_code": "CZ",
+          "row_count": 288,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "a84a5d91b48f6afbb72056df5855fa01e0978d5d54cc282c5a1409dc824b0771",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis/rp1_af_acz_acz_code_FZ.csv",
+          "partition_code": "FZ",
+          "row_count": 288,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "9e990fa9a9536df4d46f00f4149f95fe88be8dc7119e5f995528e0b63712db51",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis/rp1_af_acz_acz_code_GS.csv",
+          "partition_code": "GS",
+          "row_count": 288,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "9f6e477fd8757cb6a9eac555e576b069776df202e7c47bacf7837c044f46ac9f",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis/rp1_af_acz_acz_code_SS.csv",
+          "partition_code": "SS",
+          "row_count": 288,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "5b69994f9f79ec1541eb42f9cab0a67cfdc5740d8bed8093b1eff3a0666c9a3a",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis/rp1_af_acz_acz_code_TZ.csv",
+          "partition_code": "TZ",
+          "row_count": 288,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "503b3e6c69b2b9a76dfad2736bb3164ffc4d3765d1941c463dfccd3d6032367e",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        }
+      ],
+      "level": "acz",
+      "root": {
+        "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/modis",
+        "staged_path": null
+      },
+      "run_ids": [
+        "ghana_full"
+      ],
+      "schema_version": "rp1_af_monthly_v2",
+      "source_kind": "modis_af",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 200101
+    },
+    {
+      "family_name": "modis_af_district_base",
+      "files": [
+        {
+          "family_name": "modis_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis/rp1_af_district_acz_code_CZ.csv",
+          "partition_code": "CZ",
+          "row_count": 16704,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "3d5196db89d65b6641ceb5b6925a28205f5203269ce33a55fafd07db77e38150",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis/rp1_af_district_acz_code_FZ.csv",
+          "partition_code": "FZ",
+          "row_count": 31680,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "23cdc5ef3283f56157594607b1486a88fa0ef5195984285f0bf636ad554bc3b4",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis/rp1_af_district_acz_code_GS.csv",
+          "partition_code": "GS",
+          "row_count": 12960,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "c40623ea11fb54a7ca3155a5adf8f80f839a774d7d4ccab8a3eb4b0a23cc3847",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis/rp1_af_district_acz_code_SS.csv",
+          "partition_code": "SS",
+          "row_count": 5760,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "5754ee5f1d62048979b299a8732ae6efab28b7a919d94c7dd09a0f684fef34bf",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        },
+        {
+          "family_name": "modis_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis/rp1_af_district_acz_code_TZ.csv",
+          "partition_code": "TZ",
+          "row_count": 7776,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "ab54106a4789fc22ef616d3524486a576af059226728aabf40577843939cd5d3",
+          "source_kind": "modis_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 200101
+        }
+      ],
+      "level": "district",
+      "root": {
+        "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/modis",
+        "staged_path": null
+      },
+      "run_ids": [
+        "ghana_full"
+      ],
+      "schema_version": "rp1_af_monthly_v2",
+      "source_kind": "modis_af",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 200101
+    },
+    {
+      "family_name": "viirs_af_acz_base",
+      "files": [
+        {
+          "family_name": "viirs_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs/rp1_af_acz_acz_code_CZ.csv",
+          "partition_code": "CZ",
+          "row_count": 156,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "b9e7011dd6fe541aaf8885ac0ed15cda338602896c3795d31e3257c5e0d28bc7",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs/rp1_af_acz_acz_code_FZ.csv",
+          "partition_code": "FZ",
+          "row_count": 156,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "bc78c936f0a473cd8d3fb258c19ed468c27685b5cf233e7bd651fa48463828a8",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs/rp1_af_acz_acz_code_GS.csv",
+          "partition_code": "GS",
+          "row_count": 156,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "0a79495b9809083055a8ffeef7ae2a742bfc1cedca0d1819632bdabc781dd69a",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs/rp1_af_acz_acz_code_SS.csv",
+          "partition_code": "SS",
+          "row_count": 156,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "77db257e8090027f854efa6e9ea46c5c0d036430475a89ee31fdfee924a5d28d",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_acz_base",
+          "level": "acz",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs/rp1_af_acz_acz_code_TZ.csv",
+          "partition_code": "TZ",
+          "row_count": 156,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "89e4b5667af29f76354413ff16c23a34f0048b79f9bf28e9ac45518aa0bb4f5d",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        }
+      ],
+      "level": "acz",
+      "root": {
+        "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/acz/viirs",
+        "staged_path": null
+      },
+      "run_ids": [
+        "ghana_full"
+      ],
+      "schema_version": "rp1_af_monthly_v2",
+      "source_kind": "viirs_af",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 201201
+    },
+    {
+      "family_name": "viirs_af_district_base",
+      "files": [
+        {
+          "family_name": "viirs_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs/rp1_af_district_acz_code_CZ.csv",
+          "partition_code": "CZ",
+          "row_count": 9048,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "2640a8e035c036c2878fcad23367bc69c45449f3dc9aed0de91b37090d878c47",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs/rp1_af_district_acz_code_FZ.csv",
+          "partition_code": "FZ",
+          "row_count": 17160,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "e3d2dc0ebf4e2320891e200df47704ff59596e941445ff533c0544873da7fe92",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs/rp1_af_district_acz_code_GS.csv",
+          "partition_code": "GS",
+          "row_count": 7020,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "cc0aec4b1cdab43c785ea8a70502fff56be2f63f3db13a1501a4bac37e9d5588",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs/rp1_af_district_acz_code_SS.csv",
+          "partition_code": "SS",
+          "row_count": 3120,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "dd10b2b2d196c9fe8b69cc15c62a28f7e4e01a01bcbda04b6f69d7fc9db8501f",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        },
+        {
+          "family_name": "viirs_af_district_base",
+          "level": "district",
+          "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs/rp1_af_district_acz_code_TZ.csv",
+          "partition_code": "TZ",
+          "row_count": 4212,
+          "run_id": "ghana_full",
+          "schema_version": "rp1_af_monthly_v2",
+          "sha256": "5f0fc416cb93bdab9b2194bc998a3c62813f50a2402b760cbb91222da9a1d6a3",
+          "source_kind": "viirs_af",
+          "staged_path": null,
+          "yyyymm_max": 202412,
+          "yyyymm_min": 201201
+        }
+      ],
+      "level": "district",
+      "root": {
+        "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports/district/viirs",
+        "staged_path": null
+      },
+      "run_ids": [
+        "ghana_full"
+      ],
+      "schema_version": "rp1_af_monthly_v2",
+      "source_kind": "viirs_af",
+      "support_end_yyyymm": 202412,
+      "support_start_yyyymm": 201201
+    }
+  ],
+  "final_schema_columns": [
+    "run_id",
+    "schema_version",
+    "level",
+    "unit_id",
+    "unit_code",
+    "unit_name",
+    "parent_level",
+    "parent_id",
+    "parent_code",
+    "parent_name",
+    "yyyymm",
+    "year",
+    "month",
+    "modis_det_low",
+    "modis_det_nominal",
+    "modis_det_high",
+    "modis_det_all",
+    "modis_det_nh",
+    "modis_pct_high_conf",
+    "modis_days_active_nh",
+    "modis_streak_max_nh",
+    "modis_frp_active_days",
+    "modis_frp_sum_daily_max_mw",
+    "modis_frp_mean_mw",
+    "modis_frp_p95_daily_max_mw",
+    "viirs_det_low",
+    "viirs_det_nominal",
+    "viirs_det_high",
+    "viirs_det_all",
+    "viirs_det_nh",
+    "viirs_pct_high_conf",
+    "viirs_days_active_nh",
+    "viirs_streak_max_nh",
+    "viirs_frp_active_days",
+    "viirs_frp_sum_daily_max_mw",
+    "viirs_frp_mean_mw",
+    "viirs_frp_p95_daily_max_mw",
+    "modis_ba_km2_ba2001",
+    "modis_burned_pixel_count_ba2001",
+    "modis_ba_any_ba2001",
+    "modis_aoi_area_land_km2_ba2001",
+    "modis_burnable_km2_union_ba2001",
+    "modis_burnable_km2_annual_ba2001",
+    "modis_burned_frac_union_ba2001",
+    "modis_burned_frac_annual_ba2001",
+    "modis_zero_union_den_flag_ba2001",
+    "modis_zero_annual_den_flag_ba2001",
+    "modis_ba_km2_ba2012",
+    "modis_burned_pixel_count_ba2012",
+    "modis_ba_any_ba2012",
+    "modis_aoi_area_land_km2_ba2012",
+    "modis_burnable_km2_union_ba2012",
+    "modis_burnable_km2_annual_ba2012",
+    "modis_burned_frac_union_ba2012",
+    "modis_burned_frac_annual_ba2012",
+    "modis_zero_union_den_flag_ba2012",
+    "modis_zero_annual_den_flag_ba2012",
+    "modis_det_primary",
+    "modis_det_nh_share_of_all",
+    "modis_det_primary_any",
+    "viirs_det_primary",
+    "viirs_det_nh_share_of_all",
+    "viirs_det_primary_any",
+    "modis_ba_km2_per100km2_union_ba2001",
+    "modis_ba_km2_per100km2_annual_ba2001",
+    "modis_ba_km2_per100km2_union_ba2012",
+    "modis_ba_km2_per100km2_annual_ba2012",
+    "modis_det_primary_per100km2_burnable_union_ba2001",
+    "modis_det_primary_per100km2_burnable_annual_ba2001",
+    "modis_det_primary_per100km2_burnable_union_ba2012",
+    "modis_det_primary_per100km2_burnable_annual_ba2012",
+    "viirs_det_primary_per100km2_burnable_union_ba2001",
+    "viirs_det_primary_per100km2_burnable_annual_ba2001",
+    "viirs_det_primary_per100km2_burnable_union_ba2012",
+    "viirs_det_primary_per100km2_burnable_annual_ba2012",
+    "modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001",
+    "modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001",
+    "modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012",
+    "modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012",
+    "viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001",
+    "viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001",
+    "viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012",
+    "viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012",
+    "modis_det_primary_per_active_day",
+    "modis_frp_sum_daily_max_mw_per_active_day",
+    "modis_frp_sum_daily_max_mw_per_primary_det",
+    "viirs_det_primary_per_active_day",
+    "viirs_frp_sum_daily_max_mw_per_active_day",
+    "viirs_frp_sum_daily_max_mw_per_primary_det",
+    "viirs_supported_flag",
+    "ba2012_supported_flag",
+    "full_overlap_supported_flag",
+    "ba_any_ba2001_and_viirs_primary_any_flag",
+    "ba_any_ba2012_and_viirs_primary_any_flag",
+    "ba_any_ba2001_and_modis_primary_any_flag",
+    "ba_any_ba2012_and_modis_primary_any_flag",
+    "ba_any_ba2001_without_viirs_primary_flag",
+    "ba_any_ba2012_without_viirs_primary_flag",
+    "viirs_primary_without_ba_any_ba2001_flag",
+    "viirs_primary_without_ba_any_ba2012_flag",
+    "viirs_primary_any_and_modis_primary_any_flag",
+    "af_modis_source_present",
+    "af_viirs_source_present",
+    "ba2001_source_present",
+    "ba2012_source_present",
+    "row_in_canonical_spine",
+    "merge_key_complete_flag",
+    "merge_duplicate_resolved_flag",
+    "viirs_structural_missing_flag",
+    "ba2012_structural_missing_flag",
+    "merge_note"
+  ],
+  "final_schema_sha256": "c1103b3e3c221f8c8958f48e682769b776e8f18de22799cb5b44b7b8131d8a4d",
+  "merge_run_id": "merge_fire_panel_20260410T213425Z",
+  "merge_schema_version": "rp1_fire_panel_consolidated_v2",
+  "outputs": {
+    "fire_panel_acz": {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv",
+      "sha256": "c40f2adcdb405addb273ea61a4af32e73a38d88ce229786cbf42f0975dc5c171",
+      "staged_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv"
+    },
+    "fire_panel_district": {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv",
+      "sha256": "057c0c50864e21b51e2ccc49b96761a8ba991513b48936808d5c1b3ca314c2f7",
+      "staged_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv"
+    },
+    "key_audit": {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv",
+      "sha256": "e1a17c6c876cc51cec5be377d8ebe4fc758f0c9ded2298f9a72a4722f01d0bec",
+      "staged_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv"
+    },
+    "manifest": {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json",
+      "staged_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json"
+    },
+    "merge_summary": {
+      "origin_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json",
+      "sha256": "c0610f6331322368302299536972997f4f7a7201c136c92aa91405739215f5b0",
+      "staged_path": "RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json"
+    }
+  },
+  "path_semantics": {
+    "origin_path": "Repository-relative source/original provenance path. It may refer to a historical or upstream intermediate location that is not distributed with the release.",
+    "staged_path": "Repository-relative current durable location in the distributed repository; null only for upstream intermediate sources that are intentionally not distributed."
+  },
+  "provenance_schema_version": "rp1-fire-panel-provenance-v2",
+  "repo_root": ".",
+  "source_roots": {
+    "active_fire": {
+      "origin_path": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports",
+      "staged_path": null
+    },
+    "ba2001": {
+      "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001",
+      "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001"
+    },
+    "ba2012": {
+      "origin_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012",
+      "staged_path": "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012"
+    },
+    "unit_universe": {
+      "origin_path": "geo_data_prep/out/example_acz/unit_universe.csv",
+      "staged_path": "RP1_Project/rp1_mv_firms_panels/data/metadata/unit_universe.csv"
+    }
+  },
+  "written_at_utc": "2026-04-10T21:34:31+00:00"
+}

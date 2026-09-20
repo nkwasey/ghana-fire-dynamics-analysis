@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rp1-analysis-v1"
+version = "1.2.3"
+description = "Configuration-governed analysis package for Ghana Fire RP1."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Ghana Fire RP1 contributors" }]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "numpy>=1.24,<3",
+  "PyYAML>=6,<7",
+  "pandas>=2,<3",
+  "geopandas>=1,<2",
+  "pyproj>=3.5,<4",
+  "scipy>=1.11,<2",
+  "statsmodels>=0.14,<0.15",
+  "matplotlib>=3.8,<4",
+  "nbformat>=5,<6",
+  "nbclient>=0.10,<1",
+  "ipykernel>=6,<8",
+]
+
+[project.scripts]
+rp1-analysis = "rp1_analysis_v1.cli:main"
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7,<10",
+  "pypdf>=5,<7",
+  "Pillow>=10,<13",
+]
+dev = [
+  "pytest>=7,<10",
+  "pypdf>=5,<7",
+  "Pillow>=10,<13",
+  "ruff>=0.6,<1",
+  "black>=24,<26",
+  "mypy>=1.8,<2",
+  "types-PyYAML>=6,<7",
+  "pandas-stubs==2.3.3.260113",
+  "types-geopandas==1.1.4.20260807",
+  "scipy-stubs==1.17.1.5",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["rp1_analysis_v1*"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-q"
+testpaths = ["tests"]

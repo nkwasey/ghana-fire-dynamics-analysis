@@ -1,0 +1,4 @@
+term,log2_viirs_det_primary,log2_viirs_frp_mean_mw,log2_modis_burnable_km2_union_ba2012
+log2_viirs_det_primary,1.0,0.7913770849731264,0.3835607202394579
+log2_viirs_frp_mean_mw,0.7913770849731264,1.0,0.42305091079101365
+log2_modis_burnable_km2_union_ba2012,0.3835607202394579,0.42305091079101365,1.0

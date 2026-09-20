@@ -1,0 +1,338 @@
+schema_version: rp1-analysis-v1.1
+project:
+  name: Ghana Fire RP1 Analysis
+  distribution: rp1-analysis-v1
+  package_namespace: rp1_analysis_v1
+  canonical_notebook: RP1_Analysis_v1.ipynb
+  analysis_schema: rp1-analysis-v1.1
+  data_schema: rp1-data-schema-v1.1
+reproducibility:
+  primary_seed: 20260822
+  alpha: 0.05
+  confidence_level: 0.95
+study:
+  design_type: observational
+  causal_driver_inference: false
+  temporal_windows:
+    long_run:
+      start: 2001-01
+      end: 2024-12
+    overlap_monthly:
+      start: 2012-02
+      end: 2024-12
+    overlap_complete_years:
+      start: 2013
+      end: 2024
+  populations:
+    acz_monthly:
+      source_panel: acz_monthly
+      units: 5
+      rows: 1440
+      start: 2001-01
+      end: 2024-12
+      eligibility: complete_balanced_panel
+    district_monthly:
+      source_panel: district_monthly
+      units: 260
+      rows: 74880
+      start: 2001-01
+      end: 2024-12
+      eligibility: complete_balanced_panel
+    long_run_district:
+      source_panel: district_monthly
+      units: 250
+      rows: 72000
+      start: 2001-01
+      end: 2024-12
+      eligibility: positive_fixed_ba2001_burnable_area_all_months
+      denominator_role: rq1.fixed_burnable_area
+    paired_overlap:
+      source_panel: district_monthly
+      units: 249
+      rows: 38595
+      start: 2012-02
+      end: 2024-12
+      eligibility: paired_supported_positive_fixed_ba2012_burnable_area
+      support_roles:
+      - rq3.viirs_support
+      - rq3.ba2012_support
+      denominator_role: rq3.burnable_area
+    rq3_model:
+      source_population: paired_overlap
+      units: 249
+      rows: 22939
+      start: 2012-02
+      end: 2024-12
+      eligibility: viirs_detection_count_positive
+      positive_role: rq3.viirs_count
+  district_parent_acz:
+    method: maximum_original_polygon_overlap
+    whole_district_units: true
+    crosswalk_path: data/reference/district_to_acz_max_overlap.csv
+    dominant_overlap_share_column: dominant_overlap_share
+    analysis_crs: EPSG:32630
+product_semantics:
+  mcd64a1: mapped_burned_surface_evidence
+  snpp_viirs_active_fire: thermal_detection_evidence
+  product_relationship: complementary_non_ground_truth
+  validation_direction: none
+field_roles:
+  keys:
+    unit_id: unit_id
+    unit_code: unit_code
+    unit_name: unit_name
+    parent_code: parent_code
+    parent_name: parent_name
+    yyyymm: yyyymm
+    year: year
+    month: month
+  rq1:
+    burned_area: modis_ba_km2_ba2001
+    fixed_burnable_area: modis_burnable_km2_union_ba2001
+  rq2:
+    burned_area: modis_ba_km2_ba2001
+    fixed_burnable_area: modis_burnable_km2_union_ba2001
+  rq3:
+    viirs_support: viirs_supported_flag
+    ba2012_support: ba2012_supported_flag
+    viirs_presence: viirs_det_primary_any
+    ba_presence: modis_ba_any_ba2012
+    ba_area: modis_ba_km2_ba2012
+    viirs_count: viirs_det_primary
+    mean_frp: viirs_frp_mean_mw
+    burnable_area: modis_burnable_km2_union_ba2012
+  secondary:
+    mcd64a1_cases: modis_burned_pixel_count_ba2001
+    mcd64a1_exposure: modis_burnable_km2_union_ba2001
+    viirs_cases: viirs_det_primary
+research_questions:
+  rq1:
+    identity: spatial_support_heterogeneity_seasonality_spatial_organisation
+    population: long_run_district
+    supports:
+    - acz
+    - district
+    annual_rate:
+      numerator_role: rq1.burned_area
+      denominator_role: rq1.fixed_burnable_area
+      denominator_support: fixed_ba2001_burnable_union
+      scale_per_km2: 100
+      annual_aggregation: sum
+      long_run_summary: arithmetic_mean
+    within_acz:
+      metric: district_long_run_rate
+      summaries:
+      - median
+      - iqr
+      concentration_method: gini_coefficient
+    district_departure:
+      method: within_acz_rate_difference
+      metric: district_long_run_rate_minus_direct_parent_acz_long_run_rate
+      standardisation: none
+    seasonality:
+      climatology_months: 12
+      full_climatology_retained: true
+      method: circular_mean_resultant
+      mean_direction_role: primary_timing
+      resultant_length_role: primary_concentration
+      peak_month_role: descriptive_only
+      zero_total_policy: undefined_fail_closed
+    spatial:
+      variable: district_departure
+      weights:
+        method: queen_contiguity
+        order: first_order
+        transform: row_standardised
+        island_policy: exclude_from_inference
+        artificial_links: false
+      global:
+        method: global_morans_i
+        reporting_scope: one_national_result
+        inference_method: permutation
+        permutations: 9999
+        seed_source: reproducibility.primary_seed
+        alternative: two_sided_centered_on_randomisation_expectation
+      local:
+        method: local_morans_i
+        permutations: 9999
+        seed_source: reproducibility.primary_seed
+        permutation_scheme: conditional_without_replacement
+        focal_value_policy: fixed
+        candidate_pool: all_other_non_island_standardised_values
+        standardisation: population_sd_ddof0
+        statistic: z_i_times_row_standardised_spatial_lag
+        upper_tail_comparison: greater_than_or_equal
+        tie_allocation: upper_tail
+        p_value_method: local_moran_smaller_tail_plus_one
+        multiply_smaller_tail_by_two: false
+        multiplicity_method: benjamini_hochberg
+        multiplicity_family: all_non_island_eligible_districts
+        classification: bh_supported_hh_ll_hl_lh_only
+    arbitrary_departure_thresholds_primary_evidence: false
+  rq2:
+    identity: monotonic_acz_rate_change_under_serial_dependence
+    authority_status: frozen
+    population: acz_monthly
+    analysis_unit: acz_annual_fixed_support_series
+    expected_series_count: 5
+    expected_n_per_series: 24
+    rate:
+      numerator_role: rq2.burned_area
+      denominator_role: rq2.fixed_burnable_area
+      denominator_support: fixed_ba2001_burnable_union
+      scale_per_km2: 100
+    effect_estimator: sens_slope
+    effect_uncertainty: none_required
+    inferential_test:
+      method: studentized_global_mann_kendall_permutation
+      empirical_cdf: less_than_or_equal_ecdf
+      rank_tie_contribution: zero
+      reference_admissibility:
+        requires_distinct_observations: true
+        on_ties: fail_closed
+      bandwidth_rule: floor_n_power_one_third
+      variance_floor: 0.001
+      studentisation: recompute_for_each_permutation
+      permutations: 9999
+      seed_source: reproducibility.primary_seed
+      alternative: two_sided_absolute
+      p_value_method: monte_carlo_plus_one
+    multiple_testing:
+      method: benjamini_hochberg
+      family: exactly_five_acz_raw_p_values
+      family_size: 5
+      alpha_source: reproducibility.alpha
+  rq3:
+    identity: viirs_positive_mcd64a1_absence_association
+    authority_status: frozen
+    descriptive_population: paired_overlap
+    model_population: rq3_model
+    four_state_correspondence:
+      enabled: true
+      states:
+      - both_zero
+      - mcd64a1_positive_viirs_zero
+      - viirs_positive_mcd64a1_zero
+      - both_positive
+    outcome:
+      one: mcd64a1_absent
+      zero: mcd64a1_present
+      burned_area_presence_role: rq3.ba_presence
+    estimator: firth_penalized_gee
+    family: binomial
+    link: logit
+    cluster:
+      unit: district
+      id_role: keys.unit_id
+    working_correlation: independence
+    covariance: morel_bokossa_neerchal
+    reference_distribution: standard_normal_wald
+    predictors:
+    - predictor_id: viirs_detection_count
+      field_role: rq3.viirs_count
+      transform: log2_positive
+      role: focal
+      term_name: log2_viirs_det_primary
+    - predictor_id: viirs_mean_frp
+      field_role: rq3.mean_frp
+      transform: log2_positive
+      role: focal
+      term_name: log2_viirs_frp_mean_mw
+    - predictor_id: fixed_ba2012_burnable_area
+      field_role: rq3.burnable_area
+      transform: log2_positive
+      role: adjustment
+      term_name: log2_modis_burnable_km2_union_ba2012
+    factors:
+    - factor_id: month
+      field_role: keys.month
+      coding: categorical
+      reference: 1
+      reference_label: January
+      role: adjustment
+      term_prefix: month
+    - factor_id: year
+      field_role: keys.year
+      coding: categorical
+      reference: 2013
+      reference_label: '2013'
+      role: adjustment
+      term_prefix: year
+    - factor_id: acz
+      field_role: keys.parent_code
+      coding: categorical
+      reference: CZ
+      reference_label: Coastal Zone
+      role: adjustment
+      term_prefix: acz
+    intercept: true
+    diagnostics:
+      vif:
+        enabled: true
+        method: variance_inflation_factor
+        fields: final_continuous_predictor_set
+        deletion_authority: false
+      separation_audit: true
+    standardised_probabilities:
+      method: observed_covariate_predictive_standardisation
+      focal_predictor_quantiles:
+      - 0.25
+      - 0.75
+      averaging_distribution: observed_remaining_covariates
+    excluded_predictor_roles:
+    - rq3.active_days
+    - rq3.modis_af_presence
+    interactions: false
+    stepwise_selection: false
+    outcome_driven_tuning: false
+    computational_controls:
+      tolerance: 1.0e-08
+      max_iterations: 250
+      max_step_halvings: 40
+secondary_analysis:
+  identity: spatiotemporal_concentration
+  role: secondary_noncausal
+  external_execution:
+    engine: SaTScan
+    engine_version_authority: 10.3.3
+    execution_required_for_cluster_claims: true
+    missing_result_policy: EXTERNAL_RESULTS_REQUIRED
+    scientific_seed_source: reproducibility.primary_seed
+    user_defined_random_seed_supported: false
+    user_defined_random_seed_parameter: null
+    rng_authority: engine_deterministic_internal_seed
+    engine_rng_behaviour: same_internal_seed_for_identical_input
+  spatial_support:
+    unit: district
+    coordinate_crs: EPSG:32630
+    coordinate_anchor_method: centroid_inside_else_point_on_surface
+    spatial_window_shape: circular
+  temporal_support:
+    aggregation: month
+    precision_case_times: month
+  common:
+    analysis_type: retrospective
+    cluster_type: high_only
+    max_spatial_percent: 50
+    max_temporal_months: 12
+    monte_carlo_replicates: 999
+    alpha_source: reproducibility.alpha
+    reporting_method: hierarchical_non_overlapping
+    geographical_overlap: false
+    gini_optimised_reporting: false
+    report_cluster_rank: true
+  scenarios:
+  - scenario_id: MCD64A1_POISSON_PRIMARY
+    product: mcd64a1
+    population: long_run_district
+    temporal_window: long_run
+    model: discrete_poisson
+    case_role: secondary.mcd64a1_cases
+    exposure_role: secondary.mcd64a1_exposure
+  - scenario_id: VIIRS_STP_PRIMARY
+    product: viirs
+    population: paired_overlap
+    temporal_window: overlap_monthly
+    model: space_time_permutation
+    case_role: secondary.viirs_cases
+    exposure_role: null

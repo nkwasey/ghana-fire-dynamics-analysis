@@ -1,0 +1,40 @@
+{
+  "expected": {
+    "expected_i": -0.3333333333333333,
+    "morans_i": 0.29130434782608694,
+    "permutation_p": 0.09
+  },
+  "input": {
+    "ids": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "neighbours": {
+      "A": [
+        "B"
+      ],
+      "B": [
+        "A",
+        "C"
+      ],
+      "C": [
+        "B",
+        "D"
+      ],
+      "D": [
+        "C"
+      ]
+    },
+    "permutations": 199,
+    "seed": 20260819,
+    "values": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "provenance": "independent row-standardised Moran formula and deterministic permutation calculation"
+}

@@ -1,0 +1,50 @@
+{
+  "files": [
+    {
+      "path": "acz_annual_rates.csv",
+      "sha256": "f423703d1cc366576c890e85ee4cbf073a5b75d9bfb604b43ceb1012e3ac4e91",
+      "size_bytes": 10569
+    },
+    {
+      "path": "acz_summary.csv",
+      "sha256": "d9b09a3e8d902dc285e1ae15304320fe4a67f2acd9fc56f180888597a0eed3ca",
+      "size_bytes": 3272
+    },
+    {
+      "path": "district_annual_rates.csv",
+      "sha256": "fd129abafd6456a349482b3f0b0a3b7b474962ffdc74737996c96433d3d9e3a7",
+      "size_bytes": 687273
+    },
+    {
+      "path": "district_metrics.csv",
+      "sha256": "4ab0c0f56893d0864cbbd95335b9f6ff31833674020f72ba091fdc19f12b3231",
+      "size_bytes": 99934
+    },
+    {
+      "path": "spatial_support_source.csv",
+      "sha256": "b745c683e0b96bd06e0e89d8f54c829d9f20ea03dbc05ccf9c615649f2ee5253",
+      "size_bytes": 37376
+    },
+    {
+      "path": "seasonality_spatial_organisation_source.csv",
+      "sha256": "96c588519adff4de07bbbf314d35a8203b5b64b13b72ba762e25c2a045a31401",
+      "size_bytes": 63631
+    },
+    {
+      "path": "realised_run_metadata.json",
+      "sha256": "f38196aeef979fe93b264b8e125d59876e279a2d2b4279736c854104133b3921",
+      "size_bytes": 1721
+    },
+    {
+      "path": "spatial_statistics.csv",
+      "sha256": "491591458b03cbacbdd401c1e0006acba2c8ebc4f582df112579306ed5a2cf3d",
+      "size_bytes": 24072
+    },
+    {
+      "path": "within_acz_heterogeneity.csv",
+      "sha256": "ca25b9ef8b795cc7ef6e2223e0d6c8d03296a7b1fc20b75372b676c17fe0e833",
+      "size_bytes": 960
+    }
+  ],
+  "schema": "rp1-rq1-source-authority-v1"
+}

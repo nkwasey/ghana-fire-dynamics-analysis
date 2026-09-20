@@ -1,0 +1,26 @@
+{
+  "acz": {
+    "ba2012_structural_missing_rows": 660,
+    "ba2012_supported_rows": 780,
+    "column_count": 111,
+    "row_count": 1440,
+    "unique_units": 5,
+    "viirs_structural_missing_rows": 660,
+    "viirs_supported_rows": 780,
+    "yyyymm_max": 202412,
+    "yyyymm_min": 200101
+  },
+  "district": {
+    "ba2012_structural_missing_rows": 34320,
+    "ba2012_supported_rows": 40560,
+    "column_count": 111,
+    "row_count": 74880,
+    "unique_units": 260,
+    "viirs_structural_missing_rows": 34320,
+    "viirs_supported_rows": 40560,
+    "yyyymm_max": 202412,
+    "yyyymm_min": 200101
+  },
+  "merge_run_id": "merge_fire_panel_20260410T213425Z",
+  "merge_schema_version": "rp1_fire_panel_consolidated_v2"
+}

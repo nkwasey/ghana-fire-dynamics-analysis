@@ -1,0 +1,24 @@
+{
+  "expected": {
+    "mean_direction_radians": 0.5235987755982988,
+    "mean_month": 2.0,
+    "resultant_length": 0.8660254037844386
+  },
+  "input": {
+    "shares": [
+      0.5,
+      0,
+      0.5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "provenance": "independent vector-sum calculation on the 12-month unit circle"
+}

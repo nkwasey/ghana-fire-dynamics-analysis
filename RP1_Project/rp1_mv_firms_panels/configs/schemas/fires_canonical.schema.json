@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mv_firms_panels/fires_canonical.schema.json",
+  "title": "Canonical fire detections joined to polygon units (one row per detection \u00d7 level)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "source_file",
+    "sensor",
+    "level",
+    "unit_id",
+    "acq_datetime_utc",
+    "acq_date",
+    "acq_time_utc",
+    "yyyymm",
+    "date_utc",
+    "latitude",
+    "longitude",
+    "conf_cat",
+    "frp_mw",
+    "type",
+    "dedup_key",
+    "was_dedup_kept"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Deterministic run identifier derived from a hash of the config snapshot (and optionally a timestamp)."
+    },
+    "source_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path (or basename) of the raw FIRMS shapefile that produced this record."
+    },
+    "sensor": {
+      "type": "string",
+      "enum": [
+        "viirs",
+        "modis"
+      ],
+      "description": "Source sensor. Must be one of: viirs, modis."
+    },
+    "level": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Polygon level name supplied in config (user-defined)."
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Authoritative unit identifier (stringified) from the polygon level join."
+    },
+    "acq_datetime_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Acquisition datetime in UTC. Composed from raw acq_date + acq_time and normalised."
+    },
+    "acq_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Acquisition date (UTC) in YYYY-MM-DD."
+    },
+    "acq_time_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Acquisition time (UTC) in HHMM, zero-padded."
+    },
+    "yyyymm": {
+      "type": "integer",
+      "minimum": 190001,
+      "maximum": 210012,
+      "description": "Month key derived from acq_datetime_utc (UTC month)."
+    },
+    "date_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "UTC date key (YYYY-MM-DD) derived from acq_datetime_utc."
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90,
+      "description": "Detection latitude in degrees (WGS84)."
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180,
+      "description": "Detection longitude in degrees (WGS84)."
+    },
+    "conf_cat": {
+      "type": "string",
+      "enum": [
+        "l",
+        "n",
+        "h"
+      ],
+      "description": "Confidence category, harmonised across sensors: l=low, n=nominal, h=high."
+    },
+    "frp_mw": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Fire Radiative Power in MW for this detection (raw FRP field after type coercion)."
+    },
+    "daynight": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "D",
+        "N",
+        null
+      ],
+      "description": "Day/night flag if available (D or N). Null if absent in input."
+    },
+    "satellite": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Satellite/platform identifier if present in input; stored as string. Null if absent."
+    },
+    "type": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Raw FIRMS TYPE code retained in canonical detections after source-column mapping. TYPE == 0 filtering is applied before deduplication."
+    },
+    "dedup_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Deterministic deduplication key. Default: (sensor, acq_datetime_utc, round(lat,6), round(lon,6), satellite)."
+    },
+    "was_dedup_kept": {
+      "type": "boolean",
+      "description": "True if this record is the retained representative within its dedup_key group; false if it was dropped."
+    }
+  }
+}

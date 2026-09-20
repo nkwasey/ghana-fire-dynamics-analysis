@@ -1,0 +1,4 @@
+term,predictor_role,beta,corrected_se,z,p,adjusted_or,or_lower_95,or_upper_95,n,districts,estimator,working_structure,covariance_method,reference_distribution
+log2_viirs_det_primary,focal,-0.78430268253603619,0.039924737744533242,-19.644529353068275,6.4390839094584473e-86,0.4564378729396108,0.42208281901658962,0.49358922578046904,22939,249,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+log2_viirs_frp_mean_mw,focal,-0.50119833130017921,0.069381736683030631,-7.2237789836523678,5.0562411116936101e-13,0.60580427035305873,0.52877935291049893,0.69404906216169904,22939,249,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald
+log2_modis_burnable_km2_union_ba2012,adjustment,0.0162542495722563,0.059847102999111591,0.27159626377399737,0.78593247258293031,1.0163870685352248,0.90389333583444742,1.142881169858337,22939,249,firth_penalized_gee,independence,morel_bokossa_neerchal,standard_normal_wald

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mv_firms_panels/rp1_af_monthly_base.schema.json",
+  "title": "RP1 AF monthly merger-ready base export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "schema_version",
+    "level",
+    "unit_id",
+    "unit_code",
+    "unit_name",
+    "parent_level",
+    "parent_id",
+    "parent_code",
+    "parent_name",
+    "yyyymm",
+    "year",
+    "month",
+    "viirs_det_low",
+    "viirs_det_nominal",
+    "viirs_det_high",
+    "viirs_det_all",
+    "viirs_det_nh",
+    "viirs_pct_high_conf",
+    "viirs_days_active_nh",
+    "viirs_streak_max_nh",
+    "viirs_frp_active_days",
+    "viirs_frp_sum_daily_max_mw",
+    "viirs_frp_mean_mw",
+    "viirs_frp_p95_daily_max_mw"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "level": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unit_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "unit_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parent_level": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "yyyymm": {
+      "type": "integer",
+      "minimum": 201201,
+      "maximum": 202412
+    },
+    "year": {
+      "type": "integer",
+      "minimum": 2012,
+      "maximum": 2024
+    },
+    "month": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "viirs_det_low": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_nominal": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_high": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_all": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_det_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_pct_high_conf": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_days_active_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_streak_max_nh": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_active_days": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_sum_daily_max_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_mean_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "viirs_frp_p95_daily_max_mw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,1626 @@
+schema_version: rp1-analysis-v1.1
+formats:
+  raster:
+  - png
+  vector:
+  - pdf
+resolution_dpi: 300
+dimensions_inches:
+  single_panel:
+  - 7.0
+  - 5.0
+  wide_single_panel:
+  - 7.2
+  - 6.0
+  full_width_map:
+  - 7.2
+  - 7.2
+physical_size_roles:
+  rectangular_landscape_20x15_cm:
+    width_cm: 20.0
+    height_cm: 15.0
+  portrait_10x15_cm:
+    width_cm: 10.0
+    height_cm: 15.0
+pixel_rounding:
+  method: half_up
+grid_layouts:
+  single_panel:
+    rows: 1
+    columns: 1
+    width_ratios:
+    - 1.0
+    height_ratios:
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+    size_role: single_panel
+  wide_single_panel:
+    rows: 1
+    columns: 1
+    width_ratios:
+    - 1.0
+    height_ratios:
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+    size_role: wide_single_panel
+  full_width_map:
+    rows: 1
+    columns: 1
+    width_ratios:
+    - 1.0
+    height_ratios:
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+    size_role: full_width_map
+  rectangular_one_by_two:
+    rows: 1
+    columns: 2
+    width_ratios:
+    - 1.0
+    - 1.0
+    height_ratios:
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 1
+      row: 0
+      column: 1
+      row_span: 1
+      column_span: 1
+    size_role: rectangular_landscape_20x15_cm
+  rectangular_top_span_two_bottom:
+    rows: 2
+    columns: 2
+    width_ratios:
+    - 1.0
+    - 1.0
+    height_ratios:
+    - 1.0
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 2
+    - kind: data
+      panel_index: 1
+      row: 1
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 2
+      row: 1
+      column: 1
+      row_span: 1
+      column_span: 1
+    size_role: rectangular_landscape_20x15_cm
+  rectangular_three_by_two_with_key:
+    rows: 3
+    columns: 2
+    width_ratios:
+    - 1.0
+    - 1.0
+    height_ratios:
+    - 1.0
+    - 1.0
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 1
+      row: 0
+      column: 1
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 2
+      row: 1
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 3
+      row: 1
+      column: 1
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 4
+      row: 2
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: auxiliary
+      auxiliary_id: shared_graphical_key
+      row: 2
+      column: 1
+      row_span: 1
+      column_span: 1
+    size_role: rectangular_landscape_20x15_cm
+  rectangular_left_span_two_right:
+    rows: 2
+    columns: 2
+    width_ratios:
+    - 1.35
+    - 1.0
+    height_ratios:
+    - 1.0
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 2
+      column_span: 1
+    - kind: data
+      panel_index: 1
+      row: 0
+      column: 1
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 2
+      row: 1
+      column: 1
+      row_span: 1
+      column_span: 1
+    size_role: rectangular_landscape_20x15_cm
+  supplementary_wide_top_two_bottom:
+    rows: 2
+    columns: 2
+    width_ratios:
+    - 1.0
+    - 1.0
+    height_ratios:
+    - 1.2
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 2
+    - kind: data
+      panel_index: 1
+      row: 1
+      column: 0
+      row_span: 1
+      column_span: 1
+    - kind: data
+      panel_index: 2
+      row: 1
+      column: 1
+      row_span: 1
+      column_span: 1
+    size_role: rectangular_landscape_20x15_cm
+  portrait_single_panel:
+    size_role: portrait_10x15_cm
+    rows: 1
+    columns: 1
+    width_ratios:
+    - 1.0
+    height_ratios:
+    - 1.0
+    cells:
+    - kind: data
+      panel_index: 0
+      row: 0
+      column: 0
+      row_span: 1
+      column_span: 1
+font_sizes_pt:
+  base: 9
+  axis_label: 9
+  tick_label: 8
+  legend: 8
+  panel_label: 10
+map_layout:
+  shared_extent_for_comparable_maps: true
+  distinguish_excluded_from_valid_zero: true
+  north_arrow:
+    enabled: true
+    position: upper_right
+  scale_bar:
+    enabled: true
+    length_km: 100
+    unit: km
+    label: 100 km
+    position: lower_right
+    horizontal_margin_fraction: 0.08
+    vertical_margin_fraction: 0.05
+  colorbar:
+    position: below
+    orientation: horizontal
+    label_required: true
+  legend:
+    position: below
+panel_layout:
+  orientation: grid
+  panel_titles: false
+  panel_descriptions: false
+panel_labels:
+  convention: lowercase_parenthesised
+  sequence_start: a
+  font_weight: bold
+presentation_export:
+  schema: rp1-presentation-export-v1
+  groups:
+  - study
+  - rq1
+  - rq2
+  - rq3
+  - rq4
+  renderer_identities:
+  - acz_categorical_context_map
+  - support_acz_map
+  - acz_choropleth
+  - district_choropleth
+  - seasonality_lines
+  - local_moran_categorical_map
+  - district_seasonal_heatmap
+  - district_circular_mean_timing
+  - resultant_length_boxplot
+  - single_trajectory_with_sen
+  - grid_trajectory_with_sen
+  - stacked_proportions
+  - coefficient_or_plot
+  - standardised_probability_pairs
+  - cluster_membership_map
+  - cluster_recurrence_map
+  sources:
+    governed_acz_geometry:
+      path_pattern: data/geo/acz.shp
+    long_run_spatial_rate_presentation_source:
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F2.csv
+    seasonality_spatial_organisation_presentation_source:
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    district_seasonal_diagnostics_source:
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    annual_trend_source:
+      path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    cross_product_observability_presentation_source:
+      path_pattern: out/runs/{run_base}_pub/03_rq3_observability/figure_data/FD_F5.csv
+    supplement_s5_rq3:
+      path_pattern: out/runs/{run_base}_pub/03_rq3_observability/tables/S5.csv
+    cluster_membership_source:
+      path_pattern: out/runs/{run_base}_sec/04_secondary_concentration/publication_sources/cluster_membership_source.csv
+    cluster_recurrence_source:
+      path_pattern: out/runs/{run_base}_pub/04_secondary_concentration/figure_data/FD_F6.csv
+  geometry_dependencies:
+    none:
+      geometries: []
+    acz:
+      geometries:
+      - acz
+    district+acz:
+      geometries:
+      - district
+      - acz
+    acz+district_outline:
+      geometries:
+      - acz
+      - district
+  output:
+    formats:
+    - png
+    - pdf
+    size_role: rectangular_landscape_20x15_cm
+    raster_dpi: 300
+    collision_policy: error_if_output_dir_exists
+    deterministic_names: true
+    source_run_read_only: true
+    staging_policy: temporary_sibling_then_atomic_promote
+  run_family:
+    required_member_suffix: _close
+    publication_member_suffix: _pub
+    secondary_member_suffix: _sec
+    require_closeout_validation: true
+  manifests:
+    export_manifest: presentation_export_manifest.json
+    source_inventory: presentation_export_source_inventory.csv
+    output_inventory: presentation_export_output_inventory.csv
+  semantic_styles:
+    acz_categories:
+      CZ: '#1f77b4'
+      FZ: '#ff7f0e'
+      GS: '#2ca02c'
+      SS: '#d62728'
+      TZ: '#9467bd'
+    four_state_categories:
+      both_zero: '#1f77b4'
+      mcd64a1_positive_viirs_zero: '#ff7f0e'
+      viirs_positive_mcd64a1_zero: '#2ca02c'
+      both_positive: '#d62728'
+  exports:
+  - export_id: study_ghana_acz
+    group: study
+    label: Ghana agro-climatic zones
+    source_identity: governed_acz_geometry
+    source_path_pattern: data/geo/acz.shp
+    selector:
+      all_rows: true
+    geometry_dependency: acz
+    renderer_identity: acz_categorical_context_map
+    scenario: null
+    required_result_state: NONE
+    output_filename: study_ghana_acz.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: categorical ACZ identity
+    category_order:
+      mode: explicit
+      values:
+      - CZ
+      - FZ
+      - GS
+      - SS
+      - TZ
+    colour_semantic: 'fixed ACZ categorical palette: CZ #1f77b4; FZ #ff7f0e; GS #2ca02c; SS #d62728; TZ #9467bd'
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - north arrow
+    - 100 km scale bar
+    - below-map legend with full ACZ names
+    interpretation_boundary: Context only; no fire burden or inferential meaning.
+  - export_id: study_district_support
+    group: study
+    label: District analytical support
+    source_identity: long_run_spatial_rate_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F2.csv
+    selector:
+      column: panel
+      equals: district_long_run_rate
+    geometry_dependency: district+acz
+    renderer_identity: support_acz_map
+    scenario: null
+    required_result_state: NONE
+    output_filename: study_district_support.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: categorical support status and parent ACZ
+    category_order:
+      mode: explicit
+      values:
+      - CZ
+      - FZ
+      - GS
+      - SS
+      - TZ
+    colour_semantic: ACZ categorical palette for retained districts; configured excluded hatch
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - north arrow
+    - 100 km scale bar
+    - below-map ACZ/support legend
+    interpretation_boundary: Eligibility/support map only; excluded districts are not zero-fire districts.
+  - export_id: rq1_acz_long_run_rate
+    group: rq1
+    label: ACZ long-run mapped burned-area rate
+    source_identity: long_run_spatial_rate_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F2.csv
+    selector:
+      column: panel
+      equals: direct_acz_long_run_rate
+    geometry_dependency: acz+district_outline
+    renderer_identity: acz_choropleth
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_acz_long_run_rate.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: km² burned per 100 km² fixed BA-2001 burnable area per year
+    category_order:
+      mode: explicit
+      values:
+      - CZ
+      - FZ
+      - GS
+      - SS
+      - TZ
+    colour_semantic: viridis continuous
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: Direct ACZ long-run BA rate (km² per 100 km² yr⁻¹)'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Direct ACZ quantities are calculated on ACZ support, not averages of district rates.
+  - export_id: rq1_district_long_run_rate
+    group: rq1
+    label: District long-run mapped burned-area rate
+    source_identity: long_run_spatial_rate_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F2.csv
+    selector:
+      column: panel
+      equals: district_long_run_rate
+    geometry_dependency: district+acz
+    renderer_identity: district_choropleth
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_district_long_run_rate.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: km² burned per 100 km² fixed BA-2001 burnable area per year
+    category_order:
+      mode: deterministic
+      key: unit_id
+      values: []
+    colour_semantic: viridis continuous + configured valid-zero/excluded semantics
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: District long-run BA rate (km² per 100 km² yr⁻¹)'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Descriptive mapped burned-area rate; excluded/unsupported is distinct from observed zero.
+  - export_id: rq1_acz_seasonality
+    group: rq1
+    label: ACZ burned-area seasonality
+    source_identity: seasonality_spatial_organisation_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    selector:
+      column: panel
+      equals: acz_seasonality
+    geometry_dependency: none
+    renderer_identity: seasonality_lines
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_acz_seasonality.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: mean monthly mapped burned area (km²); circular mean month; dimensionless resultant length
+    category_order:
+      mode: explicit
+      values:
+      - CZ
+      - FZ
+      - GS
+      - SS
+      - TZ
+    colour_semantic: fixed ACZ categorical line palette
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - months 1–12
+    - legend below
+    - each ACZ legend entry includes μ and R
+    interpretation_boundary: Descriptive seasonality; circular timing does not imply synchronisation or causation.
+  - export_id: rq1_district_departure
+    group: rq1
+    label: District departure from parent ACZ
+    source_identity: seasonality_spatial_organisation_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    selector:
+      column: panel
+      equals: district_departure
+    geometry_dependency: district+acz
+    renderer_identity: district_choropleth
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_district_departure.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: km² per 100 km² yr⁻¹ difference (district minus parent ACZ)
+    category_order:
+      mode: deterministic
+      key: unit_id
+      values: []
+    colour_semantic: coolwarm signed continuous + configured excluded semantics
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: District − parent-ACZ BA rate (km² per 100 km² yr⁻¹)'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Raw rate-unit difference; not a z-score, hotspot class or causal effect.
+  - export_id: rq1_local_moran
+    group: rq1
+    label: Local Moran spatial organisation
+    source_identity: seasonality_spatial_organisation_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    selector:
+      column: panel
+      equals: local_moran
+    geometry_dependency: district+acz
+    renderer_identity: local_moran_categorical_map
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_local_moran.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: categorical HH/LL/HL/LH/NS/ISLAND
+    category_order:
+      mode: explicit
+      values:
+      - HH
+      - LL
+      - HL
+      - LH
+      - NS
+      - ISLAND
+    colour_semantic: configured semantic_styles.local_moran and excluded hatch
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - categorical key below map
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Only governed BH-supported classes are inferential; islands and excluded units remain distinct.
+  - export_id: rq1_district_seasonal_heatmap
+    group: rq1
+    label: District seasonal heatmap
+    source_identity: district_seasonal_diagnostics_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    selector:
+      column: record_type
+      equals: monthly_share
+    geometry_dependency: none
+    renderer_identity: district_seasonal_heatmap
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_district_seasonal_heatmap.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: share of district long-run mapped burned area (0–1)
+    category_order:
+      mode: explicit
+      values:
+      - rows ordered by parent_code, circular_mean_month, unit_name; columns months 1–12
+    colour_semantic: viridis continuous
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: Share of district long-run burned area'
+    interpretation_boundary: Presentation-only ordering of governed district climatologies; no clustering or inferential ordering
+      is introduced.
+  - export_id: rq1_district_circular_mean_timing
+    group: rq1
+    label: District circular mean timing
+    source_identity: district_seasonal_diagnostics_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    selector:
+      column: record_type
+      equals: monthly_share
+    geometry_dependency: none
+    renderer_identity: district_circular_mean_timing
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_district_circular_mean_timing.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: cyclic month coordinate (0 ≡ 12)
+    category_order:
+      mode: explicit
+      values:
+      - districts ordered by parent_code, circular_mean_month, unit_name
+    colour_semantic: single neutral marker colour
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - x-axis uses configured circular_mean_month display convention
+    - no district y labels
+    interpretation_boundary: Circular mean is descriptive timing; row order is presentation-only and not a rank of fire burden.
+  - export_id: rq1_district_resultant_length_by_acz
+    group: rq1
+    label: District seasonal concentration by ACZ
+    source_identity: district_seasonal_diagnostics_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    selector:
+      column: record_type
+      equals: monthly_share
+    geometry_dependency: none
+    renderer_identity: resultant_length_boxplot
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_district_resultant_length_by_acz.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: dimensionless mean resultant length (0–1)
+    category_order:
+      mode: explicit
+      values:
+      - CZ
+      - FZ
+      - GS
+      - SS
+      - TZ
+    colour_semantic: neutral boxplot; ACZ identity carried by ordered labels
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - ACZ codes on x-axis
+    - resultant length on y-axis
+    - fliers suppressed as in current S1 renderer
+    interpretation_boundary: Resultant length measures seasonal concentration, not fire magnitude or synchronisation.
+  - export_id: rq2_coastal_trend
+    group: rq2
+    label: Coastal Zone annual burned-area-rate trend
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      column: parent_code
+      equals: CZ
+    geometry_dependency: none
+    renderer_identity: single_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_coastal_trend.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - years 2001–2024
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - COASTAL ZONE
+    - Sen slope
+    - raw permutation p
+    - BH q
+    - no confidence interval
+    interpretation_boundary: The Sen line is presentation-only anchoring of the governed slope; p/q are consumed, not recomputed;
+      non-rejection is not evidence of no change.
+  - export_id: rq2_forest_trend
+    group: rq2
+    label: Forest Zone annual burned-area-rate trend
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      column: parent_code
+      equals: FZ
+    geometry_dependency: none
+    renderer_identity: single_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_forest_trend.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - years 2001–2024
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - FOREST ZONE
+    - Sen slope
+    - raw permutation p
+    - BH q
+    - no confidence interval
+    interpretation_boundary: The Sen line is presentation-only anchoring of the governed slope; p/q are consumed, not recomputed;
+      non-rejection is not evidence of no change.
+  - export_id: rq2_guinea_trend
+    group: rq2
+    label: Guinea Savannah annual burned-area-rate trend
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      column: parent_code
+      equals: GS
+    geometry_dependency: none
+    renderer_identity: single_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_guinea_trend.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - years 2001–2024
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - GUINEA SAVANNAH
+    - Sen slope
+    - raw permutation p
+    - BH q
+    - no confidence interval
+    interpretation_boundary: The Sen line is presentation-only anchoring of the governed slope; p/q are consumed, not recomputed;
+      non-rejection is not evidence of no change.
+  - export_id: rq2_sudan_trend
+    group: rq2
+    label: Sudan Savannah annual burned-area-rate trend
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      column: parent_code
+      equals: SS
+    geometry_dependency: none
+    renderer_identity: single_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_sudan_trend.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - years 2001–2024
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - SUDAN SAVANNAH
+    - Sen slope
+    - raw permutation p
+    - BH q
+    - no confidence interval
+    interpretation_boundary: The Sen line is presentation-only anchoring of the governed slope; p/q are consumed, not recomputed;
+      non-rejection is not evidence of no change.
+  - export_id: rq2_transition_trend
+    group: rq2
+    label: Transition Zone annual burned-area-rate trend
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      column: parent_code
+      equals: TZ
+    geometry_dependency: none
+    renderer_identity: single_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_transition_trend.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - years 2001–2024
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - TRANSITION ZONE
+    - Sen slope
+    - raw permutation p
+    - BH q
+    - no confidence interval
+    interpretation_boundary: The Sen line is presentation-only anchoring of the governed slope; p/q are consumed, not recomputed;
+      non-rejection is not evidence of no change.
+  - export_id: rq2_five_acz_comparison
+    group: rq2
+    label: Five-ACZ annual burned-area-rate comparison
+    source_identity: annual_trend_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    selector:
+      all_rows: true
+    geometry_dependency: none
+    renderer_identity: grid_trajectory_with_sen
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_five_acz_comparison.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: annual burned area per 100 km² fixed BA-2001 burnable area; Sen slope per year
+    category_order:
+      mode: explicit
+      values:
+      - COASTAL ZONE
+      - FOREST ZONE
+      - GUINEA SAVANNAH
+      - SUDAN SAVANNAH
+      - TRANSITION ZONE
+    colour_semantic: 'observed #0072B2; Sen slope #D55E00'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - five panels
+    - each annotated with governed Sen slope, raw p and BH q
+    - shared graphical key
+    interpretation_boundary: Same five prespecified RQ2 series and inferential outputs; layout comparison only, not a new
+      pooled test or national trend.
+  - export_id: rq3_four_state_correspondence
+    group: rq3
+    label: Four-state observation correspondence
+    source_identity: cross_product_observability_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/03_rq3_observability/figure_data/FD_F5.csv
+    selector:
+      column: panel
+      equals: four_state_correspondence
+    geometry_dependency: none
+    renderer_identity: stacked_proportions
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq3_four_state_correspondence.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: proportion of paired district-months (0–1)
+    category_order:
+      mode: explicit
+      values:
+      - both_zero
+      - mcd64a1_positive_viirs_zero
+      - viirs_positive_mcd64a1_zero
+      - both_positive
+    colour_semantic: 'four_state_categories: both_zero=#1f77b4; mcd64a1_positive_viirs_zero=#ff7f0e; viirs_positive_mcd64a1_zero=#2ca02c;
+      both_positive=#d62728'
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - 'state aliases: Both zero'
+    - MCD64A1 only
+    - VIIRS only
+    - Both positive
+    - ACZ order CZ/FZ/GS/SS/TZ
+    interpretation_boundary: Descriptive correspondence between different observation systems; neither product is treated
+      as ground truth.
+  - export_id: rq3_district_mismatch
+    group: rq3
+    label: District observation-system mismatch
+    source_identity: cross_product_observability_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/03_rq3_observability/figure_data/FD_F5.csv
+    selector:
+      column: panel
+      equals: mismatch_geography
+    geometry_dependency: district+acz
+    renderer_identity: district_choropleth
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq3_district_mismatch.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: proportion among VIIRS-positive paired district-months (0–1)
+    category_order:
+      mode: deterministic
+      key: unit_id
+      values: []
+    colour_semantic: viridis continuous + configured excluded semantics
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: VIIRS-positive / MCD64A1-absent proportion'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Mismatch is observation-system disagreement, not a validated omission rate or proof of product
+      error.
+  - export_id: rq3_focal_effects
+    group: rq3
+    label: Focal adjusted associations
+    source_identity: cross_product_observability_presentation_source
+    source_path_pattern: out/runs/{run_base}_pub/03_rq3_observability/figure_data/FD_F5.csv
+    selector:
+      column: panel
+      equals: focal_adjusted_associations
+    geometry_dependency: none
+    renderer_identity: coefficient_or_plot
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq3_focal_effects.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: adjusted odds ratio per doubling with 95% normal-reference CI
+    category_order:
+      mode: explicit
+      values:
+      - VIIRS detection count (per doubling)
+      - Mean FRP (per doubling)
+    colour_semantic: neutral point/CI; null reference at OR=1
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - log x-axis
+    - display aliases
+    - 95% CI
+    - no factor coefficients
+    interpretation_boundary: Associations are marginal and conditional on VIIRS-positive district-months; not causal effects
+      or product accuracy estimates.
+  - export_id: rq3_standardised_probabilities
+    group: rq3
+    label: Model-standardised probabilities
+    source_identity: supplement_s5_rq3
+    source_path_pattern: out/runs/{run_base}_pub/03_rq3_observability/tables/S5.csv
+    selector:
+      column: record_type
+      equals: standardised_probability
+    geometry_dependency: none
+    renderer_identity: standardised_probability_pairs
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq3_standardised_probabilities.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: probability (0–1); raw predictor units retained in labels
+    category_order:
+      mode: explicit
+      values:
+      - viirs_detection_count Q25
+      - viirs_detection_count Q75
+      - viirs_mean_frp Q25
+      - viirs_mean_frp Q75
+    colour_semantic: predictor-identity categorical palette; Q25/Q75 linked within predictor
+    legend_policy:
+      show: false
+      position: none
+    annotation_policy:
+    - show raw Q25/Q75 values, standardised probability, n=22,939 and 249 districts
+    - no CI because none is governed
+    interpretation_boundary: One focal predictor is changed at a time over observed covariates; these are model-standardised
+      descriptive predictions, not causal risks.
+  - export_id: rq4_mcd64a1_clusters
+    group: rq4
+    label: MCD64A1 significant-cluster membership
+    source_identity: cluster_membership_source
+    source_path_pattern: out/runs/{run_base}_sec/04_secondary_concentration/publication_sources/cluster_membership_source.csv
+    selector:
+      column: product
+      equals: mcd64a1
+    geometry_dependency: district+acz
+    renderer_identity: cluster_membership_map
+    scenario: MCD64A1_POISSON_PRIMARY
+    required_result_state: RESULTS_VALIDATED
+    output_filename: rq4_mcd64a1_clusters.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: binary significant-cluster membership
+    category_order:
+      mode: explicit
+      values:
+      - member
+      - no membership
+      - excluded
+    colour_semantic: configured valid-zero/excluded semantics; member neutral dark fill
+    legend_policy:
+      show: true
+      position: renderer_default
+    annotation_policy:
+    - 'legend: Significant cluster member / No significant cluster membership / Excluded'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Binary projection of already validated significant memberships; no significance or cluster classification
+      is recalculated.
+  - export_id: rq4_viirs_clusters
+    group: rq4
+    label: VIIRS significant-cluster membership
+    source_identity: cluster_membership_source
+    source_path_pattern: out/runs/{run_base}_sec/04_secondary_concentration/publication_sources/cluster_membership_source.csv
+    selector:
+      column: product
+      equals: viirs
+    geometry_dependency: district+acz
+    renderer_identity: cluster_membership_map
+    scenario: VIIRS_STP_PRIMARY
+    required_result_state: RESULTS_VALIDATED
+    output_filename: rq4_viirs_clusters.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: binary significant-cluster membership
+    category_order:
+      mode: explicit
+      values:
+      - member
+      - no membership
+      - excluded
+    colour_semantic: configured valid-zero/excluded semantics; member neutral dark fill
+    legend_policy:
+      show: true
+      position: renderer_default
+    annotation_policy:
+    - 'legend: Significant cluster member / No significant cluster membership / Excluded'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Binary projection of already validated significant memberships; no significance or cluster classification
+      is recalculated.
+  - export_id: rq4_mcd64a1_recurrence
+    group: rq4
+    label: MCD64A1 significant-cluster recurrence
+    source_identity: cluster_recurrence_source
+    source_path_pattern: out/runs/{run_base}_pub/04_secondary_concentration/figure_data/FD_F6.csv
+    selector:
+      column: product
+      equals: mcd64a1
+    geometry_dependency: district+acz
+    renderer_identity: cluster_recurrence_map
+    scenario: MCD64A1_POISSON_PRIMARY
+    required_result_state: RESULTS_VALIDATED
+    output_filename: rq4_mcd64a1_recurrence.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: count of distinct significant clusters
+    category_order:
+      mode: deterministic
+      key: unit_id
+      values: []
+    colour_semantic: cividis continuous + configured excluded semantics
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: Distinct significant clusters containing district'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Recurrence count is descriptive cluster membership frequency across distinct significant clusters;
+      not fire-event count, duration or persistence.
+  - export_id: rq4_viirs_recurrence
+    group: rq4
+    label: VIIRS significant-cluster recurrence
+    source_identity: cluster_recurrence_source
+    source_path_pattern: out/runs/{run_base}_pub/04_secondary_concentration/figure_data/FD_F6.csv
+    selector:
+      column: product
+      equals: viirs
+    geometry_dependency: district+acz
+    renderer_identity: cluster_recurrence_map
+    scenario: VIIRS_STP_PRIMARY
+    required_result_state: RESULTS_VALIDATED
+    output_filename: rq4_viirs_recurrence.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats:
+    - png
+    - pdf
+    raster_dpi: 300
+    units: count of distinct significant clusters
+    category_order:
+      mode: deterministic
+      key: unit_id
+      values: []
+    colour_semantic: cividis continuous + configured excluded semantics
+    legend_policy:
+      show: true
+      position: below
+    annotation_policy:
+    - 'horizontal colourbar: Distinct significant clusters containing district'
+    - north arrow
+    - 100 km scale bar
+    interpretation_boundary: Recurrence count is descriptive cluster membership frequency across distinct significant clusters;
+      not fire-event count, duration or persistence.
+figures:
+- id: F2
+  rq: RQ1
+  title: Spatial variation in long-run mapped burned-area rate
+  role: manuscript
+  evidence_class: DESCRIPTIVE
+  layout_role: rectangular_one_by_two
+  renderer: grid_composite
+  data_builder: source_frame
+  source_attribute: long_run_spatial_rate_presentation_source
+  requires_results_validated: true
+  data_builder_options:
+    panel_order:
+    - direct_acz_long_run_rate
+    - district_long_run_rate
+  renderer_options:
+    panel_column: panel
+    panel_order:
+    - direct_acz_long_run_rate
+    - district_long_run_rate
+    panel_renderers:
+    - acz_choropleth
+    - choropleth
+    panel_colorbar_labels:
+    - Direct ACZ long-run BA rate (km² per 100 km² yr⁻¹)
+    - District long-run BA rate (km² per 100 km² yr⁻¹)
+    panel_colormaps:
+    - viridis
+    - viridis
+  panel_count: 2
+  required_columns:
+  - panel
+  - unit_id
+  - unit_name
+  - parent_code
+  - support_status
+  - value
+  - exclusion_reasons
+  panel_xlabels:
+  - ''
+  - ''
+  panel_ylabels:
+  - ''
+  - ''
+- id: F3
+  rq: RQ1
+  title: RQ1 seasonality and spatial organisation
+  role: manuscript
+  evidence_class: PRIMARY_AND_DESCRIPTIVE
+  layout_role: rectangular_top_span_two_bottom
+  renderer: grid_composite
+  data_builder: source_frame
+  source_attribute: seasonality_spatial_organisation_presentation_source
+  requires_results_validated: true
+  data_builder_options:
+    panel_order:
+    - acz_seasonality
+    - district_departure
+    - local_moran
+  renderer_options:
+    panel_column: panel
+    panel_order:
+    - acz_seasonality
+    - district_departure
+    - local_moran
+    panel_renderers:
+    - seasonality_lines
+    - choropleth
+    - categorical_map
+    panel_colorbar_labels:
+    - ''
+    - District − parent-ACZ BA rate (km² per 100 km² yr⁻¹)
+    - ''
+    panel_colormaps:
+    - viridis
+    - coolwarm
+    - viridis
+    seasonality_legend_band_fraction: 0.18
+    seasonality_legend_gap_fraction: 0.28
+    seasonality_legend_ncol: 3
+    seasonality_horizontal_inset_fraction: 0.05
+    seasonality_y_label_padding_pt: 2.0
+  panel_count: 3
+  required_columns:
+  - panel
+  - record_type
+  - unit_id
+  - unit_name
+  - parent_code
+  - month
+  - value
+  - circular_mean_month
+  - mean_resultant_length
+  - local_class
+  - support_status
+  - exclusion_reasons
+  panel_xlabels:
+  - Month
+  - ''
+  - ''
+  panel_ylabels:
+  - 'Mean monthly burned area
+
+    (km²)
+
+    '
+  - ''
+  - ''
+- id: F4
+  rq: RQ2
+  title: RQ2 annual burned-area-rate trends
+  role: manuscript
+  evidence_class: PRIMARY_INFERENCE
+  layout_role: rectangular_three_by_two_with_key
+  renderer: grid_trajectory_with_sen
+  data_builder: source_frame
+  source_attribute: annual_trend_source
+  requires_results_validated: true
+  data_builder_options: {}
+  renderer_options:
+    x: year
+    y: annual_rate
+    group: parent_name
+    slope: sen_slope
+    annotation_fields:
+    - sen_slope
+    - raw_p
+    - bh_q
+    panel_order:
+    - COASTAL ZONE
+    - FOREST ZONE
+    - GUINEA SAVANNAH
+    - SUDAN SAVANNAH
+    - TRANSITION ZONE
+    auxiliary_key:
+      cell_id: shared_graphical_key
+      entries:
+      - label: Annual fixed-support rate
+        kind: observed_series
+      - label: Sen slope
+        kind: sen_slope
+    trajectory_styles:
+      observed_series:
+        color: '#0072B2'
+        linewidth: 0.8
+        marker: o
+        markersize: 2.2
+      sen_slope:
+        color: '#D55E00'
+        linewidth: 1.2
+    shared_ylabel_x_fraction: 0.018
+  panel_count: 5
+  required_columns:
+  - parent_code
+  - parent_name
+  - year
+  - annual_rate
+  - sen_slope
+  - raw_p
+  - bh_q
+  xlabel: Year
+  ylabel: Burned area per 100 km² of fixed BA-2001 burnable area
+  panel_xlabels:
+  - Year
+  - Year
+  - Year
+  - Year
+  - Year
+  panel_ylabels:
+  - ''
+  - ''
+  - ''
+  - ''
+  - ''
+- id: F5
+  rq: RQ3
+  title: RQ3 cross-product observability
+  role: manuscript
+  evidence_class: PRIMARY_AND_DESCRIPTIVE
+  layout_role: rectangular_left_span_two_right
+  renderer: grid_composite
+  data_builder: source_frame
+  source_attribute: cross_product_observability_presentation_source
+  requires_results_validated: true
+  data_builder_options:
+    panel_order:
+    - mismatch_geography
+    - four_state_correspondence
+    - focal_adjusted_associations
+  renderer_options:
+    panel_column: panel
+    panel_order:
+    - mismatch_geography
+    - four_state_correspondence
+    - focal_adjusted_associations
+    panel_renderers:
+    - choropleth
+    - stacked_proportion
+    - coefficient_or_plot
+    panel_colorbar_labels:
+    - VIIRS-positive / MCD64A1-absent proportion
+    - ''
+    - ''
+    panel_colormaps:
+    - viridis
+    - viridis
+    - viridis
+    panel_expected_rows:
+    - 260
+    - 20
+    - 2
+    state_display_aliases:
+      both_zero: Both zero
+      mcd64a1_positive_viirs_zero: MCD64A1 only
+      viirs_positive_mcd64a1_zero: VIIRS only
+      both_positive: Both positive
+    state_legend_ncol: 2
+    state_legend_band_fraction: 0.3
+    state_legend_gap_fraction: 0.07
+    effect_display_aliases:
+      VIIRS detection count (per doubling): 'VIIRS detection count
+
+        (per doubling)'
+      Mean FRP (per doubling): 'Mean VIIRS FRP
+
+        (per doubling)'
+    effect_label_gutter_fraction: 0.56
+    effect_label_gap_fraction: 0.02
+  panel_count: 3
+  required_columns:
+  - panel
+  - record_type
+  - unit_id
+  - unit_name
+  - parent_code
+  - state
+  - proportion
+  - value
+  - term
+  - adjusted_or
+  - or_lower_95
+  - or_upper_95
+  - p
+  - support_status
+  - exclusion_reasons
+  panel_xlabels:
+  - ''
+  - ''
+  - Adjusted odds ratio (log scale)
+  panel_ylabels:
+  - ''
+  - Proportion
+  - ''
+- id: F6
+  rq: SECONDARY
+  title: Recurrence of validated significant spatio-temporal cluster membership
+  role: manuscript
+  evidence_class: DESCRIPTIVE
+  layout_role: rectangular_one_by_two
+  renderer: cluster_recurrence_maps_grid
+  data_builder: source_frame
+  source_attribute: cluster_recurrence_source
+  requires_results_validated: true
+  data_builder_options:
+    genuine_external_results_required: true
+  renderer_options:
+    panel_column: product
+    panel_order:
+    - mcd64a1
+    - viirs
+    panel_titles:
+    - MCD64A1
+    - VIIRS
+    value_column: significant_cluster_count
+    cmap: cividis
+    colorbar_label: Distinct significant clusters containing district
+    colorbar_labelpad_pt: 2.0
+    shared_colorbar: true
+  panel_count: 2
+  required_columns:
+  - product
+  - unit_id
+  - significant_cluster_count
+  - total_significant_clusters
+  - significant_cluster_fraction
+  - support_status
+  - exclusion_reasons
+  panel_xlabels:
+  - ''
+  - ''
+  panel_ylabels:
+  - ''
+  - ''
+- id: S1
+  rq: RQ1
+  title: Full district seasonal diagnostics
+  role: supplementary
+  evidence_class: DESCRIPTIVE
+  layout_role: supplementary_wide_top_two_bottom
+  renderer: grid_district_seasonal_diagnostics
+  data_builder: source_frame
+  source_attribute: district_seasonal_diagnostics_source
+  requires_results_validated: true
+  data_builder_options: {}
+  renderer_options: {}
+  panel_count: 3
+  required_columns:
+  - record_type
+  - unit_id
+  - unit_name
+  - parent_code
+  - month
+  - monthly_share
+  - circular_mean_month
+  - mean_resultant_length
+  panel_xlabels:
+  - Month
+  - Circular mean month (cyclic coordinate; 0 ≡ 12)
+  - ACZ
+  panel_ylabels:
+  - Districts
+  - Districts
+  - Resultant length
+source_data_policy:
+  required_for_manuscript_figures: true
+  format: csv
+  deterministic_filenames: true
+text_policy:
+  title_inside_figure: false
+  embedded_notes: false
+publication_geometry:
+  canvas:
+    width_cm: 20.0
+    height_cm: 15.0
+    orientation: landscape
+  outer_margins:
+    left_fraction: 0.08
+    right_fraction: 0.08
+    top_fraction: 0.05
+    bottom_fraction: 0.08
+  spacing:
+    inter_column: 0.3
+    inter_row: 0.38
+  axis_label_padding_pt:
+    x: 6.0
+    y: 8.0
+  panel_label_offset_axes:
+    x: -0.02
+    y: 0.02
+  map_panel:
+    map_height_ratio: 1.0
+    legend_band_height: 0.13
+    colourbar_band_height: 0.08
+    inter_band_spacing: 0.04
+  heatmap_colorbar_band_fraction: 0.07
+  heatmap_colorbar_gap_fraction: 0.1
+  effect_vertical_padding_rows: 0.45
+semantic_styles:
+  valid_zero:
+    face: '#BFD7EA'
+    edge: '#666666'
+  not_significant:
+    face: '#D9D9D9'
+    edge: '#666666'
+  excluded:
+    face: '#FFFFFF'
+    edge: '#666666'
+    hatch: ////
+  local_moran:
+    HH:
+      face: '#D55E00'
+      edge: '#666666'
+      hatch: ''
+    LL:
+      face: '#0072B2'
+      edge: '#666666'
+      hatch: ''
+    HL:
+      face: '#CC79A7'
+      edge: '#666666'
+      hatch: ''
+    LH:
+      face: '#009E73'
+      edge: '#666666'
+      hatch: ''
+    NS:
+      face: '#D9D9D9'
+      edge: '#666666'
+      hatch: ''
+    ISLAND:
+      face: '#F0E442'
+      edge: '#666666'
+      hatch: ''
+display_conventions:
+  circular_mean_month:
+    axis_label: Circular mean month (cyclic coordinate; 0 ≡ 12)
+    legend_title: μ = circular mean month (cyclic; 0 ≡ 12)
+    axis_min: 0.0
+    axis_max: 12.0
+    ticks:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    tick_labels:
+    - 12/0
+    - '1'
+    - '2'
+    - '3'
+    - '4'
+    - '5'
+    - '6'
+    - '7'
+    - '8'
+    - '9'
+    - '10'
+    - '11'
+    - 12/0
