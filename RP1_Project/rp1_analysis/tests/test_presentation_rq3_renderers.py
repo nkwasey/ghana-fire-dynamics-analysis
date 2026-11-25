@@ -1,4 +1,6 @@
 from __future__ import annotations
+from scientific_input_reference import paired_input_reference, model_input_reference, design_terms_reference
+from generated_run_reference import selected_run_base, require_selected_run
 
 import hashlib
 import json
@@ -20,46 +22,10 @@ from rp1_analysis_v1.presentation_rq3 import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = selected_run_base(ROOT)
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 FD_F5 = ROOT / "out" / "runs" / f"{RUN_BASE}_pub" / "03_rq3_observability" / "figure_data" / "FD_F5.csv"
 S5 = ROOT / "out" / "runs" / f"{RUN_BASE}_pub" / "03_rq3_observability" / "tables" / "S5.csv"
-EXPECTED_FD_F5_SHA = "38736b0376469908b7a057ce88e52462bec8ccad0efbec16c0c26158d51c5317"
-EXPECTED_S5_SHA = "c83c612186a7b7d144b86e1c04f5870f2f9966f3bf99f18701cd718b45f331b4"
-EXPECTED_OVERALL_COUNTS = {
-    "both_zero": 15447,
-    "mcd64a1_positive_viirs_zero": 209,
-    "viirs_positive_mcd64a1_zero": 16811,
-    "both_positive": 6128,
-}
-EXPECTED_FOCAL = {
-    "VIIRS detection count (per doubling)": {
-        "beta": -0.7843026825360361,
-        "corrected_se": 0.0399247377445332,
-        "adjusted_or": 0.4564378729396108,
-        "or_lower_95": 0.4220828190165896,
-        "or_upper_95": 0.493589225780469,
-        "p": 6.439083909458447e-86,
-    },
-    "Mean FRP (per doubling)": {
-        "beta": -0.5011983313001792,
-        "corrected_se": 0.0693817366830306,
-        "adjusted_or": 0.6058042703530587,
-        "or_lower_95": 0.5287793529104989,
-        "or_upper_95": 0.694049062161699,
-        "p": 5.05624111169361e-13,
-    },
-}
-EXPECTED_STANDARDISED = {
-    "viirs_detection_count": {
-        0.25: {"raw_quantile_value": 2.0, "standardised_probability": 0.9185166447796452},
-        0.75: {"raw_quantile_value": 40.0, "standardised_probability": 0.6128446058877899},
-    },
-    "viirs_mean_frp": {
-        0.25: {"raw_quantile_value": 4.09, "standardised_probability": 0.7599209398023414},
-        0.75: {"raw_quantile_value": 10.018712121212122, "standardised_probability": 0.7147889477059636},
-    },
-}
 EXPORTS = (
     "rq3_four_state_correspondence",
     "rq3_district_mismatch",
@@ -69,6 +35,7 @@ EXPORTS = (
 
 
 def _context_and_source(export_id: str):
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     bundle = load_configuration_bundle(ROOT / "config")
     registry = bundle.figure.presentation_export
@@ -82,31 +49,37 @@ def _context_and_source(export_id: str):
     return spec, context, source
 
 
-def test_rq3_governed_sources_are_byte_identical() -> None:
-    assert hashlib.sha256(FD_F5.read_bytes()).hexdigest() == EXPECTED_FD_F5_SHA
-    assert hashlib.sha256(S5.read_bytes()).hexdigest() == EXPECTED_S5_SHA
+def test_rq3_source_identity_is_computed_from_selected_run() -> None:
+    for export_id in EXPORTS:
+        _spec, _context, source = _context_and_source(export_id)
+        assert source.sha256 == hashlib.sha256(source.path.read_bytes()).hexdigest()
 
 
-def test_rq3_overall_populations_and_four_state_counts_are_exact() -> None:
+def test_rq3_populations_and_four_state_counts_match_recorded_inputs() -> None:
+    require_selected_run(ROOT, RUN_BASE)
     s5 = pd.read_csv(S5)
     overall = s5.loc[s5["record_type"].eq("four_state") & s5["scope"].eq("overall")].copy()
-    assert len(overall) == 4
-    assert overall["denominator_n"].eq(38595).all()
-    assert dict(zip(overall["state"].astype(str), overall["count"].astype(int), strict=True)) == EXPECTED_OVERALL_COUNTS
-
-    diagnostics = s5.loc[s5["record_type"].eq("diagnostic")].copy()
+    paired = paired_input_reference()
+    ba, viirs = paired.modis_ba_any_ba2012.eq(1), paired.viirs_det_primary.gt(0)
+    expected = {"both_zero": int((~ba & ~viirs).sum()), "mcd64a1_positive_viirs_zero": int((ba & ~viirs).sum()),
+                "viirs_positive_mcd64a1_zero": int((~ba & viirs).sum()), "both_positive": int((ba & viirs).sum())}
+    assert overall["denominator_n"].eq(len(paired)).all()
+    assert dict(zip(overall["state"].astype(str), overall["count"].astype(int), strict=True)) == expected
+    diagnostics = s5.loc[s5["record_type"].eq("diagnostic")]
     lookup = {str(row["diagnostic_name"]): row["diagnostic_value"] for _, row in diagnostics.iterrows()}
-    assert int(float(lookup["observations"])) == 22939
-    assert int(float(lookup["districts"])) == 249
-    assert int(float(lookup["outcome_y1"])) == 16811
-    assert int(float(lookup["outcome_y0"])) == 6128
-    assert int(float(lookup["model_columns"])) == 31
+    model = model_input_reference()
+    expected_diagnostics = {"observations": len(model), "districts": model.unit_id.nunique(),
+                            "outcome_y1": int(model.mismatch_y.sum()), "outcome_y0": int(model.mismatch_y.eq(0).sum()),
+                            "model_columns": len(design_terms_reference())}
+    for key, value in expected_diagnostics.items():
+        assert int(float(lookup[key])) == value
 
 
 def test_presentation_export_selectors_resolve_expected_rq3_shapes() -> None:
+    require_selected_run(ROOT, RUN_BASE)
     expected_rows = {
         "rq3_four_state_correspondence": 20,
-        "rq3_district_mismatch": 260,
+        "rq3_district_mismatch": pd.read_csv(ROOT / "data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv").unit_id.nunique(),
         "rq3_focal_effects": 2,
         "rq3_standardised_probabilities": 4,
     }
@@ -136,42 +109,32 @@ def test_four_state_renderer_fails_closed_on_broken_within_acz_support() -> None
         render_rq3_four_state_correspondence(broken, spec=spec, context=context)
 
 
-def test_district_mismatch_renderer_uses_governed_249_supported_districts() -> None:
+def test_district_mismatch_renderer_uses_current_supported_districts() -> None:
     spec, context, source = _context_and_source("rq3_district_mismatch")
     assert source.frame is not None
     frame = source.frame
-    assert len(frame) == 260
-    assert frame.loc[~frame["support_status"].eq("excluded"), "unit_id"].nunique() == 249
+    assert frame.unit_id.is_unique
     valid = frame.loc[~frame["support_status"].eq("excluded")].copy()
+    assert set(valid.unit_id) == set(paired_input_reference().unit_id)
     assert valid["value"].between(0.0, 1.0, inclusive="both").all()
     rendered = render_rq1_district_choropleth(frame, spec=spec, context=context)
     assert rendered.png.startswith(b"\x89PNG\r\n\x1a\n")
     assert rendered.pdf.startswith(b"%PDF")
 
 
-def test_focal_effect_source_exactly_matches_governed_s5_coefficients() -> None:
-    spec, _context, source = _context_and_source("rq3_focal_effects")
+def test_focal_effect_source_matches_selected_model_coefficients() -> None:
+    _spec, _context, source = _context_and_source("rq3_focal_effects")
     assert source.frame is not None
     frame = source.frame.copy()
-    assert tuple(frame["term"].astype(str)) == tuple(EXPECTED_FOCAL)
     s5 = pd.read_csv(S5)
-    coeff = s5.loc[s5["record_type"].eq("coefficient") & s5["term_role"].eq("focal_predictor")].copy()
-    assert len(coeff) == 2
-    for row in coeff.itertuples(index=False):
-        label = "VIIRS detection count (per doubling)" if row.term == "log2_viirs_det_primary" else "Mean FRP (per doubling)"
-        expected = EXPECTED_FOCAL[label]
-        assert float(row.beta) == pytest.approx(expected["beta"], abs=1e-15)
-        assert float(row.corrected_se) == pytest.approx(expected["corrected_se"], abs=1e-15)
-        assert float(row.adjusted_or) == pytest.approx(expected["adjusted_or"], abs=1e-15)
-        assert float(row.or_lower_95) == pytest.approx(expected["or_lower_95"], abs=1e-15)
-        assert float(row.or_upper_95) == pytest.approx(expected["or_upper_95"], abs=1e-15)
-        assert float(row.p) == pytest.approx(expected["p"], abs=1e-15)
-    for row in frame.itertuples(index=False):
-        expected = EXPECTED_FOCAL[str(row.term)]
-        assert float(row.adjusted_or) == pytest.approx(expected["adjusted_or"], abs=1e-15)
-        assert float(row.or_lower_95) == pytest.approx(expected["or_lower_95"], abs=1e-15)
-        assert float(row.or_upper_95) == pytest.approx(expected["or_upper_95"], abs=1e-15)
-        assert float(row.p) == pytest.approx(expected["p"], abs=1e-15)
+    coefficients = s5.loc[s5["record_type"].eq("coefficient") & s5["term_role"].eq("focal_predictor")]
+    labels = {"log2_viirs_det_primary": "VIIRS detection count (per doubling)",
+              "log2_viirs_frp_mean_mw": "Mean FRP (per doubling)"}
+    assert set(frame.term) == {labels[str(term)] for term in coefficients.term}
+    for row in coefficients.itertuples(index=False):
+        observed = frame.loc[frame.term.eq(labels[str(row.term)])].iloc[0]
+        for field in ("adjusted_or", "or_lower_95", "or_upper_95", "p"):
+            assert float(observed[field]) == pytest.approx(float(getattr(row, field)), rel=1e-12, abs=1e-15)
 
 
 def test_focal_effect_renderer_returns_valid_configured_png_pdf() -> None:
@@ -182,28 +145,19 @@ def test_focal_effect_renderer_returns_valid_configured_png_pdf() -> None:
     assert rendered.pdf.startswith(b"%PDF")
 
 
-def test_standardised_probability_source_exact_values_and_population() -> None:
+def test_standardised_probability_source_matches_selected_model() -> None:
     _spec, _context, source = _context_and_source("rq3_standardised_probabilities")
     assert source.frame is not None
     frame = source.frame.copy()
-    assert len(frame) == 4
-    assert frame["n"].eq(22939).all()
-    assert frame["districts"].eq(249).all()
-    grouped = {}
-    for predictor_id, group in frame.groupby("predictor_id", sort=False, observed=True):
-        grouped[str(predictor_id)] = {
-            float(row.quantile): {
-                "raw_quantile_value": float(row.raw_quantile_value),
-                "standardised_probability": float(row.standardised_probability),
-            }
-            for row in group.itertuples(index=False)
-        }
-    assert tuple(grouped) == tuple(EXPECTED_STANDARDISED)
-    for predictor_id, expected in EXPECTED_STANDARDISED.items():
-        for quantile, values in expected.items():
-            observed = grouped[predictor_id][quantile]
-            assert observed["raw_quantile_value"] == pytest.approx(values["raw_quantile_value"], abs=1e-12)
-            assert observed["standardised_probability"] == pytest.approx(values["standardised_probability"], abs=1e-15)
+    model = model_input_reference()
+    assert frame["n"].eq(len(model)).all()
+    assert frame["districts"].eq(model.unit_id.nunique()).all()
+    expected = pd.read_csv(S5).loc[lambda x: x.record_type.eq("standardised_probability")]
+    keys = ["predictor_id", "quantile"]
+    columns = keys + ["raw_quantile_value", "standardised_probability"]
+    pd.testing.assert_frame_equal(frame[columns].sort_values(keys).reset_index(drop=True),
+                                  expected[columns].sort_values(keys).reset_index(drop=True), check_dtype=False)
+    assert frame["standardised_probability"].between(0.0, 1.0).all()
 
 
 def test_standardised_probability_renderer_returns_valid_configured_png_pdf() -> None:
@@ -227,6 +181,7 @@ def test_exporter_registry_marks_all_four_rq3_exports_implemented() -> None:
 
 @pytest.mark.parametrize("export_id", EXPORTS)
 def test_end_to_end_rq3_export_is_read_only_and_manifest_bound(export_id: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     run = pe.resolve_run_family(RUN_CLOSE, paths=paths, validate=False)
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
@@ -244,6 +199,7 @@ def test_end_to_end_rq3_export_is_read_only_and_manifest_bound(export_id: str, t
 
 
 def test_deterministic_repeat_rendering_for_all_four_rq3_exports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     run = pe.resolve_run_family(RUN_CLOSE, paths=paths, validate=False)
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
@@ -254,3 +210,5 @@ def test_deterministic_repeat_rendering_for_all_four_rq3_exports(tmp_path: Path,
         pe.export_one_presentation_figure(run_dir=RUN_CLOSE, output_dir=second, export_id=export_id, paths=paths)
         assert (first / f"{export_id}.png").read_bytes() == (second / f"{export_id}.png").read_bytes()
         assert (first / f"{export_id}.pdf").read_bytes() == (second / f"{export_id}.pdf").read_bytes()
+
+

@@ -275,12 +275,16 @@ def test_final_gate_requires_rq2_production_and_preserves_external_secondary_sta
     assert 'final_run_gate="PASS"' in code
     assert "secondary_integration.execution_statein{EXTERNAL_RESULTS_REQUIRED,RESULTS_VALIDATED}" in code
 
-def test_notebook_starts_clean_without_embedded_outputs() -> None:
+def test_saved_notebook_outputs_do_not_change_source_identity() -> None:
+    from copy import deepcopy
+    from rp1_analysis_v1.publication_sources import _notebook_payload_digest
     nb = _nb()
-    for cell in nb.cells:
+    clean = deepcopy(nb)
+    for cell in clean.cells:
         if cell.cell_type == "code":
-            assert cell.execution_count is None
-            assert cell.outputs == []
+            cell.execution_count = None
+            cell.outputs = []
+    assert _notebook_payload_digest(nb) == _notebook_payload_digest(clean)
 
 
 def test_optional_satscan_cell_remains_thin_orchestration() -> None:

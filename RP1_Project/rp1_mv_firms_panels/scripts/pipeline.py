@@ -1,7 +1,8 @@
 # file: scripts/pipeline.py
 """Wrapper script for `pipeline`.
 
-This is the recommended entry point for most users.
+This runs the active-fire component. Use tools/run_workflow.py at the workspace
+root for the complete geography, c3 burned-area and analysis workflow.
 
 Examples
 --------

@@ -1,6 +1,8 @@
 from __future__ import annotations
+from scientific_input_reference import long_run_input_reference, panel_input_reference
 
 import json
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -111,7 +113,7 @@ def test_real_rq1_population_and_fixed_rate(governed) -> None:
     district = district_long_run_burned_area_summary(
         authorities.district_panel, bundle.analysis, summary.long_run_mask
     )
-    assert (len(acz), len(district)) == (5, 250)
+    assert (len(acz), len(district)) == (authorities.acz_panel.unit_id.nunique(), long_run_input_reference().unit_id.nunique())
     assert acz["n_months"].eq(288).all() and district["n_months"].eq(288).all()
     assert acz["n_years"].eq(24).all() and district["n_years"].eq(24).all()
     coastal_source = authorities.acz_panel.loc[authorities.acz_panel["unit_id"].eq("coastal_zone")]
@@ -218,11 +220,11 @@ def test_spatial_synthetic_positive_and_outlier_cases_are_distinct() -> None:
 
 
 def test_real_rq1_authorities_are_complete_and_protocol_clean(rq1) -> None:
-    assert rq1.acz_fire_pattern_reference.shape[0] == 5
-    assert rq1.within_acz_district_heterogeneity.shape[0] == 5
-    assert rq1.district_scale_authority.shape[0] == 250
+    assert rq1.acz_fire_pattern_reference.shape[0] == panel_input_reference("acz_monthly").unit_id.nunique()
+    assert rq1.within_acz_district_heterogeneity.shape[0] == panel_input_reference("acz_monthly").unit_id.nunique()
+    assert rq1.district_scale_authority.shape[0] == long_run_input_reference().unit_id.nunique()
     assert rq1.spatial_autocorrelation.shape[0] == 1
-    assert rq1.local_moran_authority.shape[0] == 250
+    assert rq1.local_moran_authority.shape[0] == long_run_input_reference().unit_id.nunique()
     district_cols = " ".join(rq1.district_scale_authority.columns).casefold()
     assert "standardised" not in district_cols and "d_star" not in district_cols
     assert "annual_sensitivity" not in district_cols
@@ -230,16 +232,28 @@ def test_real_rq1_authorities_are_complete_and_protocol_clean(rq1) -> None:
     assert "top_five" not in " ".join(rq1.within_acz_district_heterogeneity.columns)
 
 
-def test_real_moran_lisa_uses_9999_and_single_explicit_island(rq1) -> None:
+def _reference_islands(governed):
+    _, _, authorities, summary = governed
+    retained = set(summary.long_run_mask.units.loc[summary.long_run_mask.units.eligible, "unit_id"])
+    geometry = authorities.district_geometry.set_index("dist_id").loc[sorted(retained)].geometry
+    # Pairwise boundary intersections independently check the indexed Queen graph.
+    return {key for key, shape in geometry.items()
+            if not any(key != other and shape.boundary.intersects(candidate.boundary)
+                       for other, candidate in geometry.items())}
+
+
+def test_real_moran_lisa_uses_9999_and_records_source_geometry_islands(rq1, governed) -> None:
     global_row = rq1.spatial_autocorrelation.iloc[0]
+    islands = _reference_islands(governed)
     assert global_row["permutations"] == 9999
-    assert global_row["n_effective"] == 249
-    assert global_row["island_count"] == 1
-    assert global_row["island_ids"] == "Accra_Metropolis"
+    assert global_row["n_effective"] == len(rq1.district_scale_authority) - len(islands)
+    assert global_row["island_count"] == len(islands)
+    assert global_row["island_ids"] == "|".join(sorted(islands))
     local = rq1.local_moran_authority
     assert local.loc[local["diagnostic_status"].eq("ok"), "permutations"].eq(9999).all()
-    island = local.loc[local["unit_id"].eq("Accra_Metropolis")].iloc[0]
-    assert island["lisa_class"] == "ISLAND" and pd.isna(island["permutation_p"])
+    island_rows = local.loc[local.unit_id.isin(islands)]
+    assert set(local.loc[local.lisa_class.eq("ISLAND"), "unit_id"]) == islands
+    assert island_rows["permutation_p"].isna().all()
     eligible = local.loc[local["diagnostic_status"].eq("ok")]
     assert eligible["permutation_p"].notna().all() and eligible["bh_q"].notna().all()
     assert set(local["lisa_class"]).issubset({"HH", "LL", "HL", "LH", "NS", "ISLAND"})
@@ -311,41 +325,43 @@ def test_rq1_maximum_overlap_crosswalk_provenance_is_embedded(rq1) -> None:
     assert required.issubset(district.columns)
     assert district["dominant_overlap_share"].between(0.0, 1.0, inclusive="both").all()
     assert district["crosswalk_sha256"].nunique() == 1
-    assert district["crosswalk_sha256"].iloc[0] == "fb42b79ca19ab2a620cac7484c4d92c785374d39b78c52c18618be18e35772d0"
+    crosswalk = SUBPROJECT / "data/reference/district_to_acz_max_overlap.csv"
+    assert district["crosswalk_sha256"].iloc[0] == hashlib.sha256(crosswalk.read_bytes()).hexdigest()
     assert district["crosswalk_analysis_crs"].eq("EPSG:32630").all()
 
 
 def test_rq1_contract_facing_source_authorities_are_complete(rq1) -> None:
-    assert rq1.acz_annual_rates.shape[0] == 120
-    assert rq1.district_annual_rates.shape[0] == 6000
+    assert rq1.acz_annual_rates.shape[0] == len(panel_input_reference("acz_monthly").drop_duplicates(["unit_id", "year"]))
+    assert rq1.district_annual_rates.shape[0] == len(long_run_input_reference().drop_duplicates(["unit_id", "year"]))
     assert rq1.district_annual_rates["fixed_burnable_union_km2"].gt(0).all()
-    assert rq1.district_metrics_source.shape[0] == 250
+    assert rq1.district_metrics_source.shape[0] == long_run_input_reference().unit_id.nunique()
     assert set(rq1.spatial_support_source["panel"]) == {
         "spatial_supports", "direct_acz_long_run_rate", "district_long_run_rate"
     }
     assert rq1.spatial_support_source["panel"].value_counts().to_dict() == {
-        "spatial_supports": 260,
-        "district_long_run_rate": 250,
-        "direct_acz_long_run_rate": 5,
+        "spatial_supports": panel_input_reference().unit_id.nunique(),
+        "district_long_run_rate": long_run_input_reference().unit_id.nunique(),
+        "direct_acz_long_run_rate": panel_input_reference("acz_monthly").unit_id.nunique(),
     }
     assert set(rq1.seasonality_spatial_organisation_source["panel"]) == {"acz_seasonality", "district_departure", "local_moran"}
     assert (rq1.spatial_statistics_authority["record_type"] == "global_moran_national").sum() == 1
-    assert (rq1.spatial_statistics_authority["record_type"] == "local_moran").sum() == 250
+    assert (rq1.spatial_statistics_authority["record_type"] == "local_moran").sum() == long_run_input_reference().unit_id.nunique()
 
 
-def test_rq1_realised_metadata_records_population_and_spatial_parameters(rq1) -> None:
+def test_rq1_realised_metadata_records_population_and_spatial_parameters(rq1, governed) -> None:
     meta = rq1.rq1_realised_run_metadata
     assert meta["population"] == {
-        "acz_units": 5,
-        "district_units": 250,
-        "district_months": 72000,
-        "years": 24,
+        "acz_units": panel_input_reference("acz_monthly").unit_id.nunique(),
+        "district_units": long_run_input_reference().unit_id.nunique(),
+        "district_months": len(long_run_input_reference()),
+        "years": long_run_input_reference().year.nunique(),
         "climatology_months": 12,
     }
     spatial = meta["spatial"]
-    assert spatial["candidate_units"] == 250
-    assert spatial["non_island_units"] == 249
-    assert spatial["island_count"] == 1
-    assert spatial["island_ids"] == ["Accra_Metropolis"]
+    assert spatial["candidate_units"] == long_run_input_reference().unit_id.nunique()
+    islands = _reference_islands(governed)
+    assert spatial["non_island_units"] == spatial["candidate_units"] - len(islands)
+    assert spatial["island_count"] == len(islands)
+    assert spatial["island_ids"] == sorted(islands)
     assert spatial["global_permutations"] == spatial["local_permutations"] == 9999
-    assert spatial["local_bh_family_size"] == 249
+    assert spatial["local_bh_family_size"] == spatial["non_island_units"]

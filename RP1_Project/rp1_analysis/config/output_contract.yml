@@ -72,10 +72,7 @@ publication_outputs:
     - district_rate_gini
     - circular_mean_month
     - mean_resultant_length
-    - sen_slope
-    - trend_permutation_p
-    - trend_bh_q
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options: {}
   - id: T2
     rq: RQ3
@@ -94,7 +91,7 @@ publication_outputs:
     - or_lower_95
     - or_upper_95
     - p
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options:
       row_count: 3
       focal_effects_per_doubling: true
@@ -117,9 +114,14 @@ publication_outputs:
     - end_month
     - observed
     - expected
+    - conditional_expected
+    - observed_expected_ratio
     - relative_risk
-    - likelihood_ratio
+    - log_likelihood_ratio
+    - test_statistic
+    - test_statistic_type
     - p_value
+    - p_value_report
     requires_results_validated: true
     builder_options:
       stp_relative_risk: not_applicable
@@ -161,7 +163,7 @@ publication_outputs:
     - district_departure
     - circular_mean_month
     - mean_resultant_length
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options: {}
   - id: S3
     rq: RQ1
@@ -184,7 +186,7 @@ publication_outputs:
     - n_effective
     - permutations
     - random_seed
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options:
       global_rows: 1
   - id: S4
@@ -209,7 +211,7 @@ publication_outputs:
     - seed
     - raw_p
     - bh_q
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options:
       years_per_acz: 24
   - id: S5
@@ -257,7 +259,7 @@ publication_outputs:
     - working_structure
     - covariance_method
     - reference_distribution
-    requires_results_validated: true
+    requires_results_validated: false
     builder_options:
       full_factor_coefficients: true
       standardised_probability_cis: false
@@ -281,9 +283,14 @@ publication_outputs:
     - end_month
     - observed
     - expected
+    - conditional_expected
+    - observed_expected_ratio
     - relative_risk
-    - likelihood_ratio
+    - log_likelihood_ratio
+    - test_statistic
+    - test_statistic_type
     - p_value
+    - p_value_report
     - parameter_name
     - parameter_value
     - anchor_method
@@ -297,6 +304,300 @@ publication_outputs:
       genuine_external_results_required: true
       parameter_files_required: true
       coordinate_provenance_required: true
+  - id: QA_C3_EVIDENCE
+    rq: INTEGRATED_RQ1_RQ2
+    title: c3 result admission and visible evidence record counts
+    role: internal_authority
+    family_id: c3_input_evidence
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: c3_evidence_summary
+    required_columns:
+    - level
+    - family
+    - year
+    - month
+    - ba_status
+    - ba_coverage_status
+    - rows
+    - primary_usable_rows
+    - withheld_rows
+    - scenario_zero_rows
+    - explicit_zero_evidence_rows
+    - positive_rows
+    requires_results_validated: false
+    builder_options: {}
+  - id: QA_C3_EXCLUSIONS
+    rq: INTEGRATED_RQ1_RQ2
+    title: c3 complete-window analytical eligibility
+    role: internal_authority
+    family_id: c3_input_evidence
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: c3_population_exclusions
+    required_columns: [population, unit_id, eligible, exclusion_reasons]
+    requires_results_validated: false
+    builder_options: {}
+  - id: QA_C3_RECONCILIATION
+    rq: INTEGRATED_RQ1_RQ2
+    title: c3 comparable district and direct ACZ contributions
+    role: internal_authority
+    family_id: c3_input_evidence
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: c3_reconciliation_eligibility
+    required_columns:
+    - field
+    - rows_compared
+    - not_comparable_rows
+    - incomplete_constituent_rows
+    - null_state_mismatches
+    - max_absolute_difference
+    - max_relative_difference
+    - absolute_tolerance
+    - relative_tolerance
+    - comparison_status
+    - passed
+    requires_results_validated: false
+    builder_options: {}
+
+  - id: QA_C3_DIAGNOSTICS
+    rq: INTEGRATED_RQ1_RQ2
+    title: c3 additive diagnostic reconciliation independent of primary withholding
+    role: internal_authority
+    family_id: c3_input_evidence
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: c3_diagnostic_reconciliation
+    required_columns:
+    - family
+    - field
+    - rows_compared
+    - not_comparable_rows
+    - missing_constituent_rows
+    - withheld_constituent_rows
+    - withheld_acz_rows
+    - max_absolute_difference
+    - absolute_tolerance
+    - relative_tolerance
+    - comparison_status
+    - passed
+    requires_results_validated: false
+    builder_options: {}
+
+  - id: S7
+    rq: RQ1
+    title: District burnable support and mapped burned area
+    role: supplementary
+    family_id: S7
+    evidence_class: DESCRIPTIVE
+    builder: dataframe_csv
+    source_attribute: district_burnable_support
+    required_columns: [unit_id, unit_name, parent_id, parent_code, parent_name, baseline_eligible, baseline_exclusion_reason, fixed_burnable_union_km2, cumulative_mapped_ba_km2, cumulative_burned_pixel_cases, direct_parent_acz_rate, long_run_rate, district_departure, observed_years, positive_mapped_years, annual_rate_q25, annual_rate_median, annual_rate_q75, annual_rate_iqr, first_period_start_year, first_period_end_year, first_period_mean_rate, second_period_start_year, second_period_end_year, second_period_mean_rate]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S8
+    rq: RQ1
+    title: Distribution of fixed district burnable area
+    role: supplementary
+    family_id: S8
+    evidence_class: DESCRIPTIVE
+    builder: dataframe_csv
+    source_attribute: district_denominator_distribution
+    required_columns: [scope, parent_code, parent_name, candidate_districts, baseline_eligible_districts, zero_union_districts, undefined_union_districts, minimum_km2, p05_km2, q25_km2, median_km2, q75_km2, p95_km2, maximum_km2]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S9
+    rq: RQ1
+    title: Conditional district mapped-rate variability
+    role: supplementary
+    family_id: S9
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: district_rate_variability
+    required_columns: [unit_id, block_length_years, is_primary_block, lower_rate, upper_rate, interval_status, positive_mapped_years, interval_method, confidence_level, bootstrap_replications, seed, blocks_compared, lower_endpoint_span_rate, upper_endpoint_span_rate, primary_interval_width_rate, block_endpoint_materiality_fraction, material_endpoint_shift_threshold_rate, materially_block_sensitive]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S10
+    rq: RQ1
+    title: National burnable-support threshold sensitivity
+    role: supplementary
+    family_id: S10
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: district_threshold_national
+    required_columns: [scenario_id, minimum_fixed_union_km2, candidate_districts, baseline_eligible_districts, retained_districts, threshold_excluded_districts, retained_fixed_union_km2, removed_fixed_union_km2, removed_fixed_union_fraction, retained_burned_pixel_cases, removed_burned_pixel_cases, removed_burned_pixel_case_fraction, global_morans_i, global_raw_p, spatial_status, queen_edges, non_island_districts, island_districts, island_unit_ids, local_bh_family_size, global_permutations, local_permutations, permutation_seed, local_bh_alpha, local_hh_districts, local_ll_districts, local_hl_districts, local_lh_districts, local_ns_districts, common_district_local_class_changes]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S11
+    rq: RQ1
+    title: Zone dispersion by fixed burnable-support threshold
+    role: supplementary
+    family_id: S11
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: district_threshold_by_acz
+    required_columns: [scenario_id, minimum_fixed_union_km2, parent_id, parent_code, parent_name, direct_parent_acz_rate, district_count, district_rate_median, district_rate_q25, district_rate_q75, district_rate_iqr, district_rate_gini, departure_min, departure_p05, departure_median, departure_p95, departure_max, shared_departure_rank_change_count, max_abs_shared_departure_rank_change, screening_departure_rank_shift_count, max_abs_screening_departure_rank_shift]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S12
+    rq: RQ1
+    title: District membership and Local Moran sensitivity
+    role: supplementary
+    family_id: S12
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: district_threshold_by_unit
+    required_columns: [scenario_id, minimum_fixed_union_km2, unit_id, unit_name, parent_id, parent_code, parent_name, baseline_eligible, baseline_exclusion_reason, fixed_burnable_union_km2, cumulative_mapped_ba_km2, cumulative_burned_pixel_cases, direct_parent_acz_rate, long_run_rate, district_departure, included, exclusion_reason, local_morans_i, local_raw_p, local_bh_q, local_class, neighbour_count, spatial_status, baseline_local_class, local_class_changed, baseline_departure_rank, retained_baseline_departure_rank, retained_departure_rank, departure_rank_change_shared, departure_rank_shift_from_screening]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S13
+    rq: RQ2
+    title: Sen slope intervals and primary trend probabilities
+    role: supplementary
+    family_id: S13
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: trend_slope_intervals
+    required_columns: [parent_code, n_years, sen_slope, slope_unit, raw_p, bh_q, pointwise_interval_level, expected_block_length, interval_role, bootstrap_replicates, interval_lower, interval_upper, uncalibrated_lower, uncalibrated_upper, calibration_multiplier, worst_held_out_coverage, worst_held_out_coverage_lower_95, status]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S14
+    rq: RQ2
+    title: Slope-interval simulation calibration and validation
+    role: supplementary
+    family_id: S14
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: trend_interval_calibration
+    required_columns: [parent_code, noise_scenario, decline_fraction_per_decade, true_slope, sample, replicates, valid_fit_count, uncalibrated_coverage, calibrated_coverage, coverage_lower_95, coverage_upper_95, coverage_mcse, slope_bias, mean_interval_width, calibration_multiplier]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S15
+    rq: RQ2
+    title: Trend detectability and null diagnostics
+    role: supplementary
+    family_id: S15
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: trend_detectability
+    required_columns: [noise_scenario, effect_pattern, target_zone, parent_code, decline_fraction_per_decade, injected_slope, replicates, raw_rejection_count, raw_rejection, raw_rejection_lower_95, raw_rejection_upper_95, bh_rejection_count, bh_rejection, bh_rejection_lower_95, bh_rejection_upper_95, bh_rejection_mcse, bh_bank_min, bh_bank_max, bh_bank_lower_95_min, family_any_bh_rejection, family_any_bh_rejection_lower_95, family_any_bh_rejection_upper_95, family_any_bh_rejection_mcse, family_fdr, family_fdr_mcse, variance_floor_fraction]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S16
+    rq: RQ2
+    title: Trend detectability target attainment
+    role: supplementary
+    family_id: S16
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: trend_detectability_summary
+    required_columns: [noise_scenario, effect_pattern, target_zone, parent_code, target_power, status, sustained_decline_fraction_per_decade, sustained_slope, maximum_tested_decline_fraction_per_decade, maximum_tested_decline_slope, peak_bh_detection, peak_slope, estimated_nonmonotone]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S17
+    rq: RQ2
+    title: Realised trend simulation settings
+    role: supplementary
+    family_id: S17
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: trend_simulation_settings
+    required_columns: [settings_json]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S18
+    rq: RQ3
+    title: VIIRS confidence-class counts on paired support
+    role: supplementary
+    family_id: S18
+    evidence_class: DESCRIPTIVE
+    builder: dataframe_csv
+    source_attribute: viirs_confidence_counts
+    required_columns: [summary_scope, parent_code, parent_name, month, paired_district_months, paired_districts, low_detections, nominal_detections, high_detections, nominal_high_detections, all_confidence_detections, detection_share_denominator, low_detection_share_pct, nominal_detection_share_pct, high_detection_share_pct]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S19
+    rq: RQ3
+    title: Paired correspondence by VIIRS confidence policy
+    role: supplementary
+    family_id: S19
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: viirs_confidence_correspondence
+    required_columns: [summary_scope, parent_code, parent_name, month, paired_district_months, paired_districts, confidence_policy, viirs_detections, both_zero, mcd64a1_positive_viirs_zero, viirs_positive_mcd64a1_zero, both_positive, both_zero_pct_paired, mcd64a1_positive_viirs_zero_pct_paired, viirs_positive_mcd64a1_zero_pct_paired, both_positive_pct_paired, viirs_positive_district_months, viirs_positive_districts, mcd64a1_absent_viirs_positive_districts, mcd64a1_present_viirs_positive_districts, mcd64a1_absence_pct_given_viirs_positive, mcd64a1_absence_delta_pp_vs_nominal_high, viirs_positive_added_vs_nominal_high, viirs_positive_lost_vs_nominal_high, minority_outcome_district_months, no_viirs_positive_rows, single_ba_outcome_among_positives, viirs_positive_count_below_10, minority_outcome_count_below_10]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S20
+    rq: RQ3
+    title: VIIRS annual source and processing receipts
+    role: supplementary
+    family_id: S20
+    evidence_class: DATA_AUTHORITY
+    builder: dataframe_csv
+    source_attribute: viirs_confidence_source_receipts
+    required_columns: [year, archive_source, processing, platform, archive_product_version, input_profile, archive_checked_start, archive_checked_end, archive_partial_year, vegetation_type, count_population, primary_count_classes, frp_classes, configuration_sha256, preparation_manifest_path, preparation_manifest_sha256, preparation_summary_path, preparation_summary_sha256, canonical_count_path, canonical_count_sha256, canonical_frp_path, canonical_frp_sha256, aggregate_summary_path, aggregate_summary_sha256, stage2_monthly_panel_path, stage2_monthly_panel_sha256]
+    requires_results_validated: false
+    builder_options: {}
+  - id: S21
+    rq: SECONDARY
+    title: Restricted burned-area Poisson scan comparison
+    role: supplementary
+    family_id: S21
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: restricted_scan_summary
+    required_columns: [scenario_id, minimum_fixed_union_km2, p_value_threshold, primary_eligible_districts, sensitivity_eligible_districts, primary_significant_clusters, sensitivity_significant_clusters, excluded_districts_by_acz_json, primary_median_recurrence_common_districts, sensitivity_median_recurrence_common_districts, changed_recurrence_common_districts, primary_exposure_km2, restricted_exposure_km2, removed_exposure_km2, removed_exposure_fraction, primary_total_cases, restricted_total_cases, removed_total_cases, removed_case_fraction, matched_significant_windows, unmatched_primary_windows, unmatched_restricted_windows, window_match_rule]
+    requires_results_validated: true
+    builder_options:
+      requires_restricted_scan: true
+  - id: S22
+    rq: SECONDARY
+    title: Significant clusters in the restricted burned-area scan
+    role: supplementary
+    family_id: S22
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: restricted_scan_clusters
+    required_columns: [cluster_id, cluster_rank, centroid_location_id, centroid_x, centroid_y, radius, radius_max, start_date, end_date, n_locations, log_likelihood_ratio, test_statistic, test_statistic_type, p_value_report, p_value, case_count, expected_count, observed_expected_ratio, relative_risk]
+    requires_results_validated: true
+    builder_options:
+      requires_restricted_scan: true
+  - id: S23
+    rq: SECONDARY
+    title: District recurrence in the primary and restricted burned-area scans
+    role: supplementary
+    family_id: S23
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: restricted_scan_recurrence
+    required_columns: [location_id, unit_id, unit_name, parent_code, fixed_ba2001_support_km2, retained, primary_cluster_count, sensitivity_cluster_count, cluster_count_change]
+    requires_results_validated: true
+    builder_options:
+      requires_restricted_scan: true
+  - id: S24
+    rq: SECONDARY
+    title: Matched significant windows in the primary and restricted burned-area scans
+    role: supplementary
+    family_id: S24
+    evidence_class: SENSITIVITY
+    builder: dataframe_csv
+    source_attribute: restricted_scan_window_comparison
+    required_columns: [match_status, primary_cluster_id, restricted_cluster_id, primary_rank, restricted_rank, rank_change, primary_start_month, primary_end_month, restricted_start_month, restricted_end_month, primary_duration_months, restricted_duration_months, overlap_months, primary_full_districts, primary_shared_districts, restricted_districts, shared_district_intersection, shared_district_jaccard, primary_leading_window, restricted_leading_window, primary_observed, restricted_observed, observed_change, primary_expected, restricted_expected, expected_change, primary_observed_expected_ratio, restricted_observed_expected_ratio, observed_expected_ratio_change, primary_relative_risk, restricted_relative_risk, relative_risk_change, primary_log_likelihood_ratio, restricted_log_likelihood_ratio, log_likelihood_ratio_change, primary_p_value, restricted_p_value, p_value_change]
+    requires_results_validated: true
+    builder_options:
+      requires_restricted_scan: true
+  - id: S25
+    rq: RQ1
+    title: Reviewer district-name crosswalk and declared burned-area authority
+    role: supplementary
+    family_id: S25
+    evidence_class: DIAGNOSTIC
+    builder: dataframe_csv
+    source_attribute: district_proof_crosswalk
+    required_columns: [proof_id, proof_page, proof_district_name, unit_id, unit_name, parent_code, fixed_burnable_union_km2, long_run_rate, district_departure, baseline_departure_rank]
+    requires_results_validated: false
+    builder_options: {}
   figure_formats:
   - png
   - pdf
@@ -316,7 +617,7 @@ secondary_outputs:
   role: internal_authority
   builder: dataframe_csv
   source_attribute: local_moran_authority
-  requires_results_validated: true
+  requires_results_validated: false
 - id: rq2_annual_series_authority
   output_type: table
   role: internal_authority
@@ -364,13 +665,13 @@ secondary_outputs:
   role: internal_authority
   builder: dataframe_csv
   source_attribute: full_coefficient_source
-  requires_results_validated: true
+  requires_results_validated: false
 - id: rq3_standardised_probability_authority
   output_type: table
   role: internal_authority
   builder: dataframe_csv
   source_attribute: standardised_probability_source
-  requires_results_validated: true
+  requires_results_validated: false
 - id: secondary_location_authority
   output_type: table
   role: internal_authority

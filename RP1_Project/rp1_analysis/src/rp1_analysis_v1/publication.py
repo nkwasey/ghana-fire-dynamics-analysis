@@ -8,6 +8,7 @@ external-engine results are unavailable.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 from typing import Mapping
 
@@ -19,10 +20,12 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from .config import ConfigurationBundle, load_configuration_bundle
+from .contracts import AnalysisContract
 from .data_io import DataAuthorities, load_data_authorities
 from .design import assert_execution_ready
 from .figures import (
     RenderedFigure,
+    common_trajectory_y_limits,
     district_seasonal_components,
     draw_circular_mean_timing,
     draw_coefficient_or_plot,
@@ -33,13 +36,18 @@ from .figures import (
     draw_stacked_proportions,
     draw_trajectory_panel,
     export_figure,
+    label_district_share_colorbar,
+    seasonality_lines,
 )
 from .mapping import (
+    bounded_map_norm,
     cluster_maps_grid,
     cluster_recurrence_maps_grid,
+    cluster_recurrence_titles,
     draw_acz_choropleth_axis,
     draw_categorical_axis,
     draw_choropleth_axis,
+    draw_rate_comparison_maps,
     draw_support_acz_axis,
     prepare_geography,
 )
@@ -48,7 +56,8 @@ from .paths import ProjectPaths
 from .presentation import FigureSpecification, load_figure_specs
 from .publication_sources import load_publication_authorities
 from .registers import artefact_registry, figure_registry, result_registry, table_registry
-from .secondary_clusters import EXTERNAL_RESULTS_REQUIRED, SecondaryInputRun, build_secondary_input_run
+from .reviewer_figures import render_reviewer_figure
+from .secondary_clusters import EXTERNAL_RESULTS_REQUIRED, RESULTS_VALIDATED, SecondaryInputRun, build_secondary_input_run
 from .style import PublicationStyle
 from .grid_rendering import (
     add_panel_labels,
@@ -62,8 +71,57 @@ from .grid_rendering import (
 from .validation import DataContractSummary, validate_data_authorities
 
 
+RESTRICTED_SCAN_RESULTS_REQUIRED = "RESTRICTED_SCAN_RESULTS_REQUIRED"
+
+
 class PublicationError(RuntimeError):
     pass
+
+
+def load_restricted_scan_sources(secondary_run_dir: Path) -> dict[str, pd.DataFrame]:
+    """Project the validated restricted-scan result into the publication tables."""
+    from .scan_sensitivity import (
+        RESULTS_PREFIX, RESULT_NAMES, scan_sensitivity_summary_path, validate_scan_sensitivity,
+    )
+
+    restricted = secondary_run_dir / "support_sensitivity"
+    summary = scan_sensitivity_summary_path(restricted)
+    if not summary.is_file():
+        native = restricted / RESULTS_PREFIX
+        result_paths = (summary.parent, native, *(
+            native.with_suffix(suffix) for suffix in (".txt", ".col.txt", ".gis.txt", ".llr.txt", ".execution.json")
+        ))
+        if any(path.exists() or path.is_symlink() for path in result_paths):
+            raise PublicationError(
+                "Restricted scan results exist without a complete derived comparison"
+            )
+        return {}
+    missing = [name for name in RESULT_NAMES.values() if not (summary.parent / name).is_file()]
+    if missing:
+        raise PublicationError(f"Restricted scan derived comparison is incomplete: {', '.join(missing)}")
+
+    result = validate_scan_sensitivity(baseline_secondary_dir=secondary_run_dir, run_dir=restricted)
+    return restricted_scan_publication_sources(result.summary, clusters=result.clusters,
+                                               recurrence=result.recurrence,
+                                               window_comparison=result.window_comparison)
+
+
+def restricted_scan_publication_sources(
+    source_summary: Mapping[str, object], *, clusters: pd.DataFrame, recurrence: pd.DataFrame,
+    window_comparison: pd.DataFrame,
+) -> dict[str, pd.DataFrame]:
+    """Use the same restricted-scan projection for rendering and transfer verification."""
+    from .scan_sensitivity import MIN_SUPPORT_KM2
+
+    summary = dict(source_summary)
+    summary["minimum_fixed_union_km2"] = float(MIN_SUPPORT_KM2)
+    summary["excluded_districts_by_acz_json"] = json.dumps(summary.pop("excluded_districts_by_acz"), sort_keys=True)
+    return {
+        "restricted_scan_summary": pd.DataFrame([summary]),
+        "restricted_scan_clusters": clusters,
+        "restricted_scan_recurrence": recurrence,
+        "restricted_scan_window_comparison": window_comparison,
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,15 +180,32 @@ def _write_configured_tables(
 ) -> tuple[dict[str, OutputRecord], dict[str, str]]:
     records: dict[str, OutputRecord] = {}
     deferred: dict[str, str] = {}
+    restricted_sources = {
+        spec.source_attribute for spec in bundle.output.tables
+        if spec.builder_options.get("requires_restricted_scan")
+    }
+    present_restricted_sources = restricted_sources.intersection(context)
+    if present_restricted_sources and present_restricted_sources != restricted_sources:
+        missing = restricted_sources - present_restricted_sources
+        raise PublicationError(f"Restricted scan publication sources incomplete: {', '.join(sorted(missing))}")
     for spec in bundle.output.tables:
         if spec.builder != "dataframe_csv":
             raise PublicationError(f"Unsupported publication table builder {spec.builder!r}")
+        restricted = spec.builder_options.get("requires_restricted_scan")
+        primary_scan = spec.builder_options.get("genuine_external_results_required")
         frame = context.get(spec.source_attribute)
         if frame is None:
-            if spec.requires_results_validated and external_state == EXTERNAL_RESULTS_REQUIRED:
+            if restricted:
+                deferred[spec.output_id] = RESTRICTED_SCAN_RESULTS_REQUIRED
+                continue
+            if primary_scan and external_state == EXTERNAL_RESULTS_REQUIRED:
                 deferred[spec.output_id] = EXTERNAL_RESULTS_REQUIRED
                 continue
             raise PublicationError(f"Publication source {spec.source_attribute!r} unavailable for {spec.output_id}")
+        if (restricted or primary_scan) and external_state != RESULTS_VALIDATED:
+            raise PublicationError(f"Publication source for {spec.output_id} requires a validated primary scan")
+        if frame.empty and not (restricted or primary_scan):
+            raise PublicationError(f"Publication source {spec.source_attribute!r} is empty for {spec.output_id}")
         missing = [column for column in spec.required_columns if column not in frame.columns]
         if missing:
             raise PublicationError(f"{spec.output_id} source missing governed columns: {missing!r}")
@@ -184,7 +259,24 @@ def _figure_data(
 ) -> pd.DataFrame | None:
     source = context.get(spec.source_attribute)
     if spec.data_builder == "source_frame":
-        return None if source is None else source.copy()
+        if source is None:
+            return None
+        order = spec.data_builder_options.get("panel_order")
+        if order is None:
+            return source.copy()
+        panel_column = str(spec.renderer_options.get("panel_column", "panel"))
+        if panel_column not in source:
+            raise PublicationError(
+                f"{spec.figure_id} source has no configured panel column {panel_column!r}"
+            )
+        panel_values = source[panel_column].astype(str)
+        selected = tuple(str(panel) for panel in order)
+        if not selected or len(set(selected)) != len(selected):
+            raise PublicationError(f"{spec.figure_id} must select unique, non-empty source panels")
+        missing = tuple(panel for panel in selected if not panel_values.eq(panel).any())
+        if missing:
+            raise PublicationError(f"{spec.figure_id} source is missing configured panels {missing!r}")
+        return source.loc[panel_values.isin(selected)].copy()
     if spec.data_builder == "cluster_membership_map":
         if source is None:
             return None
@@ -244,8 +336,8 @@ def _composite_render(
         apply_grid_spacing(grid.figure, layout, style=style)
         label_axes: list[Axes] = []
         y_label_padding_overrides: list[tuple[Axes, float]] = []
-        for idx, (panel_id, renderer_id) in enumerate(zip(order, renderers, strict=True)):
-            panel = frame.loc[frame[panel_column].astype(str).eq(panel_id)].copy()
+        panels = [frame.loc[frame[panel_column].astype(str).eq(panel_id)].copy() for panel_id in order]
+        for idx, (panel_id, panel) in enumerate(zip(order, panels, strict=True)):
             if panel.empty:
                 plt.close(grid.figure)
                 raise PublicationError(f"{spec.figure_id} panel {panel_id!r} has no rows")
@@ -254,6 +346,18 @@ def _composite_render(
                 raise PublicationError(
                     f"{spec.figure_id} panel {panel_id!r} expected {expected[idx]} rows; got {len(panel)}"
                 )
+        if "shared_rate_colorbar_label" in opts:
+            realised = draw_rate_comparison_maps(
+                grid.figure, grid.data_axes, map_authority, *panels,
+                colorbar_label=str(opts["shared_rate_colorbar_label"]), cmap=str(cmaps[0]), style=style,
+                norm=bounded_map_norm(float(opts["rate_scale_max"])),
+                colorbar_ticks=tuple(opts["rate_scale_ticks"]),
+            )
+            label_axes = tuple(panel.map_ax for panel in realised)
+            add_panel_labels(label_axes, style=style)
+            apply_axis_label_padding(label_axes, style=style)
+            return export_figure(grid.figure, style)
+        for idx, (panel, renderer_id) in enumerate(zip(panels, renderers, strict=True)):
             ax = grid.data_axes[idx]
             if renderer_id == "support_acz_map":
                 realised = draw_support_acz_axis(
@@ -273,6 +377,7 @@ def _composite_render(
                 )
                 label_axes.append(realised.map_ax)
             elif renderer_id == "choropleth":
+                signed = bool(opts.get("symmetric_departure_scale", False))
                 realised = draw_choropleth_axis(
                     grid.figure,
                     ax,
@@ -282,6 +387,10 @@ def _composite_render(
                     colorbar_label=str(labels[idx]),
                     style=style,
                     cmap=str(cmaps[idx]),
+                    norm=bounded_map_norm(float(opts["departure_scale_limit"]), symmetric=True) if signed else None,
+                    symmetric_about_zero=signed,
+                    show_percent=bool(opts.get("mismatch_percent_scale", False)),
+                    colorbar_ticks=tuple(opts["departure_scale_ticks"]) if signed else None,
                 )
                 label_axes.append(realised.map_ax)
             elif renderer_id == "categorical_map":
@@ -312,6 +421,7 @@ def _composite_render(
                     style=style,
                     legend_ax=banded.band_ax,
                     legend_ncol=int(opts["seasonality_legend_ncol"]),
+                    compact_legend=bool(opts.get("compact_seasonality_legend", False)),
                 )
             elif renderer_id == "stacked_proportion":
                 banded = build_vertical_band_axes(
@@ -337,6 +447,8 @@ def _composite_render(
                         str(k): str(v) for k, v in opts["state_display_aliases"].items()
                     },
                     legend_ncol=int(opts["state_legend_ncol"]),
+                    state_styles=opts.get("state_styles"),
+                    show_percent=bool(opts.get("mismatch_percent_scale", False)),
                 )
             elif renderer_id == "coefficient_or_plot":
                 guttered = build_horizontal_gutter_axes(
@@ -362,6 +474,8 @@ def _composite_render(
                         str(k): str(v) for k, v in opts["effect_display_aliases"].items()
                     },
                     vertical_padding_rows=style.geometry.effect_vertical_padding_rows,
+                    decimal_ticks=opts.get("effect_decimal_ticks", ()),
+                    **opts.get("effect_style", {}),
                 )
             else:
                 plt.close(grid.figure)
@@ -402,12 +516,17 @@ def _trajectory_grid_render(
         )
     layout = style.grid_for(spec.layout_role)
     trajectory_styles = opts.get("trajectory_styles", {})
+    y_limits = (
+        common_trajectory_y_limits(frame, group=group, x=x, y=y, slope=slope)
+        if opts.get("shared_trajectory_scale") else None
+    )
     with plt.rc_context(matplotlib.RcParams(style.rc_params())):
         grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
         apply_grid_spacing(grid.figure, layout, style=style)
+        statistics = []
         for idx, (ax, key) in enumerate(zip(grid.data_axes, groups, strict=True)):
             panel = frame.loc[frame[group].astype(str).eq(key)].copy()
-            draw_trajectory_panel(
+            values = draw_trajectory_panel(
                 ax,
                 panel,
                 x=x,
@@ -419,7 +538,10 @@ def _trajectory_grid_render(
                 ylabel=str(spec.panel_ylabels[idx] or ""),
                 style=style,
                 trajectory_styles=trajectory_styles,
+                common_y_limits=y_limits,
+                show_group_title=False,
             )
+            statistics.append((key, values))
         auxiliary_key = opts.get("auxiliary_key")
         if auxiliary_key is not None:
             cell_id = str(auxiliary_key["cell_id"])
@@ -432,6 +554,7 @@ def _trajectory_grid_render(
                 entries=auxiliary_key["entries"],
                 style=style,
                 trajectory_styles=trajectory_styles,
+                statistics=statistics,
             )
         if spec.ylabel:
             grid.figure.text(
@@ -481,7 +604,7 @@ def _district_seasonal_grid_render(
         banded.band_ax.set_axis_on()
         banded.band_ax.set_yticks([])
         colorbar = grid.figure.colorbar(image, cax=banded.band_ax, orientation="horizontal")
-        colorbar.set_label("Share of district long-run burned area")
+        label_district_share_colorbar(colorbar, image)
         colorbar.ax.set_gid("nonmap-colorbar")
         draw_circular_mean_timing(
             grid.data_axes[1],
@@ -505,10 +628,26 @@ def _district_seasonal_grid_render(
         return export_figure(grid.figure, style)
 
 
-def _render(spec: FigureSpecification, frame: pd.DataFrame, *, authorities: DataAuthorities, style: PublicationStyle) -> RenderedFigure:
+def _render(
+    spec: FigureSpecification,
+    frame: pd.DataFrame,
+    *,
+    authorities: DataAuthorities,
+    style: PublicationStyle,
+    analysis: AnalysisContract | None = None,
+) -> RenderedFigure:
     opts = spec.renderer_options
     if spec.renderer == "grid_composite":
         return _composite_render(spec, frame, authorities=authorities, style=style)
+    if spec.renderer == "acz_seasonality_lines":
+        return seasonality_lines(
+            frame,
+            title=_figure_title(spec, style),
+            xlabel=str(spec.xlabel or ""),
+            ylabel=str(spec.ylabel or ""),
+            style=style,
+            figure_size=style.dimensions_for(spec.layout_role),
+        )
     if spec.renderer == "grid_trajectory_with_sen":
         return _trajectory_grid_render(spec, frame, style=style)
     if spec.renderer == "cluster_maps_grid":
@@ -523,28 +662,41 @@ def _render(spec: FigureSpecification, frame: pd.DataFrame, *, authorities: Data
             figure_size=style.dimensions_for(spec.layout_role),
         )
     if spec.renderer == "cluster_recurrence_maps_grid":
+        if analysis is None:
+            raise PublicationError("Cluster recurrence labels require the governed analysis configuration")
         authority = prepare_geography(authorities.district_geometry, authorities.acz_geometry)
+        panel_order = [str(product) for product in opts["panel_order"]]
+        titles = cluster_recurrence_titles(analysis)
         return cluster_recurrence_maps_grid(
             authority,
             frame,
             product_column=str(opts["panel_column"]),
-            panel_order=[str(x) for x in opts["panel_order"]],
+            panel_order=panel_order,
             value_column=str(opts["value_column"]),
-            panel_titles=[str(x) for x in opts["panel_titles"]],
+            panel_titles=[titles[product] for product in panel_order],
             cmap=str(opts["cmap"]),
             colorbar_label=str(opts["colorbar_label"]),
             colorbar_labelpad_pt=float(opts["colorbar_labelpad_pt"]),
             style=style,
             layout=style.grid_for(spec.layout_role),
             figure_size=style.dimensions_for(spec.layout_role),
+            norm=bounded_map_norm(float(opts["recurrence_scale_max"])),
+            colorbar_ticks=tuple(opts["recurrence_scale_ticks"]),
         )
     if spec.renderer == "grid_district_seasonal_diagnostics":
         return _district_seasonal_grid_render(spec, frame, style=style)
+    if spec.renderer in {"rq1_burnable_support_sensitivity", "rq2_trend_uncertainty"}:
+        return render_reviewer_figure(
+            spec.figure_id, frame, style=style, figure_size=style.dimensions_for(spec.layout_role)
+        )
     raise PublicationError(f"Unsupported publication renderer {spec.renderer!r}")
 
 def _source_tables(spec: FigureSpecification, bundle: ConfigurationBundle) -> list[str]:
-    matches=[f"{item.output_id}.csv" for item in bundle.output.tables if item.source_attribute==spec.source_attribute]
-    return matches
+    contributing_attributes = {
+        "rq1_burnable_support_figure_source": {"district_burnable_support", "district_threshold_by_acz"},
+        "rq2_trend_uncertainty_figure_source": {"trend_slope_intervals", "trend_detectability"},
+    }.get(spec.source_attribute, {spec.source_attribute})
+    return [f"{item.output_id}.csv" for item in bundle.output.tables if item.source_attribute in contributing_attributes]
 
 
 def _write_figure_bundle(
@@ -591,15 +743,24 @@ def build_publication_run(
     bundle: ConfigurationBundle | None=None, authorities: DataAuthorities | None=None,
     data_contract: DataContractSummary | None=None, secondary_run: SecondaryInputRun | None=None,
     run_local_publication_sources: str | Path | None = None,
+    primary_source_run_id: str | None = None,
+    secondary_run_dir: Path | None = None,
 ) -> PublicationRun:
     governed=paths or ProjectPaths.discover(); bundle=bundle or load_configuration_bundle(governed.root/"config")
     assert_execution_ready(bundle.analysis.to_dict(),bundle.methods,"rq2")
     authorities=authorities or load_data_authorities(governed,bundle.data_schema)
     data_contract=data_contract or validate_data_authorities(authorities,bundle.analysis,bundle.data_schema)
     context=load_publication_authorities(
-        paths=governed, run_local_source_dir=run_local_publication_sources
+        paths=governed, run_local_source_dir=run_local_publication_sources, primary_run_id=primary_source_run_id
     )
+    if secondary_run_dir is not None:
+        restricted = load_restricted_scan_sources(secondary_run_dir)
+        if restricted and (secondary_run is None or secondary_run.execution_state != RESULTS_VALIDATED):
+            raise PublicationError("Restricted scan tables require a selected, validated primary scan")
+        context.update(restricted)
     secondary_run=secondary_run or build_secondary_input_run(paths=governed,bundle=bundle,authorities=authorities,run_id=f"{run_id}_secondary_interface")
+    if run_local_publication_sources is not None and secondary_run.execution_state != RESULTS_VALIDATED:
+        raise PublicationError("Primary scan publication sources require a selected, validated primary scan")
     run_dir=governed.create_run(run_id); writer=OutputWriter(run_dir,bundle.output)
     table_records,deferred=_write_configured_tables(writer,bundle,context,external_state=secondary_run.execution_state)
     style=PublicationStyle.from_contract(bundle.figure)
@@ -609,13 +770,16 @@ def build_publication_run(
     for spec in load_figure_specs(bundle.figure):
         frame=_figure_data(spec,context=context,summary=data_contract)
         if frame is None:
-            if not (spec.requires_results_validated and secondary_run.execution_state==EXTERNAL_RESULTS_REQUIRED):
+            if not (
+                spec.data_builder_options.get("genuine_external_results_required")
+                and secondary_run.execution_state == EXTERNAL_RESULTS_REQUIRED
+            ):
                 raise PublicationError(f"Figure source unavailable for {spec.figure_id}")
             empty=pd.DataFrame(columns=list(spec.required_columns)); validate_figure_data(spec,empty,allow_empty=True)
             manifests[spec.figure_id]=_write_figure_bundle(writer,spec=spec,frame=empty,rendered=None,bundle=bundle,availability=EXTERNAL_RESULTS_REQUIRED)
             deferred[spec.figure_id]=EXTERNAL_RESULTS_REQUIRED; continue
         frame=frame.loc[:,list(spec.required_columns)].copy(); validate_figure_data(spec,frame)
-        rendered=_render(spec,frame,authorities=authorities,style=style)
+        rendered=_render(spec,frame,authorities=authorities,style=style,analysis=bundle.analysis)
         manifests[spec.figure_id]=_write_figure_bundle(writer,spec=spec,frame=frame,rendered=rendered,bundle=bundle,availability="AVAILABLE")
     treg=table_registry(table_records,output_contract=bundle.output,deferred=deferred)
     freg=figure_registry(manifests,figure_contract=bundle.figure)

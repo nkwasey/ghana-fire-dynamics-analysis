@@ -37,16 +37,23 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--methods-spec", type=Path, required=True)
-    parser.add_argument("--data-archive", type=Path, required=True)
+    parser.add_argument("--input-manifest", type=Path, help="Selected data/input_sha256.json; defaults to the loaded project's inventory")
+    parser.add_argument("--data-archive", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--output-dir", type=Path, default=None)
     args = parser.parse_args()
 
     root = args.project_root.resolve()
     output = (args.output_dir or (root / "data" / "authorities" / "rq3")).resolve()
-    output.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        parser.error('Output must be a fresh directory; completed design authorities are immutable')
 
     bundle = load_configuration_bundle(root / "config")
     paths = ProjectPaths.discover(root)
+    input_manifest = (args.input_manifest or args.data_archive or paths.input_hash_inventory).resolve()
+    if input_manifest != paths.input_hash_inventory.resolve():
+        parser.error('RQ3 identity must bind the loaded c3 governed input manifest, not an unrelated archive')
+    from rp1_analysis_v1.integration import validate_governed_inputs
+    validate_governed_inputs(paths, bundle=bundle)
     authorities = load_data_authorities(paths, bundle.data_schema)
     data_summary = validate_data_authorities(authorities, bundle.analysis, bundle.data_schema)
     design = build_rq3_design_authority(
@@ -54,7 +61,7 @@ def main() -> int:
         data_summary,
         bundle,
         methods_spec_sha256=sha256(args.methods_spec.resolve()),
-        data_sha256=sha256(args.data_archive.resolve()),
+        data_sha256=sha256(input_manifest),
     )
 
     outputs: dict[str, pd.DataFrame] = {
@@ -68,6 +75,7 @@ def main() -> int:
         "factor_outcome_counts.csv": design.factor_outcome_counts,
         "cluster_outcome_counts.csv": design.cluster_outcome_counts,
     }
+    output.mkdir(parents=True, exist_ok=False)
     for filename, frame in outputs.items():
         write_csv(output / filename, frame)
 
@@ -87,7 +95,7 @@ def main() -> int:
         "authority_scope": "population_design_diagnostics_only_no_pgee_estimation",
         "configuration_sha256": bundle.configuration_sha256,
         "methods_specification_sha256": sha256(args.methods_spec.resolve()),
-        "governed_data_archive_sha256": sha256(args.data_archive.resolve()),
+        "governed_input_manifest_sha256": sha256(input_manifest),
         "files": records,
     }
     (output / "source_manifest.json").write_text(

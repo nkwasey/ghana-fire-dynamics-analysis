@@ -44,7 +44,7 @@ def _production_bundle():
 
 
 def test_satscan_reference_fixture_uses_exact_core_result_family() -> None:
-    expected = {"known_good", "known_good.col.txt", "known_good.gis.txt", "expected_parser.json"}
+    expected = {"known_good", "known_good.col.txt", "known_good_stp.col.txt", "known_good.gis.txt", "expected_parser.json"}
     assert {path.name for path in FIXTURE.iterdir() if path.is_file()} == expected
     assert not (FIXTURE / "known_good.txt").exists()
     assert not (FIXTURE / "known_good.provenance.json").exists()
@@ -53,7 +53,10 @@ def test_satscan_reference_fixture_uses_exact_core_result_family() -> None:
 def test_satscan_reference_parser_fixture_is_stable() -> None:
     clusters = parse_cluster_file(FIXTURE / "known_good.col.txt", alpha=0.05)
     membership = parse_membership_file(FIXTURE / "known_good.gis.txt", alpha=0.05)
-    assert clusters.shape == (1, 16)
+    assert clusters.shape == (1, 20)
+    assert "likelihood_ratio" not in clusters
+    assert clusters.iloc[0]["observed_expected_ratio"] == 2.0
+    assert clusters.iloc[0]["relative_risk"] == 2.5
     assert membership.shape == (2, 4)
     assert clusters.iloc[0]["cluster_id"] == 1
     assert clusters.iloc[0]["cluster_rank"] == 1

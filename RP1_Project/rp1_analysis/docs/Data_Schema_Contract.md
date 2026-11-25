@@ -1,11 +1,13 @@
 # Data Schema Contract
 
-This document is generated from `config/data_schema_contract.yml`. The YAML contract is the machine-readable authority; this file is a derived human-readable registry and must not be edited as an independent 111-field authority.
+This document is generated from `config/data_schema_contract.yml`. The YAML contract is the machine-readable authority; this file is a derived registry and must not be edited as an independent 111-field authority.
 
 - Analysis schema: `rp1-analysis-v1.1`
-- Data schema: `rp1-data-schema-v1.1`
-- Panel schema: `rp1_fire_panel_consolidated_v2`
+- Data schema: `rp1-data-schema-v1.2`
+- Panel schema: `rp1_fire_panel_consolidated_v3`
 - Governed panel fields: **111**
+
+The `modis_burned_frac_annual_*` headers denote nonnegative ratios: their numerator is restricted to the family union mask, whereas their denominator is the year-specific burnable area. They are not fractions of the annual mask and may exceed one. The union-denominator fractions remain bounded by one.
 
 ## Panel authorities
 
@@ -22,9 +24,9 @@ Scientific analysis-population choices are owned by `config/analysis_contract.ym
 |---|---:|---:|---|---|---|
 | `acz_monthly` | 5 | 1440 | 2001-01 | 2024-12 | `complete_balanced_panel` |
 | `district_monthly` | 260 | 74880 | 2001-01 | 2024-12 | `complete_balanced_panel` |
-| `long_run_district` | 250 | 72000 | 2001-01 | 2024-12 | `positive_fixed_ba2001_burnable_area_all_months` |
-| `paired_overlap` | 249 | 38595 | 2012-02 | 2024-12 | `paired_supported_positive_fixed_ba2012_burnable_area` |
-| `rq3_model` | 249 | 22939 | 2012-02 | 2024-12 | `viirs_detection_count_positive` |
+| `long_run_district` | None | None | 2001-01 | 2024-12 | `complete_usable_c3_ba2001_positive_fixed_union` |
+| `paired_overlap` | None | None | 2012-02 | 2024-12 | `complete_usable_c3_ba2012_paired_positive_fixed_union` |
+| `rq3_model` | None | None | 2012-02 | 2024-12 | `viirs_detection_count_positive` |
 
 ## Geometry authorities
 
@@ -84,16 +86,16 @@ Scientific analysis-population choices are owned by `config/analysis_contract.ym
 | 35 | `viirs_frp_sum_daily_max_mw` | number | radiative_power_mw | MW | yes | `viirs_native` | snpp_viirs_active_fire | no | 0 | — | — | — |
 | 36 | `viirs_frp_mean_mw` | number | radiative_power_mw | MW | yes | `viirs_native` | snpp_viirs_active_fire | no | 0 | — | — | — |
 | 37 | `viirs_frp_p95_daily_max_mw` | number | radiative_power_mw | MW | yes | `viirs_native` | snpp_viirs_active_fire | no | 0 | — | — | — |
-| 38 | `modis_ba_km2_ba2001` | number | area_km2 | km2 | no | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
-| 39 | `modis_burned_pixel_count_ba2001` | integer | count | count | no | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
-| 40 | `modis_ba_any_ba2001` | number | numeric_measure | 1 | no | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
-| 41 | `modis_aoi_area_land_km2_ba2001` | number | area_km2 | km2 | no | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
-| 42 | `modis_burnable_km2_union_ba2001` | number | area_km2 | km2 | no | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
-| 43 | `modis_burnable_km2_annual_ba2001` | number | area_km2 | km2 | no | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
+| 38 | `modis_ba_km2_ba2001` | number | area_km2 | km2 | yes | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
+| 39 | `modis_burned_pixel_count_ba2001` | integer | count | count | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 40 | `modis_ba_any_ba2001` | number | numeric_measure | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 41 | `modis_aoi_area_land_km2_ba2001` | number | area_km2 | km2 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 42 | `modis_burnable_km2_union_ba2001` | number | area_km2 | km2 | yes | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
+| 43 | `modis_burnable_km2_annual_ba2001` | number | area_km2 | km2 | yes | `ba2001_full` | mcd64a1_burned_area | yes | 0 | — | — | — |
 | 44 | `modis_burned_frac_union_ba2001` | number | proportion | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | 1 | — | — |
-| 45 | `modis_burned_frac_annual_ba2001` | number | proportion | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | 1 | — | — |
-| 46 | `modis_zero_union_den_flag_ba2001` | number | numeric_measure | 1 | no | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
-| 47 | `modis_zero_annual_den_flag_ba2001` | number | numeric_measure | 1 | no | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 45 | `modis_burned_frac_annual_ba2001` | number | ratio | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 46 | `modis_zero_union_den_flag_ba2001` | number | numeric_measure | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
+| 47 | `modis_zero_annual_den_flag_ba2001` | number | numeric_measure | 1 | yes | `ba2001_full` | mcd64a1_burned_area | no | 0 | — | — | — |
 | 48 | `modis_ba_km2_ba2012` | number | area_km2 | km2 | yes | `ba2012_native` | mcd64a1_burned_area | yes | 0 | — | — | — |
 | 49 | `modis_burned_pixel_count_ba2012` | integer | count | count | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | — | — | — |
 | 50 | `modis_ba_any_ba2012` | number | numeric_measure | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | — | — | — |
@@ -101,7 +103,7 @@ Scientific analysis-population choices are owned by `config/analysis_contract.ym
 | 52 | `modis_burnable_km2_union_ba2012` | number | area_km2 | km2 | yes | `ba2012_native` | mcd64a1_burned_area | yes | 0 | — | — | — |
 | 53 | `modis_burnable_km2_annual_ba2012` | number | area_km2 | km2 | yes | `ba2012_native` | mcd64a1_burned_area | yes | 0 | — | — | — |
 | 54 | `modis_burned_frac_union_ba2012` | number | proportion | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | 1 | — | — |
-| 55 | `modis_burned_frac_annual_ba2012` | number | proportion | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | 1 | — | — |
+| 55 | `modis_burned_frac_annual_ba2012` | number | ratio | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | — | — | — |
 | 56 | `modis_zero_union_den_flag_ba2012` | number | numeric_measure | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | — | — | — |
 | 57 | `modis_zero_annual_den_flag_ba2012` | number | numeric_measure | 1 | yes | `ba2012_native` | mcd64a1_burned_area | no | 0 | — | — | — |
 | 58 | `modis_det_primary` | number | count | count | no | `modis_af_full` | modis_active_fire | yes | 0 | — | — | — |
@@ -141,7 +143,7 @@ Scientific analysis-population choices are owned by `config/analysis_contract.ym
 | 92 | `full_overlap_supported_flag` | integer | binary_flag | 1 | no | `canonical_spine` | merge_governance | no | 0 | 1 | — | — |
 | 93 | `ba_any_ba2001_and_viirs_primary_any_flag` | integer | binary_flag | 1 | yes | `viirs_native` | derived_multi_source | no | 0 | 1 | — | — |
 | 94 | `ba_any_ba2012_and_viirs_primary_any_flag` | integer | binary_flag | 1 | yes | `full_overlap_native` | derived_multi_source | no | 0 | 1 | — | — |
-| 95 | `ba_any_ba2001_and_modis_primary_any_flag` | integer | binary_flag | 1 | no | `canonical_spine` | derived_multi_source | no | 0 | 1 | — | — |
+| 95 | `ba_any_ba2001_and_modis_primary_any_flag` | integer | binary_flag | 1 | yes | `canonical_spine` | derived_multi_source | no | 0 | 1 | — | — |
 | 96 | `ba_any_ba2012_and_modis_primary_any_flag` | integer | binary_flag | 1 | yes | `ba2012_native` | derived_multi_source | no | 0 | 1 | — | — |
 | 97 | `ba_any_ba2001_without_viirs_primary_flag` | integer | binary_flag | 1 | yes | `viirs_native` | derived_multi_source | no | 0 | 1 | — | — |
 | 98 | `ba_any_ba2012_without_viirs_primary_flag` | integer | binary_flag | 1 | yes | `full_overlap_native` | derived_multi_source | no | 0 | 1 | — | — |
@@ -172,6 +174,25 @@ District-to-ACZ reconciliation is governed by the YAML contract. The configured 
 - `modis_det_primary`
 - `viirs_det_primary`
 
-## Structural missingness
+## Mandatory c3 evidence
 
-A valid numerical zero is permitted only on product-supported unit-months. For fields tied to a structural-support rule, unsupported rows must remain null. Supported rows declared `required_when_supported: true` must be non-null. These semantics are validated from the machine-readable contract rather than from a second Python field list.
+The companion `ba_observation_support.csv` uses `rp1-ba-c3-evidence-v1`: all 69 original `rp1_ba_c3_extended_v2` fields plus `family`, `source_path`, `source_sha256` and 1-based data-record `source_row`. Original `run_id` remains the source task identity. The c3 policy is `c3_preserve_admission_v1`, pinned to `c3_methods_v1_schema_v2`.
+
+## Auxiliary authorities
+
+| Role | Path |
+|---|---|
+| `ba_observation_support` | `data/raw/ba_observation_support.csv` |
+| `key_audit` | `data/raw/fire_panel_key_audit.csv` |
+| `panel_manifest` | `data/raw/fire_panel_manifest.json` |
+| `merge_summary` | `data/raw/fire_panel_merge_summary.json` |
+| `district_to_acz_crosswalk` | `data/reference/district_to_acz_max_overlap.csv` |
+| `district_to_acz_crosswalk_provenance` | `data/reference/district_to_acz_max_overlap.provenance.json` |
+
+## Structural missingness and result admission
+
+Temporal flags describe calendar/domain membership. Outside that support, fields remain structurally null. Within support, c3 primary fields can be withheld by their own result guards; exact values/nulls must match the mandatory evidence companion. Positive annual denominator alone does not make a withheld primary numerator usable.
+
+Admitted scenario zeros, including `NO_SUPPORTED_EVIDENCE`, are retained and are not physical absence observations. A resolved zero union has zero numerator/denominator and undefined union fraction/rate. Fixed denominators are never filled from known-union diagnostics. Complete-window analytical eligibility excludes withheld primary inputs without changing estimators.
+
+`ba_supported_fraction` is accepted-positive divided by accepted-positive plus qualifying explicit-zero evidence, not geographic observation coverage. Five exclusive evidence-state areas form the known-union partition; reason areas overlap. District reconciliation never sums around missing constituent values.

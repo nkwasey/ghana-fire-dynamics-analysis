@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import shutil
+import struct
 import tempfile
 import uuid
+from collections import Counter
 from dataclasses import asdict
-
-import nbformat
-from nbclient import NotebookClient
 from pathlib import Path
 
+import nbformat
 import pandas as pd
 import pytest
-
+from nbclient import NotebookClient
 from rp1_analysis_v1.config import load_configuration_bundle, satscan_parameters
 from rp1_analysis_v1.execution_contract import validate_secondary_completion_state
 from rp1_analysis_v1.integration import (
@@ -50,7 +51,9 @@ def _paths() -> ProjectPaths:
 
 
 def _run_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:10]}"
+    # Leave room for the nested SaTScan outputs and atomic-write temporary files.
+    label = prefix.removeprefix("pytest_").removeprefix("optional_").removeprefix("satscan_")
+    return f"pt_{label[:6]}_{uuid.uuid4().hex[:16]}"
 
 
 def _sha(path: Path) -> str:
@@ -162,66 +165,207 @@ def _stage_synthetic_family(
     model_label: str | None = None,
     study_start: str | None = None,
     study_end: str | None = None,
-    cluster_start: str = "2020/1/1",
-    cluster_end: str = "2020/3/1",
+    cluster_start: str | None = None,
+    cluster_end: str | None = None,
     centroid: str | None = None,
     membership_ids: tuple[str, str] | None = None,
     n_locations: int = 2,
     add_auxiliary: bool = False,
+    require_distinct_poisson_effects: bool = False,
 ) -> None:
-    """Create a self-contained genuine-family-shaped fixture for this exact run.
-
-    The fixture intentionally has an extensionless main report and no external
-    provenance JSON.  It exercises integration behaviour only; it is not a
-    scientific Ghana result.
-    """
+    """Stage a synthetic native-format family with effects consistent with its governed inputs."""
 
     row = _registry(run_dir).set_index("model_id").loc[model_id].to_dict()
     report = run_dir / str(row["results_prefix"])
     cluster = run_dir / f'{row["results_prefix"]}.col.txt'
     membership = run_dir / f'{row["results_prefix"]}.gis.txt'
     report.parent.mkdir(parents=True, exist_ok=True)
-    (report.parent / "EXTERNAL_RESULTS_REQUIRED.txt").unlink(missing_ok=True)
 
     geo = run_dir / str(row["coordinate_path"])
+    positions = {
+        location: (float(x), float(y))
+        for location, x, y in (line.split() for line in geo.read_text().splitlines())
+    }
     loc1, loc2 = _first_two_location_ids(geo)
     if membership_ids is not None:
         loc1, loc2 = membership_ids
-    centroid_id = centroid or loc1
 
     governed_start = pd.Period(str(row["temporal_start"]), freq="M")
     governed_end = pd.Period(str(row["temporal_end"]), freq="M")
-    start_date = study_start or governed_start.start_time.strftime("%Y/%-m/%-d")
-    end_date = study_end or governed_end.end_time.strftime("%Y/%-m/%-d")
+    start_bound, end_bound = governed_start.start_time, governed_end.end_time
+    start_date = study_start or f"{start_bound.year}/{start_bound.month}/{start_bound.day}"
+    end_date = study_end or f"{end_bound.year}/{end_bound.month}/{end_bound.day}"
     model = str(row["model"])
     expected_label = "Discrete Poisson" if model == "discrete_poisson" else "Space-Time Permutation"
     observed_label = model_label or expected_label
     observed_version = version or str(row["engine_version_authority"])
+    is_poisson = model == "discrete_poisson"
+    cluster_start = cluster_start or ("2020/2/1" if is_poisson else "2020/3/1")
+    cluster_end = cluster_end or ("2020/2/29" if is_poisson else "2020/3/31")
+    cluster_first = pd.Timestamp(cluster_start)
+    cluster_last = pd.Timestamp(cluster_end)
+    cases = [
+        (location, int(count), pd.Timestamp(date).to_period("M"))
+        for location, count, date in (line.split() for line in (run_dir / str(row["case_path"])).read_text().splitlines())
+    ]
+    month_first, month_last = cluster_first.to_period("M"), cluster_last.to_period("M")
+    local_cases: Counter[str] = Counter()
+    study_cases: Counter[str] = Counter()
+    for location, count, month in cases:
+        study_cases[location] += count
+        if month_first <= month <= month_last:
+            local_cases[location] += count
+    total = sum(count for _, count, _ in cases)
+    summary_population = cluster_population = path_population = ""
+    risk_report = risk_col = risk_gis = risk_header = gis_risk_header = ""
+    if is_poisson:
+        path_population = str(row["population_path"])
+        base_population = {
+            location: float(value)
+            for location, _, value in (
+                line.split() for line in (run_dir / path_population).read_text().splitlines()
+            )
+        }
+        native_population = {
+            location: struct.unpack("f", struct.pack("f", value))[0]
+            for location, value in base_population.items()
+        }
+        full_period_days = (end_bound.date() - start_bound.date()).days + 1
+        days_in_window = (cluster_last - cluster_first).days + 1
+        spatial_weights = native_population
+        time_share = days_in_window / full_period_days
+    else:
+        spatial_weights = study_cases
+        time_share = sum(local_cases.values()) / total
+
+    total_weight = sum(spatial_weights.values())
+    if membership_ids is None:
+        # A synthetic two-location circle is valid only for a centre and its
+        # nearest neighbour, with no other location at the same distance.
+        best_ratio = 1.0
+        for location, position in positions.items():
+            (radius, neighbour), (next_radius, _) = sorted(
+                (math.dist(position, other_position), other)
+                for other, other_position in positions.items() if other != location
+            )[:2]
+            weight = spatial_weights.get(location, 0) + spatial_weights.get(neighbour, 0)
+            pair_observed = local_cases[location] + local_cases[neighbour]
+            pair_expected = (total * weight / total_weight) * time_share
+            if next_radius <= radius + 1e-8 or weight * 2 > total_weight or not 0 < pair_expected < pair_observed < total:
+                continue
+            ratio = pair_observed / pair_expected
+            if is_poisson and require_distinct_poisson_effects:
+                risk = ratio * (total - pair_expected) / (total - pair_observed)
+                if f"{risk:.2f}" == f"{ratio:.2f}":
+                    continue
+            if ratio > best_ratio:
+                loc1, loc2, best_ratio = location, neighbour, ratio
+
+    centroid_id = centroid or loc1
+    center = positions.get(centroid_id, positions.get(loc1, next(iter(positions.values()))))
+    points = [positions[loc] for loc in (loc1, loc2) if loc in positions]
+    radius = max((math.dist(center, point) for point in points), default=0)
+    span = math.dist(*points) if len(points) == 2 else 0
+    observed_cases = local_cases[loc1] + local_cases[loc2]
+    weight = spatial_weights.get(loc1, 0) + spatial_weights.get(loc2, 0)
+    expected = (total * weight / total_weight) * time_share
+    if is_poisson:
+        exposure = weight
+        summary_population = f"Population, averaged over time: {sum(base_population.values()):.0f}\n"
+        cluster_population = f"Population: {exposure:.0f}\n"
+        rr = 0.0
+        if 0 < expected < total and observed_cases < total:
+            rr = (observed_cases / expected) / ((total - observed_cases) / (total - expected))
+        risk_report = f"Relative risk: {rr:.2f}\n"
+        risk_gis = risk_col = f" {rr:.2f} {exposure:.2f}"
+        risk_header = " REL_RISK POPULATION"
+        gis_risk_header = " CLU_RR CLU_POP"
+    oe = observed_cases / expected if expected else 0.0
+    statistic = (
+        observed_cases * math.log(oe)
+        + (total - observed_cases) * math.log((total - observed_cases) / (total - expected))
+        if observed_cases and expected else 0.0
+    )
+    statistic_label = "Log likelihood ratio" if is_poisson else "Test statistic"
+    statistic_header = "LLR" if is_poisson else "TEST_STAT"
+    simulations_header = "Simulated Log Likelihood Ratios" if is_poisson else "Simulated Test Statistics"
+    location_count = len(geo.read_text().splitlines())
+    population_parameter = f"Population File: {path_population}\n" if is_poisson else ""
 
     if omit != "report":
         report.write_text(
             f"SaTScan v{observed_version}\n"
             "Retrospective Space-Time analysis\n"
             f"using the {observed_label} model.\n"
-            f"Study period.......................: {start_date} to {end_date}\n"
+            "SUMMARY OF DATA\n"
+            f"Study period: {start_date} to {end_date}\n"
+            f"Number of locations: {location_count}\n"
+            f"Total number of cases: {total}\n"
+            f"{summary_population}"
+            "CLUSTERS DETECTED\n"
+            f"1.Location IDs included.: {loc1}, {loc2}\n"
+            f"Coordinates / radius: ({center[0]:g},{center[1]:g}) / {radius:.2f}\n"
+            f"Span: {span:.2f}\n"
+            f"Time frame: {cluster_start} to {cluster_end}\n"
+            f"{cluster_population}"
+            f"Number of cases: {observed_cases}\n"
+            f"Expected cases: {expected:.2f}\n"
+            f"Observed / expected: {oe:.2f}\n"
+            f"{risk_report}"
+            f"{statistic_label}: {statistic:.6f}\n"
+            "P-value: 0.01\n"
+            "PARAMETER SETTINGS\n"
+            f"Case File: {row['case_path']}\n"
+            f"{population_parameter}"
+            f"Coordinates File: {row['coordinate_path']}\n"
+            f"Main Results File: {row['results_prefix']}\n"
+            f"Start Date: {start_date}\n"
+            f"End Date: {end_date}\n"
+            "Time Precision: Month\n"
+            "Coordinates: Cartesian\n"
+            "Type of Analysis: Retrospective Space-Time\n"
+            f"Probability Model: {expected_label}\n"
+            "Scan For Areas With: High Rates\n"
+            "Time Aggregation Units: Month\n"
+            "Time Aggregation Length: 1\n"
+            "Window Shape: Circular\n"
+            "Maximum Spatial Cluster Size: 50 percent of population at risk\n"
+            "Minimum Temporal Cluster Size: 1 Month\n"
+            f"Maximum Temporal Cluster Size: {row['max_temporal_months']} Months\n"
+            "Number of Replications: 999\n"
+            "P-Value Reporting: Standard Monte Carlo\n"
+            "Report Gumbel Based P-Values: No\n"
+            "Report Hierarchical Clusters: Yes\n"
+            "Criteria for Reporting Secondary Clusters: No Geographical Overlap\n"
+            "Print ASCII Column Headers: Yes\n"
+            "Cluster Information: Yes (ASCII), No (dBase)\n"
+            "Location Information: Yes (ASCII), No (dBase)\n"
+            f"{simulations_header}: Yes (ASCII), No (dBase)\n"
             "Program completed\n",
             encoding="utf-8",
         )
     if omit != "col":
-        cluster.write_text(
-            "Cluster Location X Y RADIUS RADIUS_MAX START_DATE END_DATE NUMBER_LOC TEST_STAT P_VALUE OBSERVED EXPECTED RR\n"
-            f"1 {centroid_id} 500000 900000 10000 10000 {cluster_start} {cluster_end} {n_locations} 12.3 0.01 5 2 2.5\n",
-            encoding="utf-8",
+        header = (
+            "CLUSTER LOC_ID X Y RADIUS SPAN START_DATE END_DATE NUMBER_LOC "
+            f"{statistic_header} P_VALUE OBSERVED EXPECTED ODE{risk_header} GINI_CLUST\n"
         )
+        values = (
+            f"1 {centroid_id} {center[0]:g} {center[1]:g} {radius:.2f} {span:.2f} "
+            f"{cluster_start} {cluster_end} {n_locations} "
+            f"{statistic:.6f} 0.01 {observed_cases} {expected:.2f} {oe:.2f}{risk_col} F\n"
+        )
+        cluster.write_text(header + values, encoding="utf-8")
     if omit != "gis":
         membership.write_text(
-            "Location Cluster P_VALUE\n"
-            f"{loc1} 1 0.01\n"
-            f"{loc2} 1 0.01\n",
+            f"LOC_ID CLUSTER P_VALUE CLU_OBS CLU_EXP CLU_ODE{gis_risk_header}\n"
+            f"{loc1} 1 0.01 {observed_cases} {expected:.2f} {oe:.2f}{risk_gis}\n"
+            f"{loc2} 1 0.01 {observed_cases} {expected:.2f} {oe:.2f}{risk_gis}\n",
             encoding="utf-8",
         )
     if add_auxiliary:
-        (report.parent / f"{model_id}.llr.txt").write_text("optional auxiliary\n", encoding="utf-8")
+        maxima_header = "LLR" if is_poisson else "TST_STAT"
+        maxima = f"{maxima_header}\n" + f"{statistic + 1:.6f}\n" * 9 + "5.000000\n" * 990
+        (report.parent / f"{model_id}.llr.txt").write_text(maxima, encoding="utf-8")
         (report.parent / f"{model_id}.sci.txt").write_text("optional auxiliary\n", encoding="utf-8")
 
     authority_paths = [
@@ -581,6 +725,18 @@ def test_optional_auxiliary_files_do_not_break_integration(secondary_template: P
             _stage_synthetic_family(run_dir, model_id, add_auxiliary=True)
         result = validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
         assert result.external_execution_state == RESULTS_VALIDATED
+        status_path = run_dir / "04_secondary_concentration/secondary_external_execution_status.json"
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        row = _registry(run_dir).set_index("model_id").loc["MCD64A1_POISSON_PRIMARY"]
+        maxima = run_dir / f'{row["results_prefix"]}.llr.txt'
+        observed = status["native_reconciliation"]["MCD64A1_POISSON_PRIMARY"]["simulation_maxima"]
+        assert observed["sha256"] == _sha(maxima)
+        assert observed["status"] == "verified_with_printed_precision"
+
+        # This revision preserves significance and Monte Carlo rank, but changes the native evidence.
+        maxima.write_text(maxima.read_text(encoding="utf-8").replace("5.000000", "6.000000", 1), encoding="utf-8")
+        with pytest.raises(OptionalSaTScanIntegrationError, match="native SaTScan reconciliation evidence"):
+            validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
 
@@ -591,6 +747,8 @@ def test_validated_results_are_run_local_and_complete(secondary_template: Path) 
     try:
         for model_id in ("MCD64A1_POISSON_PRIMARY", "VIIRS_STP_PRIMARY"):
             _stage_synthetic_family(run_dir, model_id)
+        markers = list(run_dir.glob("04_secondary_concentration/**/EXTERNAL_RESULTS_REQUIRED.txt"))
+        assert len(markers) == 2
         result = validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
         assert result.external_execution_state == RESULTS_VALIDATED
         assert result.validated_model_count == 2
@@ -602,6 +760,7 @@ def test_validated_results_are_run_local_and_complete(secondary_template: Path) 
         }
         source_root = run_dir / "04_secondary_concentration/publication_sources"
         assert source_root.is_dir()
+        assert all(not marker.exists() for marker in markers)
         assert _product_hashes(static_root) == before
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
@@ -613,6 +772,54 @@ def test_legacy_repository_materialiser_fails_closed() -> None:
             parsed_by_model={}, scenarios=[], location_authority=pd.DataFrame(),
             run_registry=pd.DataFrame(), run_dir=ROOT,
         )
+
+
+def test_stale_v1_publication_sources_are_rejected(secondary_template: Path) -> None:
+    """Pre-correction publication sources cannot be trusted as corrected RR."""
+    paths, run_id, run_dir = _clone_secondary(secondary_template, "pytest_satscan_stale_v1")
+    try:
+        for model_id in ("MCD64A1_POISSON_PRIMARY", "VIIRS_STP_PRIMARY"):
+            _stage_synthetic_family(run_dir, model_id)
+        first = validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
+        assert first.external_execution_state == RESULTS_VALIDATED
+        manifest_path = run_dir / "04_secondary_concentration/publication_sources/M_SATSCAN_PUBLICATION_SOURCE_MANIFEST.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["schema"] == "rp1-satscan-run-local-publication-sources-v2"
+        manifest["schema"] = "rp1-satscan-run-local-publication-sources-v1"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(OptionalSaTScanIntegrationError, match="manifest schema is invalid"):
+            validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_inspection_rejects_wrong_rr_even_when_source_hash_was_refreshed(
+    secondary_template: Path,
+) -> None:
+    paths, run_id, run_dir = _clone_secondary(secondary_template, "pytest_satscan_wrong_rr")
+    try:
+        for model_id in ("MCD64A1_POISSON_PRIMARY", "VIIRS_STP_PRIMARY"):
+            _stage_synthetic_family(run_dir, model_id, require_distinct_poisson_effects=True)
+        result = validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
+        assert result.external_execution_state == RESULTS_VALIDATED
+
+        manifest_path = run_dir / "04_secondary_concentration/publication_sources/M_SATSCAN_PUBLICATION_SOURCE_MANIFEST.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        entry = manifest["sources"]["table3_satscan_clusters"]
+        table_path = run_dir / entry["path"]
+        frame = pd.read_csv(table_path, keep_default_na=False)
+        poisson = frame["product"].eq("mcd64a1")
+        assert str(frame.loc[poisson, "relative_risk"].iloc[0]) != str(frame.loc[poisson, "observed_expected_ratio"].iloc[0])
+        frame.loc[poisson, "relative_risk"] = frame.loc[poisson, "observed_expected_ratio"]
+        table_path.write_text(frame.to_csv(index=False, lineterminator="\n"), encoding="utf-8")
+        entry["sha256"] = _sha(table_path)
+        entry["size_bytes"] = table_path.stat().st_size
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with pytest.raises(OptionalSaTScanIntegrationError, match="currently validated result family"):
+            inspect_satscan_results(paths=paths, secondary_run_id=run_id)
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
 
 
 
@@ -752,8 +959,11 @@ def test_prevalidated_resume_rejects_changed_result_family(secondary_template: P
         validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
         row = _registry(run_dir).set_index("model_id").loc["MCD64A1_POISSON_PRIMARY"]
         cluster = run_dir / str(row["required_cluster_path"])
-        text = cluster.read_text(encoding="utf-8")
-        cluster.write_text(text.replace("12.3 0.01 5 2 2.5", "12.4 0.01 5 2 2.5"), encoding="utf-8")
+        header, record = cluster.read_text(encoding="utf-8").splitlines()
+        tokens = record.split()
+        llr_index = header.split().index("LLR")
+        tokens[llr_index] = f"{float(tokens[llr_index]) + 0.1:.6f}"
+        cluster.write_text(f"{header}\n{' '.join(tokens)}\n", encoding="utf-8")
         authority_paths = [
             run_dir / str(row["prm_path"]),
             run_dir / str(row["case_path"]),
@@ -761,7 +971,7 @@ def test_prevalidated_resume_rejects_changed_result_family(secondary_template: P
             run_dir / str(row["population_path"]),
         ]
         _set_fixture_mtime_after_authority((cluster,), max(item.stat().st_mtime_ns for item in authority_paths))
-        with pytest.raises(OptionalSaTScanIntegrationError, match="currently validated result family"):
+        with pytest.raises(OptionalSaTScanIntegrationError, match="report and cluster output disagree on LLR"):
             validate_and_integrate_satscan_results_if_available(paths=paths, secondary_run_id=run_id)
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
@@ -869,13 +1079,14 @@ def test_direct_interactive_notebook_completion_validates_and_exports_read_only(
 
         notebook = nbformat.read(notebook_path, as_version=4)
         with tempfile.TemporaryDirectory(prefix="rp1_direct_interactive_cwd_") as isolated_cwd:
-            executed = NotebookClient(
+            from rp1_analysis_v1.notebook_runtime import execute_notebook_client
+            executed = execute_notebook_client(NotebookClient(
                 notebook,
                 timeout=3600,
                 kernel_name="python3",
                 allow_errors=False,
                 resources={"metadata": {"path": isolated_cwd}},
-            ).execute()
+            ))
         code_cells = [cell for cell in executed.cells if cell.cell_type == "code"]
         assert code_cells and all(cell.get("execution_count") is not None for cell in code_cells)
 

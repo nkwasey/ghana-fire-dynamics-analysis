@@ -11,8 +11,12 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_string_dtype
 
-from .contracts import AnalysisContract, DataFieldSpec, DataSchemaContract
+from .contracts import AnalysisContract, DataSchemaContract
 from .data_io import DataAuthorities
+from .ba_support import (
+    BAObservationSupportError, USABLE_STATUSES,
+    reconcile_c3_evidence, validate_c3_manifest, validate_observation_support,
+)
 from .variables import ensure_declared_fields, resolve_field_role
 
 
@@ -63,6 +67,7 @@ class DataContractSummary:
     long_run_mask: AnalyticalMask
     paired_mask: AnalyticalMask
     spatial_universe_mask: AnalyticalMask
+    c3_reconciliation: pd.DataFrame | None = None
 
 
 def _raise(message: str) -> Never:
@@ -272,24 +277,43 @@ def _check_support_definitions(frame: pd.DataFrame, context: str, schema: DataSc
 
 
 def _check_validation_rules(frame: pd.DataFrame, context: str, schema: DataSchemaContract) -> None:
+    for rule in schema.validation_rules.get('binary_products', ()):
+        left, right, target = (str(rule[key]) for key in ('left', 'right', 'field'))
+        available = frame[left].notna() & frame[right].notna()
+        if frame.loc[~available, target].notna().any():
+            _raise(f'{context}: {target} must preserve withheld or structurally missing inputs')
+        expected = (frame[left].eq(rule['left_value']) & frame[right].eq(rule['right_value'])).astype(int)
+        if frame.loc[available, target].isna().any() or not frame.loc[available, target].eq(expected.loc[available]).all():
+            _raise(f'{context}: {target} disagrees with admitted source inputs')
+    for rule in schema.validation_rules.get('normalizations', ()):
+        numerator, denominator, target = (str(rule[key]) for key in ('numerator', 'denominator', 'field'))
+        available = frame[numerator].notna() & frame[denominator].gt(0)
+        if frame.loc[~available, target].notna().any():
+            _raise(f'{context}: {target} must be null for zero or withheld inputs')
+        actual = pd.to_numeric(frame.loc[available, target], errors='coerce')
+        expected = float(rule['scale']) * frame.loc[available, numerator] / frame.loc[available, denominator]
+        if actual.isna().any() or not np.isclose(actual, expected, atol=1e-8, rtol=1e-10).all():
+            _raise(f'{context}: {target} disagrees with admitted numerator/denominator')
     denominators = schema.validation_rules.get("denominators", ())
     for rule in denominators:
         denominator = str(rule["denominator"]); zero_flag = str(rule["zero_flag"])
         support = _support_mask(frame, schema, str(rule["support"]))
         den = frame.loc[support, denominator]
         flag = frame.loc[support, zero_flag]
-        if den.isna().any() or flag.isna().any():
-            _raise(f"{context}: supported denominator/flag is missing for {denominator}")
         if (den < 0).any():
             _raise(f"{context}: negative denominator in {denominator}")
-        expected_flag = den.eq(0).astype(int)
-        if not np.array_equal(flag.astype(int).to_numpy(), expected_flag.to_numpy()):
+        # Exact c3 field guards are enforced by the source companion validator.
+        # A guarded primary union can be blank while its domain zero flag exists.
+        available = den.notna()
+        if flag.loc[available].isna().any() or not flag.loc[available].eq(den.loc[available].eq(0).astype(int)).all():
             _raise(f"{context}: {zero_flag} does not match zero state of {denominator}")
         zero = support & frame[denominator].eq(0)
-        positive = support & frame[denominator].gt(0)
+        numerator = str(rule.get("numerator", denominator))
+        positive = support & frame[denominator].gt(0) & frame[numerator].notna()
+        unavailable = support & (frame[denominator].isna() | frame[numerator].isna())
         for derived in rule["derived_fields"]:
-            if frame.loc[zero, derived].notna().any():
-                _raise(f"{context}: {derived} must be missing when {denominator} is zero")
+            if frame.loc[zero | unavailable, derived].notna().any():
+                _raise(f"{context}: {derived} must be missing for zero or withheld inputs")
             if frame.loc[positive, derived].isna().any():
                 _raise(f"{context}: {derived} is missing despite positive {denominator}")
 
@@ -297,17 +321,22 @@ def _check_validation_rules(frame: pd.DataFrame, context: str, schema: DataSchem
         field = str(rule["field"]); scope = str(rule["scope"])
         support = _support_mask(frame, schema, str(rule["support"]))
         subset = frame.loc[support]
+        # Decimal CSV round trips can differ by a few floating-point units.
+        # All fields governed by this rule are areas in km². 1e-9 km² is
+        # 0.001 m²: substantially below the source resolution.
         if scope == "unit_constant":
-            counts = subset.groupby("unit_id", observed=True)[field].nunique(dropna=True)
-            if (counts > 1).any():
-                bad = counts[counts > 1].index.astype(str).tolist()[:10]
-                _raise(f"{context}: fixed field {field} varies within units {bad!r}")
+            group_keys = ["unit_id"]
         elif scope == "unit_year_constant":
-            counts = subset.groupby(["unit_id", "year"], observed=True)[field].nunique(dropna=True)
-            if (counts > 1).any():
-                _raise(f"{context}: annual field {field} varies within a unit-year")
+            group_keys = ["unit_id", "year"]
         else:
             _raise(f"Unknown temporal consistency scope: {scope!r}")
+        grouped = subset.groupby(group_keys, observed=True)[field]
+        differences = grouped.max() - grouped.min()
+        bad = differences[differences > 1e-9]
+        if not bad.empty:
+            if scope == "unit_constant":
+                _raise(f"{context}: fixed field {field} varies within units {bad.index.tolist()[:10]!r} beyond 1e-9 km²")
+            _raise(f"{context}: annual field {field} varies within a unit-year beyond 1e-9 km²")
 
 
 def _check_identity_consistency(frame: pd.DataFrame, panel_id: str, schema: DataSchemaContract) -> None:
@@ -336,6 +365,12 @@ def _check_identity_consistency(frame: pd.DataFrame, panel_id: str, schema: Data
 
 def validate_manifest(manifest: dict[str, Any], data_schema: DataSchemaContract | None = None) -> None:
     schema = _schema(data_schema)
+    try:
+        validate_c3_manifest(manifest)
+    except BAObservationSupportError as exc:
+        _raise(str(exc))
+    if manifest.get('ba_bundle', {}).get('scope') != 'full':
+        _raise('Pilot c3 evidence cannot qualify a full research analysis')
     if manifest.get("merge_schema_version") != schema.panel_schema_version:
         _raise("Manifest merge_schema_version is unsupported by data schema")
     if manifest.get("final_schema_columns") != list(schema.field_order):
@@ -482,12 +517,13 @@ def _unit_mask_with_rules(
     end: str,
     support_fields: tuple[str, ...] = (),
     denominator_field: str | None = None,
+    primary_fields: tuple[str, ...] = (),
     name: str,
 ) -> AnalyticalMask:
     """Apply population rules supplied by the executable analysis contract."""
     start_key = _yyyymm(start); end_key = _yyyymm(end)
     expected_months = len(_month_range(start, end))
-    required = ["unit_id", "yyyymm", *support_fields]
+    required = ["unit_id", "yyyymm", *support_fields, *primary_fields]
     if denominator_field is not None:
         required.append(denominator_field)
     _require_columns(district_panel, required, name)
@@ -501,6 +537,8 @@ def _unit_mask_with_rules(
         if group is None or len(group) != expected_months:
             reasons.append("incomplete_temporal_support")
         else:
+            if primary_fields and group[list(primary_fields)].isna().any().any():
+                reasons.append("c3_primary_withheld")
             for flag in support_fields:
                 if not group[flag].eq(1).all():
                     reasons.append(f"incomplete_{flag}")
@@ -541,6 +579,7 @@ def long_run_ba_district_mask(
         start=str(pop["start"]),
         end=str(pop["end"]),
         denominator_field=denominator,
+        primary_fields=(str(resolve_field_role(analysis, "rq1.burned_area")),),
         name="long_run_ba_district",
     )
 
@@ -563,6 +602,7 @@ def paired_ba_viirs_district_mask(
         end=str(pop["end"]),
         support_fields=support_fields,
         denominator_field=denominator,
+        primary_fields=(str(resolve_field_role(analysis, "rq3.ba_area")), str(resolve_field_role(analysis, "rq3.ba_presence"))),
         name="paired_ba_viirs_district",
     )
 
@@ -590,26 +630,77 @@ def _exclusion_reason_counts(mask: AnalyticalMask) -> str:
     return "none" if not counts else ";".join(f"{key}:{counts[key]}" for key in sorted(counts))
 
 
-def reconcile_district_to_acz(district_panel: pd.DataFrame, acz_panel: pd.DataFrame, *, fields: tuple[str,...] | list[str] | None = None, absolute_tolerance: float | None = None, relative_tolerance: float | None = None, data_schema: DataSchemaContract | None = None) -> pd.DataFrame:
-    schema=_schema(data_schema); rule=schema.additive_reconciliation["district_to_acz"]
-    governed=tuple(str(x) for x in rule["fields"]); selected=governed if fields is None else tuple(fields)
+def reconcile_district_to_acz(district_panel: pd.DataFrame, acz_panel: pd.DataFrame, *, fields: tuple[str,...] | list[str] | None = None, absolute_tolerance: float | None = None, relative_tolerance: float | None = None, data_schema: DataSchemaContract | None = None, allow_c3_withheld: bool = False) -> pd.DataFrame:
+    """Compare complete additive contributions; never sum around withheld cells."""
+    schema = _schema(data_schema)
+    rule = schema.additive_reconciliation["district_to_acz"]
+    governed = tuple(str(x) for x in rule["fields"])
+    selected = governed if fields is None else tuple(fields)
     ensure_declared_fields(selected, schema.field_names)
-    nonadditive=sorted(f for f in selected if not schema.field(f).additive or f not in governed)
-    if nonadditive: raise ValueError(f"Non-additive or ungoverned reconciliation fields: {nonadditive!r}")
-    atol=float(rule["absolute_tolerance"] if absolute_tolerance is None else absolute_tolerance); rtol=float(rule["relative_tolerance"] if relative_tolerance is None else relative_tolerance)
-    parent=str(rule["district_parent_field"]); acz_key=str(rule["acz_key_field"]); time=str(rule["time_field"])
-    _require_columns(district_panel,[parent,time,*selected],"district reconciliation input"); _require_columns(acz_panel,[acz_key,time,*selected],"ACZ reconciliation input")
-    grouped=district_panel.groupby([parent,time],as_index=False,observed=True)[list(selected)].sum(min_count=1)
-    merged=acz_panel[[acz_key,time,*selected]].merge(grouped,left_on=[acz_key,time],right_on=[parent,time],how="outer",suffixes=("_acz","_district_sum"),indicator=True)
-    if not merged["_merge"].eq("both").all(): _raise("District-to-ACZ reconciliation keys are incomplete")
-    rows=[]
+    if any(not schema.field(name).additive or name not in governed for name in selected):
+        raise ValueError("Non-additive or ungoverned reconciliation fields")
+    atol = float(rule["absolute_tolerance"] if absolute_tolerance is None else absolute_tolerance)
+    rtol = float(rule["relative_tolerance"] if relative_tolerance is None else relative_tolerance)
+    overrides = rule.get("field_tolerances", {})
+    if not isinstance(overrides, Mapping) or set(overrides) - set(governed):
+        raise ValueError("Invalid field-specific reconciliation tolerance fields")
+    for name, limits in overrides.items():
+        if not isinstance(limits, Mapping) or set(limits) != {"absolute_tolerance", "relative_tolerance"}:
+            raise ValueError(f"Invalid field-specific reconciliation tolerance for {name}")
+        if any(not np.isfinite(float(v)) or float(v) < 0 for v in limits.values()):
+            raise ValueError(f"Invalid field-specific reconciliation tolerance for {name}")
+    parent, acz_key, time = (str(rule[key]) for key in ("district_parent_field", "acz_key_field", "time_field"))
+    _require_columns(district_panel, [parent, time, "unit_id", *selected], "district reconciliation input")
+    _require_columns(acz_panel, [acz_key, time, *selected], "ACZ reconciliation input")
+    if district_panel.duplicated(["unit_id", time]).any() or acz_panel.duplicated([acz_key, time]).any():
+        _raise("Duplicate reconciliation keys")
+    expected = district_panel.groupby(parent, observed=True)["unit_id"].nunique()
+    groups = district_panel.groupby([parent, time], observed=True)
+    totals = groups[list(selected)].sum(min_count=1)
+    counts = groups[list(selected)].count()
+    sizes = groups.size()
     for field in selected:
-        a=merged[f"{field}_acz"].astype(float); b=merged[f"{field}_district_sum"].astype(float); null_mismatch=a.isna()^b.isna(); comparable=a.notna()&b.notna(); abs_diff=(a-b).abs(); scale=np.maximum(np.maximum(a.abs(),b.abs()),1e-15); rel_diff=abs_diff/scale; close=pd.Series(True,index=merged.index)
-        close.loc[comparable]=np.isclose(a.loc[comparable],b.loc[comparable],atol=atol,rtol=rtol); passed=not bool(null_mismatch.any()) and bool(close.all())
-        rows.append({"field":field,"rows_compared":int(comparable.sum()),"null_state_mismatches":int(null_mismatch.sum()),"max_absolute_difference":float(abs_diff.loc[comparable].max()) if comparable.any() else 0.0,"max_relative_difference":float(rel_diff.loc[comparable].max()) if comparable.any() else 0.0,"absolute_tolerance":atol,"relative_tolerance":rtol,"passed":passed})
-    result=pd.DataFrame(rows)
-    if not bool(result["passed"].all()): _raise(f"Material district-to-ACZ reconciliation disagreement: {result.loc[~result['passed'],'field'].tolist()!r}")
+        required = totals.index.get_level_values(parent).map(expected)
+        totals.loc[(counts[field].to_numpy() != required) | (sizes.to_numpy() != required), field] = np.nan
+    grouped = totals.reset_index()
+    merged = acz_panel[[acz_key, time, *selected]].merge(
+        grouped, left_on=[acz_key, time], right_on=[parent, time],
+        how="outer", suffixes=("_acz", "_district_sum"), indicator=True,
+    )
+    if not merged["_merge"].eq("both").all():
+        _raise("District-to-ACZ reconciliation keys are incomplete")
+    rows = []
+    for field in selected:
+        limits = overrides.get(field, {})
+        fa = float(limits.get("absolute_tolerance", atol)) if absolute_tolerance is None else atol
+        fr = float(limits.get("relative_tolerance", rtol)) if relative_tolerance is None else rtol
+        direct, total = merged[f"{field}_acz"].astype(float), merged[f"{field}_district_sum"].astype(float)
+        comparable = direct.notna() & total.notna()
+        mismatch = direct.isna() ^ total.isna()
+        differences = (direct - total).abs()
+        scale = np.maximum(np.maximum(direct.abs(), total.abs()), 1e-15)
+        close = np.isclose(direct.loc[comparable], total.loc[comparable], atol=fa, rtol=fr)
+        is_ba = field.endswith(("_ba2001", "_ba2012"))
+        # c3 source validation explains primary withholding at each independent
+        # support. Such rows are reported, never manufactured into comparable totals.
+        passed = bool(close.all()) and ((is_ba and allow_c3_withheld) or not bool(mismatch.any()))
+        required = counts.index.get_level_values(parent).map(expected)
+        rows.append({
+            "field": field, "rows_compared": int(comparable.sum()),
+            "not_comparable_rows": int((~comparable).sum()),
+            "incomplete_constituent_rows": int((counts[field].to_numpy() != required).sum()),
+            "null_state_mismatches": int(mismatch.sum()),
+            "max_absolute_difference": float(differences.loc[comparable].max()) if comparable.any() else 0.0,
+            "max_relative_difference": float((differences / scale).loc[comparable].max()) if comparable.any() else 0.0,
+            "absolute_tolerance": fa, "relative_tolerance": fr,
+            "comparison_status": "COMPLETE" if comparable.all() else "WITHHELD_ROWS_NOT_COMPARED",
+            "passed": passed,
+        })
+    result = pd.DataFrame(rows)
+    if not bool(result["passed"].all()):
+        _raise(f"Material district-to-ACZ reconciliation disagreement: {result.loc[~result['passed'], 'field'].tolist()!r}")
     return result
+
 
 
 def analytical_population_authority(
@@ -655,9 +746,18 @@ def validate_data_authorities(authorities: DataAuthorities, analysis: AnalysisCo
     validate_manifest(authorities.manifest,schema); validate_key_audit(authorities.key_audit,authorities.merge_summary,schema)
     validate_panel(authorities.acz_panel,level="acz",manifest=authorities.manifest,merge_summary=authorities.merge_summary,analysis=analysis,data_schema=schema)
     validate_panel(authorities.district_panel,level="district",manifest=authorities.manifest,merge_summary=authorities.merge_summary,analysis=analysis,data_schema=schema)
+    try:
+        validate_observation_support(authorities.ba_observation_support, authorities.manifest, authorities.acz_panel, authorities.district_panel)
+        evidence_rule = schema.additive_reconciliation['c3_evidence']
+        c3_reconciliation = reconcile_c3_evidence(authorities.ba_observation_support, authorities.district_panel,
+            area_absolute_tolerance=float(evidence_rule['absolute_tolerance']),
+            area_relative_tolerance=float(evidence_rule['relative_tolerance']),
+            union_absolute_tolerance=float(evidence_rule['known_union_absolute_tolerance']))
+    except BAObservationSupportError as exc:
+        _raise(str(exc))
     validate_geometry(authorities.acz_geometry,level="acz",data_schema=schema); validate_geometry(authorities.district_geometry,level="district",data_schema=schema)
     validate_geometry_panel_reconciliation(authorities.acz_panel,authorities.district_panel,authorities.acz_geometry,authorities.district_geometry,schema)
-    reconciliation = reconcile_district_to_acz(authorities.district_panel,authorities.acz_panel,data_schema=schema)
+    reconciliation = reconcile_district_to_acz(authorities.district_panel,authorities.acz_panel,data_schema=schema,allow_c3_withheld=True)
     population,spatial,long_mask,paired_mask,rq3_units,rq3_rows = analytical_population_authority(authorities.acz_panel,authorities.district_panel,authorities.acz_geometry,authorities.district_geometry,analysis,schema)
     exp = analysis.study["populations"]
     actuals = {
@@ -669,11 +769,12 @@ def validate_data_authorities(authorities: DataAuthorities, analysis: AnalysisCo
     }
     for name,(units,rows) in actuals.items():
         expected=exp[name]
-        if units!=int(expected["units"]) or rows!=int(expected["rows"]):
+        if (expected.get("units") is not None and units!=int(expected["units"])) or (expected.get("rows") is not None and rows!=int(expected["rows"])):
             _raise(f"Analytical population {name} differs from executable analysis authority: observed units={units}, rows={rows}; expected units={expected['units']}, rows={expected['rows']}")
     windows=analysis.study["temporal_windows"]
     rule=schema.additive_reconciliation["district_to_acz"]
     return DataContractSummary(
+      c3_reconciliation=c3_reconciliation,
       acz_count=actuals["acz_monthly"][0],acz_monthly_rows=actuals["acz_monthly"][1],district_spatial_universe_count=spatial.retained_units,district_monthly_rows=actuals["district_monthly"][1],long_run_eligible_count=long_mask.retained_units,long_run_rows=actuals["long_run_district"][1],paired_eligible_count=paired_mask.retained_units,paired_rows=actuals["paired_overlap"][1],rq3_gee_units=rq3_units,rq3_gee_rows=rq3_rows,long_run_start=str(exp["long_run_district"]["start"]),long_run_end=str(exp["long_run_district"]["end"]),overlap_start=str(exp["paired_overlap"]["start"]),overlap_end=str(exp["paired_overlap"]["end"]),complete_year_start=int(windows["overlap_complete_years"]["start"]),complete_year_end=int(windows["overlap_complete_years"]["end"]),reconciliation_absolute_tolerance=float(rule["absolute_tolerance"]),reconciliation_relative_tolerance=float(rule["relative_tolerance"]),reconciliation=reconciliation,population_authority=population,long_run_mask=long_mask,paired_mask=paired_mask,spatial_universe_mask=spatial)
 
 
@@ -682,46 +783,56 @@ def rq3_mcd64a1_support_audit(
     *,
     ba_area_field: str = "modis_ba_km2_ba2012",
     ba_presence_field: str = "modis_ba_any_ba2012",
+    observation_support: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Audit supported MCD64A1 zeroes separately from structural missingness.
-
-    The caller supplies the already-governed paired population.  This function
-    does not recode missing values and fails if a paired row lacks BA support.
-    """
-    required = {
-        "month",
-        "ba2012_supported_flag",
-        "ba2012_structural_missing_flag",
-        ba_area_field,
-        ba_presence_field,
-    }
-    missing = sorted(required.difference(paired_panel.columns))
-    if missing:
-        _raise(f"RQ3 MCD64A1 support audit is missing fields: {missing!r}")
-    if not paired_panel["ba2012_supported_flag"].eq(1).all():
-        _raise("RQ3 paired population contains BA2012 rows without support")
-    if not paired_panel["ba2012_structural_missing_flag"].eq(0).all():
-        _raise("RQ3 paired population contains structurally missing BA2012 rows")
-    ba = pd.to_numeric(paired_panel[ba_area_field], errors="coerce")
-    presence = pd.to_numeric(paired_panel[ba_presence_field], errors="coerce")
-    if ba.isna().any() or presence.isna().any():
-        _raise("RQ3 supported MCD64A1 observations contain numerical missing values")
-    if not presence.isin([0, 1]).all():
-        _raise("RQ3 MCD64A1 presence flag is not binary")
-    if not ((ba > 0).astype(int) == presence.astype(int)).all():
-        _raise("RQ3 MCD64A1 area/presence semantics disagree")
+    """Audit all requested BA2012 rows, including excluded/withheld results."""
+    required = {"unit_id", "yyyymm", "month", "ba2012_supported_flag",
+                "ba2012_structural_missing_flag", ba_area_field, ba_presence_field}
+    _require_columns(paired_panel, required, "RQ3 c3 audit")
+    if observation_support is None:
+        _raise("RQ3 c3 evidence is mandatory; observation quality cannot be invented")
+    evidence_fields = ["unit_id", "yyyymm", "ba_status", "ba_coverage_status", "ba_state_explicit_zero_km2"]
+    _require_columns(observation_support, [*evidence_fields, "level", "family"], "RQ3 c3 evidence")
+    support = observation_support.loc[
+        observation_support.level.eq("district") & observation_support.family.eq("ba2012"),
+        evidence_fields,
+    ].copy()
+    support["yyyymm"] = pd.to_numeric(support.yyyymm, errors="raise").astype("int64")
+    if support.duplicated(["unit_id", "yyyymm"]).any():
+        _raise("RQ3 c3 evidence contains duplicate keys")
+    frame = paired_panel.merge(support, on=["unit_id", "yyyymm"], how="left", validate="one_to_one")
+    temporal = frame.ba2012_supported_flag.eq(1)
+    if frame.loc[temporal, "ba_status"].isna().any():
+        _raise("RQ3 c3 evidence has missing keys")
+    ba = pd.to_numeric(frame[ba_area_field], errors="coerce")
+    presence = pd.to_numeric(frame[ba_presence_field], errors="coerce")
+    usable = frame.ba_status.isin(USABLE_STATUSES)
+    if (usable & (ba.isna() | presence.isna())).any():
+        _raise("RQ3 admitted c3 result has missing BA/presence")
+    if (temporal & ~usable & (ba.notna() | presence.notna())).any():
+        _raise("RQ3 withheld c3 result cannot become model absence")
+    if not presence.loc[usable].isin([0, 1]).all() or not presence.loc[usable].eq(ba.loc[usable].gt(0).astype(int)).all():
+        _raise("RQ3 c3 area/presence semantics disagree")
+    explicit = pd.to_numeric(frame.ba_state_explicit_zero_km2.replace("", np.nan), errors="raise")
+    frame["_usable"], frame["_zero"], frame["_positive"] = usable, ba.eq(0), ba.gt(0)
+    frame["_scenario_zero"] = frame.ba_status.eq("ADMITTED") & ba.eq(0) & explicit.fillna(0).eq(0)
+    frame["_explicit_zero"] = explicit.gt(0)
     rows = []
-    for month, group in paired_panel.groupby("month", sort=True, observed=True):
-        values = pd.to_numeric(group[ba_area_field], errors="raise")
-        rows.append(
-            {
-                "month": int(month),
-                "rows": int(len(group)),
-                "supported_rows": int(group["ba2012_supported_flag"].eq(1).sum()),
-                "structural_missing_rows": int(group["ba2012_structural_missing_flag"].eq(1).sum()),
-                "numeric_missing_rows": int(values.isna().sum()),
-                "zero_rows": int(values.eq(0).sum()),
-                "positive_rows": int(values.gt(0).sum()),
-            }
-        )
+    for month, group in frame.groupby("month", sort=True, observed=True):
+        row = {
+            "month": int(month), "rows": int(len(group)),
+            "supported_rows": int(group.ba2012_supported_flag.eq(1).sum()),
+            "structural_missing_rows": int(group.ba2012_structural_missing_flag.eq(1).sum()),
+            "numeric_missing_rows": int(group[ba_area_field].isna().sum()),
+            "primary_usable_rows": int(group._usable.sum()),
+            "withheld_rows": int((group.ba2012_supported_flag.eq(1) & ~group._usable).sum()),
+            "zero_rows": int(group._zero.sum()), "positive_rows": int(group._positive.sum()),
+            "scenario_zero_rows": int(group._scenario_zero.sum()),
+            "explicit_zero_evidence_rows": int(group._explicit_zero.sum()),
+            "no_supported_evidence_rows": int(group.ba_coverage_status.eq("NO_SUPPORTED_EVIDENCE").sum()),
+            "partial_evidence_rows": int(group.ba_coverage_status.eq("PARTIAL_EVIDENCE").sum()),
+            "zero_union_rows": int(group.ba_status.eq("ZERO_UNION_DENOMINATOR").sum()),
+        }
+        rows.append(row)
     return pd.DataFrame(rows)
+

@@ -44,7 +44,7 @@ class YearMonth:
 
     @property
     def ordinal(self) -> int:
-        """Return a zero-based absolute month ordinal on the proleptic calendar."""
+        """Return year times 12 plus the zero-based month offset within the year."""
 
         return self.year * 12 + (self.month - 1)
 
@@ -71,9 +71,9 @@ def parse_yyyymm(value: int | str | YearMonth) -> YearMonth:
     if not isinstance(value, str):
         raise TemporalContractError(f"yyyymm must be int or str, got {type(value).__name__}")
     text = value.strip()
-    if len(text) == 6 and text.isdigit():
+    if len(text) == 6 and text.isdecimal():
         return YearMonth(int(text[:4]), int(text[4:]))
-    if len(text) == 7 and text[4] == "-" and text[:4].isdigit() and text[5:].isdigit():
+    if len(text) == 7 and text[4] == "-" and text[:4].isdecimal() and text[5:].isdecimal():
         return YearMonth(int(text[:4]), int(text[5:]))
     raise TemporalContractError(f"invalid yyyymm representation: {value!r}")
 
@@ -150,12 +150,8 @@ def add_year_month_columns(
     ordinals = np.fromiter((x.ordinal for x in parsed), dtype=np.int64, count=len(parsed))
     for target, values in ((year_col, years), (month_col, months), (ordinal_col, ordinals)):
         if target in out.columns:
-            existing = pd.to_numeric(out[target], errors="coerce").to_numpy()
-            if (
-                len(existing) != len(values)
-                or np.any(~np.isfinite(existing))
-                or not np.array_equal(existing.astype(np.int64), values)
-            ):
+            existing = pd.to_numeric(out[target], errors="coerce")
+            if not existing.eq(values).fillna(False).all():
                 raise TemporalContractError(f"existing {target} conflicts with {yyyymm_col}")
         else:
             out[target] = values
@@ -174,6 +170,8 @@ def assert_complete_temporal_spine(
 
     if unit_col not in frame.columns or yyyymm_col not in frame.columns:
         raise TemporalContractError(f"required columns missing: {unit_col}, {yyyymm_col}")
+    if frame.empty:
+        raise TemporalContractError("temporal spine contains no rows")
     if frame[[unit_col, yyyymm_col]].isna().any().any():
         raise TemporalContractError("temporal spine keys contain missing values")
     if frame.duplicated([unit_col, yyyymm_col]).any():
@@ -230,6 +228,8 @@ def construct_grouped_annual_series(
     numeric = pd.to_numeric(prepared[value_col], errors="coerce")
     if prepared[value_col].notna().sum() != numeric.notna().sum():
         raise TemporalContractError(f"{value_col} contains non-numeric values")
+    if not np.isfinite(numeric.dropna().to_numpy(dtype=float)).all():
+        raise TemporalContractError(f"{value_col} contains non-finite values")
     prepared = prepared.copy()
     prepared[value_col] = numeric.astype(float)
 

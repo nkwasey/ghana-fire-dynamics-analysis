@@ -42,10 +42,12 @@ CURRENT_METHOD_IDS = {
 
 def _collection_time_release_contaminants() -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Snapshot persistent release contaminants before test execution starts."""
+    # Editable installation metadata is expected during local testing. The
+    # release packager independently excludes it from the distributed tree.
     forbidden_dirs = {"build", "dist", ".ipynb_checkpoints"}
     contaminants: list[str] = []
     for path in ROOT.rglob("*"):
-        if path.is_dir() and (path.name in forbidden_dirs or path.name.endswith(".egg-info")):
+        if path.is_dir() and path.name in forbidden_dirs:
             contaminants.append(path.relative_to(ROOT).as_posix())
         elif path.is_file() and (path.suffix.lower() == ".zip" or path.name.endswith("~")):
             contaminants.append(path.relative_to(ROOT).as_posix())
@@ -70,7 +72,8 @@ def test_final_documentation_set_exists_and_describes_current_product() -> None:
     for path in DOCS:
         assert path.is_file(), path
     combined = "\n".join(path.read_text(encoding="utf-8") for path in DOCS)
-    assert "1.2.3" in combined
+    assert "Ghana Fire Dynamics Analysis" in combined
+    assert "release identity" not in combined.lower()
     assert "Romano–Tirlea" in combined
     assert "Firth-type penalised GEE" in combined
     assert "space-time permutation" in combined.lower()
@@ -79,23 +82,22 @@ def test_final_documentation_set_exists_and_describes_current_product() -> None:
 def test_configuration_and_documentation_share_current_schema_identities() -> None:
     bundle = load_configuration_bundle(ROOT / "config")
     assert bundle.analysis.schema_version == "rp1-analysis-v1.1"
-    assert bundle.data_schema.data_schema_version == "rp1-data-schema-v1.1"
+    assert bundle.data_schema.data_schema_version == "rp1-data-schema-v1.2"
     for name in ("analysis_contract.yml", "data_schema_contract.yml", "method_authorities.yml", "output_contract.yml", "figure_contract.yml"):
         assert _yaml(name)["schema_version"] == "rp1-analysis-v1.1"
     combined = "\n".join(path.read_text(encoding="utf-8") for path in DOCS)
     assert "rp1-analysis-v1.1" in combined
-    assert "rp1-data-schema-v1.1" in combined
+    assert "rp1-data-schema-v1.2" in combined
 
 
 def test_package_version_is_single_and_consistent() -> None:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
     assert project["name"] == "rp1-analysis-v1"
-    assert project["version"] == "1.2.3"
-    assert rp1_analysis_v1.__version__ == "1.2.3"
-    assert "Ghana Fire RP1 Analysis v1.2.3" in (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "version `1.2.3`" in (WORKSPACE / "README.md").read_text(encoding="utf-8")
-    assert "rp1-analysis-v1==1.2.3" in (ROOT.parent / "RP1_README.md").read_text(encoding="utf-8")
+    assert project["version"] == "1.3.1"
+    assert rp1_analysis_v1.__version__ == "1.3.1"
+    for path in (ROOT / "README.md", WORKSPACE / "README.md", ROOT.parent / "RP1_README.md"):
+        assert project["version"] not in path.read_text(encoding="utf-8"), path
 
 
 def test_method_authority_contains_exact_current_methods() -> None:
@@ -129,8 +131,8 @@ def test_runtime_and_operational_scripts_use_repository_relative_inputs() -> Non
 
 def test_operational_scripts_do_not_duplicate_release_version_literal() -> None:
     text = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "scripts").glob("*.py"))
-    assert '"1.2.3"' not in text
-    assert "'1.2.3'" not in text
+    assert '"1.3.1"' not in text
+    assert "'1.3.1'" not in text
     assert "future_qualification_slots" not in text
 
 

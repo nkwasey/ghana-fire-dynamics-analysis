@@ -119,10 +119,13 @@ FIGURE_RENDERER_REGISTRY: Final[frozenset[str]] = frozenset(
         "choropleth",
         "coefficient_or_plot",
         "grid_composite",
+        "acz_seasonality_lines",
         "grid_trajectory_with_sen",
         "cluster_maps_grid",
         "cluster_recurrence_maps_grid",
         "grid_district_seasonal_diagnostics",
+        "rq1_burnable_support_sensitivity",
+        "rq2_trend_uncertainty",
     }
 )
 
@@ -146,5 +149,7 @@ PRESENTATION_RENDERER_REGISTRY: Final[frozenset[str]] = frozenset(
         "standardised_probability_pairs",
         "cluster_membership_map",
         "cluster_recurrence_map",
+        "rq1_burnable_support_sensitivity",
+        "rq2_trend_uncertainty",
     }
 )

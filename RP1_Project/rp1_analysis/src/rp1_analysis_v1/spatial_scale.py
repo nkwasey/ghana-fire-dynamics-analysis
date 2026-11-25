@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from .config import AnalysisContract, rq1_spatial_parameters
+from .fixed_denominator import fixed_denominator, constancy_policy
 from .data_io import DataAuthorities
 from .inequality import gini_coefficient
 from .seasonality import summarise_seasonality
@@ -99,15 +100,12 @@ def _filter_long_run(frame: pd.DataFrame, analysis: AnalysisContract) -> tuple[p
     return selected, expected_months, years
 
 
-def _constant_positive(group: pd.DataFrame, field: str, context: str) -> float:
-    values = _finite_numeric(group[field], f"{context}.{field}", nonnegative=True)
-    unique = np.unique(values)
-    if unique.size != 1:
-        raise SpatialScaleError(f"{context}.{field} is not constant within the governed unit")
-    value = float(unique[0])
-    if value <= 0.0:
-        raise SpatialScaleError(f"{context}.{field} must be strictly positive")
-    return value
+def _constant_positive(group: pd.DataFrame, field: str, context: str, tolerance: float = 0.0) -> float:
+    try:
+        values = _finite_numeric(group[field], f"{context}.{field}", nonnegative=True)
+        return fixed_denominator(values, tolerance)[0]
+    except ValueError as exc:
+        raise SpatialScaleError(f"{context}.{field}: {exc}") from exc
 
 
 def _seasonality_fields(group: pd.DataFrame, ba_field: str) -> dict[str, float | int | str | None]:
@@ -204,7 +202,12 @@ def _summarise_units(
             raise SpatialScaleError(f"{unit_id!r} has {len(group)} long-run rows; expected {expected_months}")
         if group["yyyymm"].duplicated().any():
             raise SpatialScaleError(f"{unit_id!r} contains duplicate long-run months")
-        denominator = _constant_positive(group, denominator_field, f"unit {unit_id}")
+        group = group.sort_values("yyyymm")
+        try:
+            tolerance = constancy_policy(analysis)
+            denominator, denominator_min, denominator_max, denominator_range = fixed_denominator(group[denominator_field], tolerance)
+        except (ValueError, KeyError, TypeError) as exc:
+            raise SpatialScaleError(f"unit {unit_id}.{denominator_field}: {exc}") from exc
         annual = _annual_rate_table_for_unit(
             group,
             unit_id=str(unit_id),
@@ -230,6 +233,9 @@ def _summarise_units(
             "ba_total_km2": total_ba,
             "mean_annual_ba_km2": mean_annual_ba,
             "fixed_burnable_union_km2": denominator,
+            "fixed_denominator_min_km2": denominator_min,
+            "fixed_denominator_max_km2": denominator_max,
+            "fixed_denominator_range_km2": denominator_range,
             PRIMARY_RATE_FIELD: mean_rate,
         }
         for parent_col in parent_columns:
@@ -612,7 +618,11 @@ def build_rq1_tables(
             "district_months": int(len(district_summary) * int(district_summary["n_months"].iloc[0])),
             "years": int(district_summary["n_years"].iloc[0]), "climatology_months": 12,
         },
-        "rate": {"annual_rate_field": ANNUAL_RATE_FIELD, "long_run_rate_field": PRIMARY_RATE_FIELD},
+        "rate": {"annual_rate_field": ANNUAL_RATE_FIELD, "long_run_rate_field": PRIMARY_RATE_FIELD,
+                 "fixed_denominator_constancy_tolerance_km2": constancy_policy(analysis),
+                 "fixed_denominator_representative": "earliest_month",
+                 "acz_denominator_checks": acz[["unit_id", "fixed_denominator_min_km2", "fixed_denominator_max_km2", "fixed_denominator_range_km2"]].to_dict(orient="records"),
+                 "district_denominator_checks": district_summary[["unit_id", "fixed_denominator_min_km2", "fixed_denominator_max_km2", "fixed_denominator_range_km2"]].to_dict(orient="records")},
         "crosswalk": {
             "sha256": str(authorities.district_to_acz_crosswalk_provenance["crosswalk"]["sha256"]),
             "source_district_geometry_bundle_sha256": str(authorities.district_to_acz_crosswalk_provenance["source_district_geometry"]["bundle_sha256"]),
@@ -627,6 +637,9 @@ def build_rq1_tables(
             "global_permutations": params.global_permutations, "local_permutations": params.local_permutations,
             "seed": params.random_seed, "local_p_value_method": params.local_p_value_method,
             "local_permutation_scheme": params.local_permutation_scheme,
+            "local_upper_tail_comparison": params.local_upper_tail_comparison,
+            "local_tie_allocation": params.local_tie_allocation,
+            "local_multiply_smaller_tail_by_two": params.local_multiply_smaller_tail_by_two,
             "multiplicity_method": params.multiplicity_method,
             "local_bh_family_size": int(len(spatial.weights.active_ids)),
         },

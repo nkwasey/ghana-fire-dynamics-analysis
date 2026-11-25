@@ -14,6 +14,7 @@ contract:
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -21,6 +22,7 @@ import pandas as pd
 import yaml
 from mv_firms_panels.cli.commands import cmd_combine
 from mv_firms_panels.io.paths import build_run_dir, sensor_panel_monthly_path
+from dual_stream_fixture import write_dual_stream_evidence
 
 
 def _write_minimal_repo(tmp_repo: Path) -> Path:
@@ -120,6 +122,15 @@ def _write_sensor_inputs(*, tmp_repo: Path, cfg_path: Path, run_id: str) -> None
         p = sensor_panel_monthly_path(run_dir=run_dir, sensor=sensor, fmt="csv")
         p.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(p, index=False)
+        # Synthetic provenance fixtures exercise reuse checks, not real data qualification.
+        qa_dir = run_dir / "qa"
+        qa_dir.mkdir(exist_ok=True)
+        policy_path = qa_dir / f"aggregate_monthly_{sensor}_summary.json"
+        policy_path.write_text(json.dumps({"steps":{"frp":{"confidence_categories":["n","h"],"aggregation":"mean_of_daily_maxima_over_eligible_utc_days"}}}))
+        manifest_path = qa_dir / f"aggregate_monthly_{sensor}_manifest.json"
+        manifest_path.write_text(json.dumps({"panel_sensor_monthly":{"path":p.relative_to(tmp_repo).as_posix(),"sha256":hashlib.sha256(p.read_bytes()).hexdigest()},"qa_summary_json":{"path":policy_path.relative_to(tmp_repo).as_posix(),"sha256":hashlib.sha256(policy_path.read_bytes()).hexdigest()}}))
+    write_dual_stream_evidence(tmp_repo, cfg_path, run_dir, run_id)
+
 
 
 def _combine_manifest_path(*, tmp_repo: Path, run_id: str) -> Path:

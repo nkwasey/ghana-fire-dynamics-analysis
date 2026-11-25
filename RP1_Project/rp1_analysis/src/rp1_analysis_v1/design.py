@@ -9,6 +9,9 @@ values as Python constants.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from itertools import pairwise
+from math import isfinite
 from typing import Any
 
 from .method_authority import (
@@ -28,6 +31,20 @@ class DesignValidationError(ValueError):
 
 class PendingDesignError(RuntimeError):
     """Raised when execution is requested for a method not yet implemented."""
+
+
+# The existing scan scenario and result paths encode this cutoff in their names.
+NAMED_BA2001_GT_CUTOFF_KM2 = 50
+
+
+@dataclass(frozen=True, slots=True)
+class RQ1SupportSensitivitySettings:
+    thresholds_km2: tuple[float, ...]
+    restricted_scan_cutoff_km2: int
+    block_lengths_years: tuple[int, ...]
+    primary_block_length_years: int
+    bootstrap_replications: int
+    block_endpoint_materiality_fraction: float
 
 
 def _mapping(value: Any, context: str) -> Mapping[str, Any]:
@@ -148,8 +165,10 @@ def _validate_populations(study: Mapping[str, Any]) -> None:
         raise DesignValidationError("study.populations must not be empty")
     for name, raw_pop in populations.items():
         pop = _mapping(raw_pop, f"study.populations.{name}")
-        _positive_int(pop.get("units"), f"study.populations.{name}.units")
-        _positive_int(pop.get("rows"), f"study.populations.{name}.rows")
+        if pop.get("units") is not None:
+            _positive_int(pop.get("units"), f"study.populations.{name}.units")
+        if pop.get("rows") is not None:
+            _positive_int(pop.get("rows"), f"study.populations.{name}.rows")
         if "source_panel" not in pop and "source_population" not in pop:
             raise DesignValidationError(
                 f"study.populations.{name} requires source_panel or source_population"
@@ -172,16 +191,82 @@ def _validate_seed_or_alpha_source(raw: Mapping[str, Any], source: Any, context:
         _nonnegative_int(value, source)
 
 
+def rq1_support_sensitivity_settings(
+    rq1: Mapping[str, Any], *, allow_legacy_snapshot: bool = False,
+) -> RQ1SupportSensitivitySettings:
+    """Resolve the settings shared by the district diagnostics and named scan."""
+    context = "research_questions.rq1.support_sensitivity"
+    support = _mapping(rq1.get("support_sensitivity", {}), context)
+    materiality_key = "block_endpoint_materiality_fraction"
+    required = {
+        "thresholds_km2", "restricted_scan_cutoff_km2", "block_lengths_years",
+        "primary_block_length_years", "bootstrap_replications", materiality_key,
+    }
+    _reject_unknown_keys(support, required, context)
+    if allow_legacy_snapshot and set(support).issubset({materiality_key}):
+        # Supply the named-assay defaults for a snapshot without explicit settings.
+        support = {
+            "thresholds_km2": (0, 10, NAMED_BA2001_GT_CUTOFF_KM2, 100),
+            "restricted_scan_cutoff_km2": NAMED_BA2001_GT_CUTOFF_KM2,
+            "block_lengths_years": (2, 3, 4, 6),
+            "primary_block_length_years": 3,
+            "bootstrap_replications": 9999,
+            materiality_key: 0.25,
+            **support,
+        }
+    missing = required - set(support)
+    if missing:
+        raise DesignValidationError(f"{context} is missing settings: {sorted(missing)!r}")
+
+    threshold_values = _sequence(support["thresholds_km2"], f"{context}.thresholds_km2")
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in threshold_values):
+        raise DesignValidationError(f"{context}.thresholds_km2 must be numeric")
+    thresholds = tuple(float(value) for value in threshold_values)
+    if (
+        not thresholds or thresholds[0] != 0
+        or not all(isfinite(value) for value in thresholds)
+        or any(left >= right for left, right in pairwise(thresholds))
+    ):
+        raise DesignValidationError(
+            f"{context}.thresholds_km2 must be finite and strictly increasing from zero"
+        )
+    cutoff = _positive_int(support["restricted_scan_cutoff_km2"], f"{context}.restricted_scan_cutoff_km2")
+    if cutoff != NAMED_BA2001_GT_CUTOFF_KM2:
+        raise DesignValidationError(
+            f"{context}.restricted_scan_cutoff_km2 must agree with the named "
+            f"BA-2001 GT{NAMED_BA2001_GT_CUTOFF_KM2} scan"
+        )
+    if cutoff not in thresholds:
+        raise DesignValidationError(
+            f"{context}.thresholds_km2 must include the restricted scan cutoff"
+        )
+    blocks = tuple(
+        _positive_int(value, f"{context}.block_lengths_years")
+        for value in _sequence(support["block_lengths_years"], f"{context}.block_lengths_years")
+    )
+    primary = _positive_int(support["primary_block_length_years"], f"{context}.primary_block_length_years")
+    if len(blocks) != len(set(blocks)) or primary not in blocks:
+        raise DesignValidationError(f"{context}.block_lengths_years must be distinct and include the primary block")
+    replications = _positive_int(support["bootstrap_replications"], f"{context}.bootstrap_replications")
+    if replications < 2:
+        raise DesignValidationError(f"{context}.bootstrap_replications must be at least two")
+    materiality = _positive_number(support[materiality_key], f"{context}.{materiality_key}")
+    if not 0 < materiality <= 1:
+        raise DesignValidationError(f"{context}.{materiality_key} must lie in (0, 1]")
+    return RQ1SupportSensitivitySettings(thresholds, cutoff, blocks, primary, replications, materiality)
+
+
 def _validate_rq1(raw: Mapping[str, Any], rq1: Mapping[str, Any]) -> None:
     _reject_unknown_keys(
         rq1,
         {
             "identity", "population", "supports", "annual_rate", "within_acz",
             "district_departure", "seasonality", "spatial",
-            "arbitrary_departure_thresholds_primary_evidence",
+            "arbitrary_departure_thresholds_primary_evidence", "support_sensitivity",
         },
         "research_questions.rq1",
     )
+    rq1_support_sensitivity_settings(rq1)
     annual = _mapping(rq1.get("annual_rate"), "research_questions.rq1.annual_rate")
     _positive_number(annual.get("scale_per_km2"), "research_questions.rq1.annual_rate.scale_per_km2")
     within = _mapping(rq1.get("within_acz"), "research_questions.rq1.within_acz")
@@ -224,7 +309,7 @@ def _validate_rq2(raw: Mapping[str, Any], rq2: Mapping[str, Any]) -> None:
             "identity", "authority_status", "population", "analysis_unit",
             "expected_series_count", "expected_n_per_series", "rate",
             "effect_estimator", "effect_uncertainty", "inferential_test",
-            "multiple_testing",
+            "multiple_testing", "trend_sensitivity",
         },
         "research_questions.rq2",
     )
@@ -253,6 +338,22 @@ def _validate_rq2(raw: Mapping[str, Any], rq2: Mapping[str, Any]) -> None:
     _method(multiple.get("method"), "research_questions.rq2.multiple_testing.method")
     _positive_int(multiple.get("family_size"), "research_questions.rq2.multiple_testing.family_size")
     _validate_seed_or_alpha_source(raw, multiple.get("alpha_source"), "research_questions.rq2.multiple_testing.alpha_source", probability=True)
+    if "trend_sensitivity" in rq2:
+        # Load the supplemental validator after the configuration modules are initialized.
+        from .trend_sensitivity import TrendSensitivityError, _compile_settings
+
+        profile = _mapping(rq2["trend_sensitivity"], "research_questions.rq2.trend_sensitivity")
+        n = _positive_int(rq2.get("expected_n_per_series"), "research_questions.rq2.expected_n_per_series")
+        try:
+            _compile_settings(
+                years=tuple(range(n)),
+                profile=profile,
+                permutation_count=test["permutations"],
+                variance_floor=test["variance_floor"],
+                bh_alpha=_resolve_source(raw, multiple["alpha_source"], "RQ2 BH alpha"),
+            )
+        except TrendSensitivityError as exc:
+            raise DesignValidationError(f"research_questions.rq2.trend_sensitivity: {exc}") from exc
 
 
 def _validate_rq3(rq3: Mapping[str, Any]) -> None:

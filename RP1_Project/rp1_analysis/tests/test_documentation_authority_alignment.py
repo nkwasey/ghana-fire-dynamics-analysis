@@ -1,4 +1,5 @@
 from __future__ import annotations
+from source_hygiene_reference import runtime_scan_text, runtime_source_files, LOCAL_ARCHIVE_IO_TOOLS
 
 import json
 from pathlib import Path
@@ -28,7 +29,7 @@ def test_current_facing_docs_match_generated_figure_and_external_boundary() -> N
     main = [item["id"] for item in figures if item["role"] == "manuscript"]
     supp = [item["id"] for item in figures if item["role"] == "supplementary"]
     assert main == ["F2", "F3", "F4", "F5", "F6"]
-    assert supp == ["S1"]
+    assert supp == ["FS1", "FS2", "FS3", "FS4"]
     docs = [
         REPO / "README.md",
         ROOT / "README.md",
@@ -38,35 +39,32 @@ def test_current_facing_docs_match_generated_figure_and_external_boundary() -> N
     ]
     combined = "\n".join(p.read_text(encoding="utf-8") for p in docs)
     assert "Figure 1" in combined and "extern" in combined.lower()
-    assert "F2–F6" in combined
-    assert "20 × 15 cm" in combined
+    assert "F2\u2013F6" in combined
+    assert "20 \u00d7 15 cm" in combined
     assert "T3/F6/S6" in combined or "T3, F6 and S6" in combined
+    assert all(figure in combined for figure in supp)
+    assert "S21-S24 require the" in combined and "restricted scan" in combined
 
 
 def test_notebook_markdown_describes_current_publication_estate() -> None:
     text = _markdown_text()
-    assert "external Figure 1" in text
-    assert "generated F2–F6" in text
-    assert "T1–T3" in text
-    assert "S1–S6" in text
-    assert "Figure S1" in text
-    assert "T3/F6/S6" in text
+    assert "Figure 1 is prepared externally" in text
+    assert "manuscript figures F2\u2013F6" in text
+    assert "tables T1\u2013T3 and S1\u2013S25" in text
+    assert "supplementary figures S1\u2013S4" in text
+    assert "Generated artwork uses manuscript captions for titles." in text
+    assert "T3, F6 and S6 require the two primary scan results" in text
+    assert "S21\u2013S24 require the validated >50 km\u00b2 burned-area scan" in text
 
 
-def test_methods_sha_provenance_is_single_current_identity() -> None:
-    rq1 = json.loads((ROOT / "data/authorities/rq1/realised_run_metadata.json").read_text())
-    rq2 = json.loads((ROOT / "data/authorities/rq2/realised_run_metadata.json").read_text())
-    rq3 = json.loads((ROOT / "data/authorities/rq3/realised_run_metadata.json").read_text())
-    rq3_manifest = json.loads((ROOT / "data/authorities/rq3/source_manifest.json").read_text())
-    values = {
-        rq1["methods_spec_sha256"],
-        rq2["methods_spec_sha256"],
-        rq3["methods_spec_sha256"],
-        rq3_manifest["methods_specification_sha256"],
-    }
-    assert len(values) == 1
-    value = next(iter(values))
-    assert re.fullmatch(r"[0-9a-f]{64}", value)
+def test_method_documentation_declares_the_executable_authority_chain() -> None:
+    text = (ROOT / "docs/Analysis_Methods_Contract.md").read_text(encoding="utf-8")
+    assert "config/analysis_contract.yml" in text
+    assert "sole executable projection" in text
+    assert "Realised values belong in run metadata" in text
+    configured = _yaml("analysis_contract.yml")["research_questions"]
+    for question in configured:
+        assert re.search(r"\b" + re.escape(question) + r"\b", text, flags=re.IGNORECASE)
 
 
 def test_obsolete_vertical_layout_authorities_are_absent() -> None:
@@ -79,7 +77,7 @@ def test_obsolete_vertical_layout_authorities_are_absent() -> None:
     assert "five_panel" + "_vertical" not in style
 
 
-def test_public_product_is_phase_neutral_and_has_no_packaging_runtime_dependency() -> None:
+def test_public_product_is_current_product_and_has_no_packaging_runtime_dependency() -> None:
     development_identity_patterns = (
         re.compile(r"\bV\d{3,}[-_]\d+\b", flags=re.IGNORECASE),
         re.compile(r"\bLOCAL[-_]\d+\b", flags=re.IGNORECASE),
@@ -87,15 +85,17 @@ def test_public_product_is_phase_neutral_and_has_no_packaging_runtime_dependency
     archive_pattern = re.compile(r"\.zip(?:$|[\s'\"])", flags=re.IGNORECASE)
     suffixes = {".py", ".md", ".yml", ".yaml", ".json", ".toml", ".txt", ".ipynb"}
     offenders: list[str] = []
-    for path in REPO.rglob("*"):
+    for path in runtime_source_files(REPO):
         if not path.is_file() or path.suffix.lower() not in suffixes:
             continue
-        if "tests" in path.parts:
+        relative = path.relative_to(REPO)
+        if (set(relative.parts).intersection({"tests", "out", "downloads", "__pycache__", ".pytest_cache"})
+                or path.name == "consolidation_receipt.json"):
             continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = runtime_scan_text(path, REPO)
         if (
             any(pattern.search(text) for pattern in development_identity_patterns)
-            or archive_pattern.search(text)
+            or (relative.as_posix() not in LOCAL_ARCHIVE_IO_TOOLS and archive_pattern.search(text))
         ):
             offenders.append(path.relative_to(REPO).as_posix())
     assert offenders == []

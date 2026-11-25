@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rp1-analysis-v1"
-version = "1.2.3"
+version = "1.3.1"
 description = "Configuration-governed analysis package for Ghana Fire RP1."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -58,7 +58,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["rp1_analysis_v1*"]
+include = ["rp1_analysis_v1*", "rp1_ba_contracts*"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

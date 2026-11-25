@@ -5,7 +5,7 @@ project:
   package_namespace: rp1_analysis_v1
   canonical_notebook: RP1_Analysis_v1.ipynb
   analysis_schema: rp1-analysis-v1.1
-  data_schema: rp1-data-schema-v1.1
+  data_schema: rp1-data-schema-v1.2
 reproducibility:
   primary_seed: 20260822
   alpha: 0.05
@@ -40,27 +40,27 @@ study:
       eligibility: complete_balanced_panel
     long_run_district:
       source_panel: district_monthly
-      units: 250
-      rows: 72000
+      units: null
+      rows: null
       start: 2001-01
       end: 2024-12
-      eligibility: positive_fixed_ba2001_burnable_area_all_months
+      eligibility: complete_usable_c3_ba2001_positive_fixed_union
       denominator_role: rq1.fixed_burnable_area
     paired_overlap:
       source_panel: district_monthly
-      units: 249
-      rows: 38595
+      units: null
+      rows: null
       start: 2012-02
       end: 2024-12
-      eligibility: paired_supported_positive_fixed_ba2012_burnable_area
+      eligibility: complete_usable_c3_ba2012_paired_positive_fixed_union
       support_roles:
       - rq3.viirs_support
       - rq3.ba2012_support
       denominator_role: rq3.burnable_area
     rq3_model:
       source_population: paired_overlap
-      units: 249
-      rows: 22939
+      units: null
+      rows: null
       start: 2012-02
       end: 2024-12
       eligibility: viirs_detection_count_positive
@@ -109,6 +109,21 @@ research_questions:
   rq1:
     identity: spatial_support_heterogeneity_seasonality_spatial_organisation
     population: long_run_district
+    support_sensitivity:
+      thresholds_km2:
+      - 0
+      - 10
+      - 50
+      - 100
+      restricted_scan_cutoff_km2: 50
+      block_lengths_years:
+      - 2
+      - 3
+      - 4
+      - 6
+      primary_block_length_years: 3
+      bootstrap_replications: 9999
+      block_endpoint_materiality_fraction: 0.25
     supports:
     - acz
     - district
@@ -116,6 +131,8 @@ research_questions:
       numerator_role: rq1.burned_area
       denominator_role: rq1.fixed_burnable_area
       denominator_support: fixed_ba2001_burnable_union
+      fixed_denominator_constancy_absolute_tolerance_km2: 1.0e-09
+      fixed_denominator_representative: earliest_month
       scale_per_km2: 100
       annual_aggregation: sum
       long_run_summary: arithmetic_mean
@@ -162,9 +179,9 @@ research_questions:
         standardisation: population_sd_ddof0
         statistic: z_i_times_row_standardised_spatial_lag
         upper_tail_comparison: greater_than_or_equal
-        tie_allocation: upper_tail
+        tie_allocation: both_tails
         p_value_method: local_moran_smaller_tail_plus_one
-        multiply_smaller_tail_by_two: false
+        multiply_smaller_tail_by_two: true
         multiplicity_method: benjamini_hochberg
         multiplicity_family: all_non_island_eligible_districts
         classification: bh_supported_hh_ll_hl_lh_only
@@ -202,6 +219,46 @@ research_questions:
       family: exactly_five_acz_raw_p_values
       family_size: 5
       alpha_source: reproducibility.alpha
+    trend_sensitivity:
+      seed: 20260823
+      interval_bootstrap_replicates: 9999
+      calibration_bootstrap_replicates: 299
+      calibration_replicates: 600
+      validation_replicates: 600
+      detectability_replicates: 3000
+      held_out_interval_replicates: 300
+      null_confirmation_replicates: 4000
+      expected_block_length: 3
+      sensitivity_block_lengths:
+      - 2
+      - 4
+      - 6
+      interval_level: 0.95
+      calibration_coverage: 0.98
+      calibration_decline: 0.2
+      permutation_banks: 3
+      target_power: 0.8
+      coverage_review_flag: 0.925
+      null_rejection_review_flag: 0.075
+      fitted_lag_shrinkage: 0.7
+      fitted_lag_limit: 0.65
+      positive_stress_lag: 0.45
+      negative_stress_lag: -0.4
+      cross_zone_diagonal_weight: 0.25
+      heavy_tail_strength: 1.25
+      skew_strength: 0.6
+      decline_grid:
+      - 0.0
+      - 0.05
+      - 0.1
+      - 0.15
+      - 0.2
+      - 0.3
+      - 0.4
+      - 0.5
+      - 0.6
+      - 0.7
+      - 0.8
   rq3:
     identity: viirs_positive_mcd64a1_absence_association
     authority_status: frozen

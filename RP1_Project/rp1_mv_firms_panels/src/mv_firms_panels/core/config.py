@@ -45,14 +45,10 @@ SensorName = Literal["viirs", "modis"]
 SpatialPredicate = Literal["intersects", "within", "contains"]
 LandMaskPredicate = Literal["intersects", "within"]
 
-# Supported RP1 export sensor modes and locked sensor-specific export windows.
-#
-# These windows define the formal merger-ready RP1 export contract. They are
-# intentionally kept separate from the broader processing/sensor coverage ranges,
-# because the pipeline may process a wider span than the analysis-ready RP1
-# export family is allowed to emit.
+# Sensor-specific defaults for the configured study; explicit study declarations
+# are checked against export windows by AppConfig.
 SUPPORTED_RP1_EXPORT_SENSOR_MODES: tuple[str, ...] = ("viirs", "modis")
-LOCKED_RP1_EXPORT_WINDOWS: dict[str, tuple[int, int]] = {
+DEFAULT_RP1_EXPORT_WINDOWS: dict[str, tuple[int, int]] = {
     "viirs": (201201, 202412),
     "modis": (200101, 202412),
 }
@@ -143,8 +139,20 @@ class FirmsSensorInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     file_glob: str
+    input_profile: Literal["native_firms_v1", "ghana_firms_archive_sp_v1"] = "native_firms_v1"
+    admission_manifest: str | None = None
+    # Optional project-relative run-local root; authority paths stay bundle-relative.
+    admission_bundle_root: str | None = None
     # canonical -> source column name mapping
     column_map: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _require_profile_admission(self) -> FirmsSensorInput:
+        if self.input_profile == "ghana_firms_archive_sp_v1" and not self.admission_manifest:
+            raise ValueError("Archive SP input_profile requires admission_manifest")
+        if self.input_profile == "native_firms_v1" and (self.admission_manifest is not None or self.admission_bundle_root is not None):
+            raise ValueError("admission_manifest and admission_bundle_root are only supported by Archive SP input_profile")
+        return self
 
 
 class PolygonLevel(BaseModel):
@@ -408,7 +416,7 @@ class RP1ExportsSection(BaseModel):
     relying on exporter-internal constants. This section defines:
     - the fixed export family name,
     - the supported sensor modes,
-    - the locked sensor-specific RP1 export windows, and
+    - the declared sensor-specific export windows, and
     - the sensor-specific base/_ext schema paths.
 
     Notes
@@ -445,7 +453,7 @@ class RP1ExportsSection(BaseModel):
                 f"missing {missing}"
             )
 
-        for sensor_mode, expected_window in LOCKED_RP1_EXPORT_WINDOWS.items():
+        for sensor_mode in SUPPORTED_RP1_EXPORT_SENSOR_MODES:
             contract = self.sensors[sensor_mode]
             tr = contract.window
             if tr.start_yyyymm is None or tr.end_yyyymm is None:
@@ -457,13 +465,6 @@ class RP1ExportsSection(BaseModel):
                 raise ValueError(
                     f"outputs.rp1_exports.sensors.{sensor_mode}.window requires "
                     "start_yyyymm <= end_yyyymm"
-                )
-            actual_window = (tr.start_yyyymm, tr.end_yyyymm)
-            if actual_window != expected_window:
-                raise ValueError(
-                    f"outputs.rp1_exports.sensors.{sensor_mode}.window must equal the locked "
-                    f"RP1 export window {expected_window[0]}..{expected_window[1]} "
-                    f"(got {tr.start_yyyymm}..{tr.end_yyyymm})"
                 )
         return self
 
@@ -602,6 +603,23 @@ class QCSection(BaseModel):
     sensors: dict[SensorName, QCPerSensor] = Field(default_factory=_default_qc_sensors)
 
 
+class StudyCalendar(BaseModel):
+    """An explicit observation period and native VIIRS support start."""
+    model_config = ConfigDict(extra="forbid")
+    start_yyyymm: int
+    end_yyyymm: int
+    viirs_support_start_yyyymm: int = 201201
+
+    @model_validator(mode="after")
+    def validate_calendar(self):
+        for value in (self.start_yyyymm, self.end_yyyymm, self.viirs_support_start_yyyymm):
+            if not 100001 <= value <= 999912 or not 1 <= value % 100 <= 12:
+                raise ValueError('Study calendar requires valid YYYYMM values')
+        if self.start_yyyymm > self.end_yyyymm or self.viirs_support_start_yyyymm > self.end_yyyymm:
+            raise ValueError('Study calendar has reversed or unavailable support')
+        return self
+
+
 class AppConfig(BaseModel):
     """Top-level validated configuration."""
 
@@ -615,6 +633,27 @@ class AppConfig(BaseModel):
     missingness_semantics: MissingnessSemantics
 
     qc: QCSection = Field(default_factory=QCSection)
+    study: StudyCalendar | None = None
+
+    @model_validator(mode="after")
+    def validate_study_export_windows(self):
+        if self.study is not None:
+            coverage_by_sensor = self.processing.sensor_coverage
+            if coverage_by_sensor is None or any(
+                sensor not in coverage_by_sensor for sensor in SUPPORTED_RP1_EXPORT_SENSOR_MODES
+            ):
+                raise ValueError('Declared study requires sensor coverage for both modis and viirs')
+            for sensor in SUPPORTED_RP1_EXPORT_SENSOR_MODES:
+                start = self.study.start_yyyymm
+                if sensor == 'viirs':
+                    start = max(start, self.study.viirs_support_start_yyyymm)
+                window = self.outputs.rp1_exports.sensors[sensor].window
+                if (window.start_yyyymm, window.end_yyyymm) != (start, self.study.end_yyyymm):
+                    raise ValueError(f'{sensor} export window differs from the declared study calendar')
+                coverage = coverage_by_sensor[sensor]
+                if coverage.start_yyyymm is None or coverage.end_yyyymm is None or coverage.start_yyyymm > start or coverage.end_yyyymm < self.study.end_yyyymm:
+                    raise ValueError(f'{sensor} coverage does not contain the declared export window')
+        return self
 
     def to_canonical_dict(self) -> dict[str, Any]:
         """Return a stable, JSON-serialisable dict (no Path objects)."""
@@ -639,9 +678,9 @@ def _repo_relative_path(path: Path, *, repo_root: Path) -> str:
 def _stage2_missing_input_message(*, label: str, path: Path, repo_root: Path) -> str:
     repo_rel = _repo_relative_path(path, repo_root=repo_root)
     return (
-        f"Missing required Stage 2 input `{label}`: {repo_rel}. "
+        f"Missing required Stage 3 input `{label}`: {repo_rel}. "
         f"See {DATA_ACCESS_DOC_REL} and {ROOT_RUNBOOK_REL} for acquisition and local staging instructions. "
-        "Required by stage: rp1_mv_firms_panels (Stage 2)."
+        "Required by stage: rp1_mv_firms_panels (Stage 3)."
     )
 
 

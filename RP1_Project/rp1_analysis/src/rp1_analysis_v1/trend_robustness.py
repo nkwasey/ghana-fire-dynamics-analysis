@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 from .config import AnalysisContract, rq2_trend_parameters
+from .fixed_denominator import fixed_denominator, constancy_policy
 from .contracts import MethodAuthorityContract
 from .data_io import DataAuthorities
 from .design import assert_execution_ready
@@ -116,11 +117,11 @@ def build_acz_annual_ba_series(acz_panel: pd.DataFrame, analysis: AnalysisContra
         observed_years = sorted(pd.to_numeric(group[year_field], errors="raise").astype(int).unique())
         if observed_years != years:
             raise TrendRobustnessError(f"{uid!r} does not contain the configured RQ2 years")
-        denominator_values = _finite(group[denominator_field], denominator_field, nonnegative=True)
-        unique_denominator = np.unique(denominator_values)
-        if unique_denominator.size != 1 or unique_denominator[0] <= 0.0:
-            raise TrendRobustnessError(f"{uid!r} has invalid fixed support")
-        fixed_denominator = float(unique_denominator[0])
+        group = group.sort_values(yyyymm)
+        try:
+            fixed_value, fixed_min, fixed_max, fixed_range = fixed_denominator(group[denominator_field], constancy_policy(analysis))
+        except (ValueError, KeyError, TypeError) as exc:
+            raise TrendRobustnessError(f"{uid!r} has invalid fixed support: {exc}") from exc
         code = group[unit_code].dropna().astype(str).unique()
         name = group[unit_name].dropna().astype(str).unique()
         if len(code) != 1 or len(name) != 1:
@@ -140,8 +141,11 @@ def build_acz_annual_ba_series(acz_panel: pd.DataFrame, analysis: AnalysisContra
                     "unit_name": str(name[0]),
                     "year": int(year),
                     "annual_ba_km2": burned,
-                    "fixed_burnable_km2": fixed_denominator,
-                    PRIMARY_RATE: scale * burned / fixed_denominator,
+                    "fixed_burnable_km2": fixed_value,
+                    "fixed_denominator_min_km2": fixed_min,
+                    "fixed_denominator_max_km2": fixed_max,
+                    "fixed_denominator_range_km2": fixed_range,
+                    PRIMARY_RATE: scale * burned / fixed_value,
                 }
             )
     out = pd.DataFrame(rows).sort_values(["unit_id", "year"]).reset_index(drop=True)

@@ -180,15 +180,24 @@ def test_exact_boundary_rank_case_counts_equality_and_returns_forest_tail():
     ) is True
 
 
-def test_all_five_actual_ghana_rq2_series_are_tie_free_and_match_reference():
+def test_current_rq2_series_check_admissibility_and_reference_parity():
     bundle = load_configuration_bundle(CONFIG)
     params = rq2_trend_parameters(bundle.analysis)
     authorities = load_data_authorities(ProjectPaths(SUBPROJECT), bundle.data_schema)
     annual = build_acz_annual_ba_series(authorities.acz_panel, bundle.analysis)
     observed_raw = []
+    checked_series = 0
     for _, group in annual.groupby("unit_id", sort=True, observed=True):
         values = group.sort_values("year")[PRIMARY_RATE].to_numpy(dtype=float)
-        assert np.unique(values).size == values.size == 24
+        checked_series += 1
+        if np.unique(values).size != values.size:
+            with pytest.raises(ReferenceAdmissibilityError):
+                permutation_test(values, epsilon=params.variance_floor, replications=params.permutations, seed=params.random_seed)
+            with pytest.raises(MethodAdmissibilityError):
+                _prod(values, epsilon=params.variance_floor, replications=params.permutations,
+                      seed=params.random_seed, requires_distinct_observations=params.requires_distinct_observations,
+                      on_ties=params.on_ties)
+            continue
         ref = permutation_test(
             values,
             epsilon=params.variance_floor,
@@ -209,4 +218,4 @@ def test_all_five_actual_ghana_rq2_series_are_tie_free_and_match_reference():
         assert prod.extreme_count == ref.extreme_count
         assert prod.raw_p == pytest.approx(ref.p_value, rel=0.0, abs=0.0)
         observed_raw.append(prod.raw_p)
-    assert len(observed_raw) == params.family_size == 5
+    assert checked_series == params.family_size

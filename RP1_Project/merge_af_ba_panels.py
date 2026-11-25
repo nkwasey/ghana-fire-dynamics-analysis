@@ -1,213 +1,24 @@
 #!/usr/bin/env python3
-"""
-# merge_af_ba_panels.py
-
-Audit-grade merger for the final consolidated RP1 Ghana fire panels.
-
-## Purpose
-
-This module builds one final monthly fire panel per level by merging four
-scientifically governed upstream families onto one canonical balanced monthly
-spine derived from the Stage 1 geography contract:
-
-1. MODIS active-fire (AF) base exports
-2. VIIRS active-fire (AF) base exports
-3. MODIS burned-area (BA) base exports using the BA-2001 family
-4. MODIS burned-area (BA) base exports using the BA-2012 family
-
-It writes one consolidated CSV for:
-
-- `acz` / zonal level
-- `district` level
-
-The merged outputs span the locked window `200101` through `202412` inclusive.
-
-## Why this rewrite exists
-
-Earlier merger logic treated the BA-2001 and BA-2012 families as if they shared
-one common realised BA numerator during the overlap period. That assumption is
-scientifically unsafe for this project.
-
-The audited GEE BA export scripts use different fixed burnable-union support
-windows for the two BA families:
-
-- BA-2001 family support window: `200101–202412`
-- BA-2012 family support window: `201201–202412`
-
-Crucially, that family-specific union mask is not only used for denominator
-construction. It is also applied to the realised monthly BA numerator. As a
-result, the following fields can legitimately differ between BA families during
-`201201–202412`:
-
-- `modis_ba_km2`
-- `modis_burned_pixel_count`
-- `modis_ba_any`
-- `modis_burned_frac_union`
-- `modis_burned_frac_annual`
-
-Accordingly, this merger intentionally preserves both BA families throughout
-the final output and never collapses them into unsuffixed shared BA fields.
-
-## Locked scientific decisions implemented here
-
-### 1. Canonical balanced spine
-
-The final panel is built from `unit_universe.csv` and not from source-row
-presence. The governing key is:
-
-- `level`
-- `unit_id`
-- `yyyymm`
-
-The canonical spine is balanced over:
-
-- all governed units in the Stage 1 geography contract
-- every month from `200101` to `202412`
-
-Expected row counts are locked and audited:
-
-- `acz`: `5 × 288 = 1440`
-- `district`: `260 × 288 = 74880`
-
-### 2. Both BA families are preserved explicitly
-
-This merger does not emit unsuffixed BA analytical fields in the final
-output. Instead, it writes family-specific versions using the suffixes:
-
-- `_ba2001`
-- `_ba2012`
-
-### 3. No `*_preferred` BA fields
-
-The merger does not choose a preferred BA family. Any downstream selection
-between BA-2001 and BA-2012 must be done explicitly by the analysis consumer.
-
-### 4. AF primary count rule
-
-The main science-facing AF count is locked to nominal-plus-high detections:
-
-- `modis_det_primary = modis_det_nh`
-- `viirs_det_primary = viirs_det_nh`
-
-### 5. Structural missingness is preserved
-
-Unsupported months are not silently converted to zero:
-
-- VIIRS is structurally unsupported before `201201`
-- BA-2012 is structurally unsupported before `201201`
-
-These months remain missing in the corresponding analytical columns and are
-tracked explicitly by support and structural-missingness flags.
-
-## Input contracts
-
-### Canonical geography
-
-Default path:
-
-- `geo_data_prep/out/example_acz/unit_universe.csv`
-
-Stage 1 geography is the sole authority for:
-
-- `level`
-- `unit_id`
-- `unit_code`
-- `unit_name`
-- `parent_level`
-- `parent_id`
-- `parent_code`
-- `parent_name`
-
-Source files are validated against this contract but never allowed to redefine
-identity.
-
-### AF base exports
-
-Default root:
-
-- `RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports`
-
-Expected family branches:
-
-- `<af_root>/acz/modis`
-- `<af_root>/acz/viirs`
-- `<af_root>/district/modis`
-- `<af_root>/district/viirs`
-
-Only governed base exports are accepted. `_ext` files, manifests,
-summaries, QA files, and unrelated CSVs are rejected.
-
-### BA base exports
-
-Default roots:
-
-- `RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001`
-- `RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012`
-
-Only governed base exports for the requested level are accepted. `_ext`
-files, QA files, drop logs, manifests, and wrong-level files are rejected.
-
-## Output contract
-
-Primary outputs:
-
-- `fire_panel_acz_monthly_consolidated_2001_2024.csv`
-- `fire_panel_district_monthly_consolidated_2001_2024.csv`
-
-Companion audit artefacts:
-
-- `fire_panel_manifest.json`
-- `fire_panel_merge_summary.json`
-- `fire_panel_key_audit.csv`
-
-## Validation philosophy
-
-This module is intentionally strict. It fails hard on integrity breaches that
-would make the final panel ambiguous, non-deterministic, or scientifically
-unsafe, including:
-
-- missing source families
-- wrong-folder ingestion
-- duplicate keys
-- wrong level values
-- support-window violations
-- schema drift
-- non-canonical source identity
-- missing supported rows
-- unexpected extra rows
-- impossible AF logic
-- impossible BA logic
-- final schema mismatch
-- final row-count mismatch
-
-## Usage
-
-From the umbrella repository root:
-
-    python RP1_Project/merge_af_ba_panels.py
-
-Optional explicit paths can be supplied when needed:
-
-    python RP1_Project/merge_af_ba_panels.py \
-      --repo-root . \
-      --af-root RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports \
-      --ba2001-root RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001 \
-      --ba2012-root RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012 \
-      --output-dir RP1_Project/rp1_analysis/data/raw
-
-The implementation uses only the standard library plus `pandas` and `numpy`.
-All file writes are deterministic and all metadata JSON outputs are serialized in
-stable sorted order.
+"""Merge AF and admitted annual c3 BA sources into separate-domain panels.
+
+The 111-column projection preserves c3 values and guarded nulls. All 69 original
+fields and file/row identities remain in the mandatory evidence companion.
+Use --profile c3 and an admitted handoff; existing outputs are never replaced.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
+import gzip
 import hashlib
 import json
 import os
 import re
+import math
+import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -216,16 +27,39 @@ from typing import Any, Iterable, Mapping, Sequence
 import numpy as np
 import pandas as pd
 
+# The lightweight contract is also included in the analysis wheel.
+_CONTRACT_SOURCE = Path(__file__).resolve().parent / "rp1_analysis" / "src"
+_UMBRELLA_SOURCE = Path(__file__).resolve().parents[1]
+if str(_UMBRELLA_SOURCE) not in sys.path:
+    sys.path.insert(0, str(_UMBRELLA_SOURCE))
+_contract_import_path = sys.path[:]
+try:
+    if str(_CONTRACT_SOURCE) not in sys.path:
+        sys.path.insert(0, str(_CONTRACT_SOURCE))
+    from rp1_ba_contracts import c3
+finally:
+    # A local contract import must not shadow installed distribution metadata.
+    sys.path[:] = _contract_import_path
+
+try:
+    from RP1_Project import rp1_local_io as _local_io
+except ModuleNotFoundError as exc:
+    if exc.name != "RP1_Project":
+        raise
+    import rp1_local_io as _local_io
+
 
 # =============================================================================
 # LOCKED CONTRACT CONSTANTS
 # =============================================================================
 
-MERGE_SCHEMA_VERSION = "rp1_fire_panel_consolidated_v2"
+MERGE_SCHEMA_VERSION = "rp1_fire_panel_consolidated_v3"
 START_YYYYMM = 200101
 END_YYYYMM = 202412
 VIIRS_SUPPORT_START_YYYYMM = 201201
 BA2012_SUPPORT_START_YYYYMM = 201201
+ANALYSIS_OVERLAP_START_YYYYMM = None
+EXPECTED_UNITS = {"acz": 0, "district": 0}  # Bound to selected geography before production loading.
 SUPPORTED_LEVELS = ("acz", "district")
 MERGE_KEY = ["level", "unit_id", "yyyymm"]
 
@@ -242,8 +76,6 @@ MERGE_KEY = ["level", "unit_id", "yyyymm"]
 DEFAULT_UNIT_UNIVERSE_RELATIVE = Path("geo_data_prep/out/example_acz/unit_universe.csv")
 DEFAULT_AF_ROOT_RELATIVE = Path("RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports")
 DEFAULT_AF_DISCOVERY_GLOB = "RP1_Project/rp1_mv_firms_panels/out/runs/*/rp1_af_exports"
-DEFAULT_BA2001_ROOT_RELATIVE = Path("RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001")
-DEFAULT_BA2012_ROOT_RELATIVE = Path("RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012")
 DEFAULT_OUTPUT_DIR_RELATIVE = Path("RP1_Project/rp1_analysis/data/raw")
 
 PROVENANCE_SCHEMA_VERSION = "rp1-fire-panel-provenance-v2"
@@ -579,6 +411,15 @@ class PathsConfig:
     ba2001_root: Path
     ba2012_root: Path
     output_dir: Path
+    profile_id: str = "c3"
+    profile_contract: Mapping[str, Any] | None = None
+    config_path: Path | None = None
+    source_lock_path: Path | None = None
+    source_lock_entries: tuple[Mapping[str, Any], ...] = ()
+    bundle_manifest_path: Path | None = None
+    bundle_handoff_path: Path | None = None
+    admission_verified: bool = False
+    config_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -603,6 +444,7 @@ class LoadedFamily:
     run_ids: list[str]
     schema_version: str
     file_inventory_rows: list[dict[str, Any]]
+    qa_sidecars: list[pd.DataFrame] | None = None
 
 
 # =============================================================================
@@ -697,6 +539,21 @@ def read_csv_strict(path: Path) -> pd.DataFrame:
     This deliberately avoids accidental dtype coercion of key and identity fields
     before schema validation and governed numeric parsing.
     """
+    # pandas normally disambiguates duplicate headers before they reach the
+    # dataframe; inspect the original header so duplicates cannot be hidden.
+    try:
+        opener = gzip.open if path.name.lower().endswith(".gz") else open
+        with opener(path, "rt", encoding="utf-8-sig", newline="") as handle:
+            header = next(csv.reader(handle, strict=True))
+        normalized = [column.strip() for column in header]
+        if not normalized or any(not name for name in normalized):
+            fail(f"CSV has an empty header or column name: {path}")
+        if len(set(normalized)) != len(normalized):
+            fail(f"CSV has duplicate column names: {path}")
+    except ValidationError:
+        raise
+    except (OSError, UnicodeError, csv.Error, StopIteration) as exc:
+        fail(f"Failed to read CSV header {path.as_posix()} :: {exc}")
     try:
         return pd.read_csv(
             path,
@@ -745,6 +602,8 @@ def parse_float_series(series: pd.Series, context: str) -> pd.Series:
     if bad_mask.any():
         bad_values = sorted({str(v) for v in series.loc[bad_mask].head(20).tolist()})
         fail(f"{context}: found non-numeric values where numeric values were required: {bad_values}")
+    if (numeric.notna() & ~np.isfinite(numeric)).any():
+        fail(f"{context}: nonfinite numeric values are not permitted")
     return numeric.astype("float64")
 
 
@@ -977,51 +836,97 @@ def discover_unique_af_root(repo_root: Path) -> Path | None:
     raise AssertionError("Unreachable")
 
 
+def configure_study(study: Mapping[str, Any]) -> None:
+    """Bind calendar and actual geography counts; empty settings reset helpers."""
+    global START_YYYYMM, END_YYYYMM, VIIRS_SUPPORT_START_YYYYMM, BA2012_SUPPORT_START_YYYYMM, ANALYSIS_OVERLAP_START_YYYYMM, EXPECTED_UNITS
+    defaults = {"start_yyyymm": 200101, "end_yyyymm": 202412,
+                "viirs_support_start_yyyymm": 201201, "ba2012_support_start_yyyymm": 201201,
+                "analysis_overlap_start_yyyymm": 201202, "expected_units": None}
+    if not isinstance(study, dict) or set(study).difference(defaults):
+        fail("study must contain only temporal bounds and expected_units")
+    values = defaults | study
+    for key in ('start_yyyymm', 'end_yyyymm', 'viirs_support_start_yyyymm', 'ba2012_support_start_yyyymm', 'analysis_overlap_start_yyyymm'):
+        value = values[key]
+        if type(value) is not int or value < 100001 or not 1 <= value % 100 <= 12:
+            fail('study contains invalid YYYYMM: ' + key)
+    if values['start_yyyymm'] > values['end_yyyymm']:
+        fail('study start exceeds end')
+    for key in ('viirs_support_start_yyyymm', 'ba2012_support_start_yyyymm'):
+        if values[key] > values['end_yyyymm']:
+            fail('sensor/family start exceeds study end')
+    units = values['expected_units']
+    if units is None:
+        units = {'acz': 0, 'district': 0}
+    elif not isinstance(units, dict) or set(units) != {'acz','district'} or any(type(v) is not int or v < 1 for v in units.values()):
+        fail('study expected_units must declare positive geography-derived counts')
+    START_YYYYMM, END_YYYYMM = values['start_yyyymm'], values['end_yyyymm']
+    VIIRS_SUPPORT_START_YYYYMM = max(START_YYYYMM, values['viirs_support_start_yyyymm'])
+    BA2012_SUPPORT_START_YYYYMM = max(START_YYYYMM, values['ba2012_support_start_yyyymm'])
+    ANALYSIS_OVERLAP_START_YYYYMM = values['analysis_overlap_start_yyyymm'] if 'analysis_overlap_start_yyyymm' in study else None
+    if ANALYSIS_OVERLAP_START_YYYYMM is not None and ANALYSIS_OVERLAP_START_YYYYMM > END_YYYYMM:
+        fail('Paired analysis starts after the study end')
+    EXPECTED_UNITS = dict(units)
+
+
 def build_paths_config(args: argparse.Namespace) -> PathsConfig:
-    """Resolve all default and CLI-overridden paths used by the merger.
-
-    All built-in defaults are interpreted relative to the canonical repository
-    root while explicit path overrides remain available for reproducible batch
-    or CI runs.
-    """
+    """Resolve a c3-only configuration through its verified admitted bundle."""
     repo_root = infer_repo_root(args.repo_root)
-
-    unit_universe_path = (
-        Path(args.unit_universe).expanduser().resolve()
-        if args.unit_universe
-        else (repo_root / DEFAULT_UNIT_UNIVERSE_RELATIVE).resolve()
-    )
-
-    if args.af_root:
-        af_root = Path(args.af_root).expanduser().resolve()
-    else:
-        default_af_root = (repo_root / DEFAULT_AF_ROOT_RELATIVE).resolve()
-        af_root = default_af_root if default_af_root.exists() else (discover_unique_af_root(repo_root) or default_af_root)
-
-    ba2001_root = (
-        Path(args.ba2001_root).expanduser().resolve()
-        if args.ba2001_root
-        else (repo_root / DEFAULT_BA2001_ROOT_RELATIVE).resolve()
-    )
-    ba2012_root = (
-        Path(args.ba2012_root).expanduser().resolve()
-        if args.ba2012_root
-        else (repo_root / DEFAULT_BA2012_ROOT_RELATIVE).resolve()
-    )
-    output_dir = (
-        Path(args.output_dir).expanduser().resolve()
-        if args.output_dir
-        else (repo_root / DEFAULT_OUTPUT_DIR_RELATIVE).resolve()
-    )
-
-    return PathsConfig(
-        repo_root=repo_root,
-        unit_universe_path=unit_universe_path,
-        af_root=af_root,
-        ba2001_root=ba2001_root,
-        ba2012_root=ba2012_root,
-        output_dir=output_dir,
-    )
+    config_path = Path(args.config).expanduser().resolve() if getattr(args,'config',None) else repo_root/'RP1_Project/configs/merge_profiles.json'
+    try:
+        config_bytes = config_path.read_bytes()
+        config = json.loads(config_bytes.decode('utf-8'))
+    except (OSError, ValueError) as exc:
+        fail(f'Cannot read merger configuration {config_path}: {exc}')
+    if config.get('version') != 2 or set(config).difference({'version','default_profile','paths','profiles','study'}):
+        fail('Merger configuration must use c3 profile contract version 2')
+    profile_id = getattr(args,'profile',None) or config.get('default_profile')
+    if profile_id != 'c3' or set(config.get('profiles',{})) != {'c3'}:
+        fail('Only the c3 burned-area profile is supported')
+    profile = config['profiles']['c3']
+    if not isinstance(profile,dict) or any(profile.get(k) != v for k,v in c3.PROFILE.items()):
+        fail('c3 profile schema/method/admission policy differs from the implemented contract')
+    def resolve(value):
+        if not isinstance(value,str) or not value.strip():
+            fail('Required c3 path is absent; complete consolidate-ba first')
+        p = Path(value).expanduser()
+        return (p if p.is_absolute() else repo_root/p).resolve()
+    settings = config.get('paths',{})
+    if set(settings) != {'unit_universe','af_root','output_root'}:
+        fail('Configuration paths must specify unit_universe, af_root and output_root')
+    universe = resolve(getattr(args,'unit_universe',None) or settings['unit_universe'])
+    try:
+        with universe.open(encoding='utf-8-sig',newline='') as stream:
+            units = list(csv.DictReader(stream))
+    except OSError as exc:
+        fail(f'Cannot read selected unit universe: {exc}')
+    counts = {level:sum(row.get('level') == level for row in units) for level in SUPPORTED_LEVELS}
+    study = dict(config.get('study',{}))
+    if 'expected_units' in study and study['expected_units'] != counts:
+        fail('Configured unit counts disagree with selected geography')
+    study['expected_units'] = counts
+    configure_study(study)
+    handoff_path = resolve(getattr(args,'ba_handoff',None) or profile.get('bundle_handoff'))
+    if handoff_path.name != 'handoff.json' or handoff_path.is_symlink():
+        fail('c3 requires the admitted bundle handoff.json')
+    from RP1_Project.rp1_ba_consolidator.handoff import verify_handoff
+    try:
+        admitted = verify_handoff(handoff_path.parent, unit_universe=universe, profile_id='c3', study=study)
+    except (OSError, ValueError) as exc:
+        fail(f'c3 bundle admission verification failed: {exc}')
+    roots = {key:Path(admitted[key]).resolve() for key in ('ba2001_root','ba2012_root','source_lock')}
+    for key in ('ba2001_root','ba2012_root'):
+        override = getattr(args,key,None)
+        if override and resolve(override) != roots[key]:
+            fail('BA root overrides cannot bypass admitted c3 sources')
+    lock = json.loads(roots['source_lock'].read_text(encoding='utf-8'))
+    output = resolve(args.output_dir) if getattr(args,'output_dir',None) else resolve(settings['output_root'])/'c3'
+    return PathsConfig(repo_root=repo_root,unit_universe_path=universe,
+        af_root=resolve(getattr(args,'af_root',None) or settings['af_root']),
+        ba2001_root=roots['ba2001_root'],ba2012_root=roots['ba2012_root'],output_dir=output,
+        profile_id='c3',profile_contract=dict(c3.PROFILE),config_path=config_path,
+        source_lock_path=roots['source_lock'],source_lock_entries=tuple(lock['files']),
+        bundle_manifest_path=handoff_path.parent/'manifest.json',bundle_handoff_path=handoff_path,
+        admission_verified=True, config_sha256=hashlib.sha256(config_bytes).hexdigest())
 
 
 # =============================================================================
@@ -1078,10 +983,10 @@ def load_unit_universe(paths: PathsConfig) -> pd.DataFrame:
     validate_key_uniqueness(unit_universe, ["level", "unit_id"], "unit_universe")
 
     counts = unit_universe.groupby("level")["unit_id"].nunique().to_dict()
-    if counts.get("acz") != 5:
-        fail(f"unit_universe: expected 5 ACZ rows, got {counts.get('acz')}")
-    if counts.get("district") != 260:
-        fail(f"unit_universe: expected 260 district rows, got {counts.get('district')}")
+    if counts.get("acz") != EXPECTED_UNITS["acz"]:
+        fail(f"unit_universe: expected {EXPECTED_UNITS['acz']} ACZ rows, got {counts.get('acz')}")
+    if counts.get("district") != EXPECTED_UNITS["district"]:
+        fail(f"unit_universe: expected {EXPECTED_UNITS['district']} district rows, got {counts.get('district')}")
 
     acz_mask = unit_universe["level"] == "acz"
     for column in ["parent_level", "parent_id", "parent_code", "parent_name"]:
@@ -1113,9 +1018,17 @@ def canonical_partition_codes(unit_universe: pd.DataFrame) -> list[str]:
         .tolist()
     )
     codes = sorted(set(codes))
-    if len(codes) != 5:
-        fail(f"Expected 5 canonical ACZ partition codes, got {codes}")
+    if len(codes) != EXPECTED_UNITS["acz"]:
+        fail(f"Expected {EXPECTED_UNITS['acz']} canonical ACZ partition codes, got {codes}")
     return codes
+
+
+def expected_panel_rows(level: str) -> int:
+    if level not in SUPPORTED_LEVELS:
+        fail('Unsupported panel level: '+str(level))
+    if EXPECTED_UNITS[level] < 1:
+        fail('Expected unit counts are not bound to selected geography')
+    return len(month_range(START_YYYYMM,END_YYYYMM))*EXPECTED_UNITS[level]
 
 
 def build_canonical_spine(unit_universe: pd.DataFrame, level: str) -> pd.DataFrame:
@@ -1136,7 +1049,7 @@ def build_canonical_spine(unit_universe: pd.DataFrame, level: str) -> pd.DataFra
 
     validate_key_uniqueness(spine, MERGE_KEY, f"canonical spine :: {level}")
 
-    expected_rows = 1440 if level == "acz" else 74880
+    expected_rows = expected_panel_rows(level)
     if len(spine) != expected_rows:
         fail(f"canonical spine :: {level}: expected {expected_rows} rows, got {len(spine)}")
 
@@ -1204,48 +1117,48 @@ def build_family_specs(paths: PathsConfig) -> list[FamilySpec]:
             family_name="ba2001_acz_base",
             level="acz",
             source_kind="ba2001",
-            required_columns=BA_REQUIRED_COLUMNS,
+            required_columns=c3.FIELDS,
             support_start_yyyymm=START_YYYYMM,
             support_end_yyyymm=END_YYYYMM,
             root_dir=paths.ba2001_root,
             filename_required_token="rp1_ba_acz_",
-            forbidden_filename_tokens=reject_tokens,
+            forbidden_filename_tokens=(),
             source_present_column="ba2001_source_present",
         ),
         FamilySpec(
             family_name="ba2012_acz_base",
             level="acz",
             source_kind="ba2012",
-            required_columns=BA_REQUIRED_COLUMNS,
+            required_columns=c3.FIELDS,
             support_start_yyyymm=BA2012_SUPPORT_START_YYYYMM,
             support_end_yyyymm=END_YYYYMM,
             root_dir=paths.ba2012_root,
             filename_required_token="rp1_ba_acz_",
-            forbidden_filename_tokens=reject_tokens,
+            forbidden_filename_tokens=(),
             source_present_column="ba2012_source_present",
         ),
         FamilySpec(
             family_name="ba2001_district_base",
             level="district",
             source_kind="ba2001",
-            required_columns=BA_REQUIRED_COLUMNS,
+            required_columns=c3.FIELDS,
             support_start_yyyymm=START_YYYYMM,
             support_end_yyyymm=END_YYYYMM,
             root_dir=paths.ba2001_root,
             filename_required_token="rp1_ba_district_",
-            forbidden_filename_tokens=reject_tokens,
+            forbidden_filename_tokens=(),
             source_present_column="ba2001_source_present",
         ),
         FamilySpec(
             family_name="ba2012_district_base",
             level="district",
             source_kind="ba2012",
-            required_columns=BA_REQUIRED_COLUMNS,
+            required_columns=c3.FIELDS,
             support_start_yyyymm=BA2012_SUPPORT_START_YYYYMM,
             support_end_yyyymm=END_YYYYMM,
             root_dir=paths.ba2012_root,
             filename_required_token="rp1_ba_district_",
-            forbidden_filename_tokens=reject_tokens,
+            forbidden_filename_tokens=(),
             source_present_column="ba2012_source_present",
         ),
     ]
@@ -1394,6 +1307,25 @@ def validate_source_identity_against_canonical(
         fail(f"{context}: wrong level rows detected for family {spec.family_name}. Sample:\n{sample.to_string(index=False)}")
 
 
+def validate_file_partition(df: pd.DataFrame, level: str, expected_code: str, context: str) -> None:
+    """Require each row to belong to the partition named in its source file."""
+    if level not in SUPPORTED_LEVELS:
+        fail(f"{context}: unsupported level {level}")
+    field = "unit_code" if level == "acz" else "parent_code"
+    matches = df[field].notna() & df[field].astype("string").eq(expected_code).fillna(False)
+    if not matches.all():
+        sample = df.loc[~matches, ["unit_id", "yyyymm", field]].head(20)
+        fail(f"{context}: file partition {expected_code} does not match row {field}. Sample:\n{sample.to_string(index=False)}")
+
+
+def verify_locked_file(path: Path, entry: Mapping[str, Any], context: str) -> None:
+    """Reject a different file or a modified file even if its schema matches."""
+    if path.name != entry["filename"] or not path.is_file():
+        fail(f"{context}: input file does not match the reviewed source lock")
+    if sha256_file(path) != entry["sha256"]:
+        fail(f"{context}: input SHA-256 differs from the reviewed source lock")
+
+
 def validate_af_content(df: pd.DataFrame, sensor_prefix: str, context: str) -> pd.DataFrame:
     """Validate AF arithmetic, non-negativity, and bounded percentages."""
     out = df.copy()
@@ -1477,72 +1409,31 @@ def validate_af_content(df: pd.DataFrame, sensor_prefix: str, context: str) -> p
 
 
 def validate_ba_content(df: pd.DataFrame, context: str) -> pd.DataFrame:
-    """Validate BA logic, denominator flags, fractions, and non-negativity."""
-    out = df.copy()
-    out["modis_burned_pixel_count"] = parse_int_series(out["modis_burned_pixel_count"], f"{context} :: modis_burned_pixel_count")
-    out["modis_ba_any"] = parse_int_series(out["modis_ba_any"], f"{context} :: modis_ba_any")
-    out["modis_zero_union_den_flag"] = parse_int_series(out["modis_zero_union_den_flag"], f"{context} :: modis_zero_union_den_flag")
-    out["modis_zero_annual_den_flag"] = parse_int_series(out["modis_zero_annual_den_flag"], f"{context} :: modis_zero_annual_den_flag")
-
-    for column in [
-        "modis_ba_km2",
-        "modis_aoi_area_land_km2",
-        "modis_burnable_km2_union",
-        "modis_burnable_km2_annual",
-        "modis_burned_frac_union",
-        "modis_burned_frac_annual",
-    ]:
-        out[column] = parse_float_series(out[column], f"{context} :: {column}")
-
-    for column in [
-        "modis_ba_km2",
-        "modis_aoi_area_land_km2",
-        "modis_burnable_km2_union",
-        "modis_burnable_km2_annual",
-        "modis_burned_frac_union",
-        "modis_burned_frac_annual",
-        "modis_burned_pixel_count",
-    ]:
-        bad_mask = out[column].notna() & (out[column] < 0)
-        if bad_mask.any():
-            sample = out.loc[bad_mask, ["unit_id", "yyyymm", column]].head(20)
-            fail(f"{context}: negative values detected in {column}. Sample:\n{sample.to_string(index=False)}")
-
-    for column in ["modis_ba_any", "modis_zero_union_den_flag", "modis_zero_annual_den_flag"]:
-        bad_mask = out[column].notna() & ~out[column].isin([0, 1])
-        if bad_mask.any():
-            sample = out.loc[bad_mask, ["unit_id", "yyyymm", column]].head(20)
-            fail(f"{context}: {column} must be binary 0/1. Sample:\n{sample.to_string(index=False)}")
-
-    union_valid = out["modis_burnable_km2_union"].notna() & (out["modis_burnable_km2_union"] > 0)
-    annual_valid = out["modis_burnable_km2_annual"].notna() & (out["modis_burnable_km2_annual"] > 0)
-    union_frac_bad = union_valid & out["modis_burned_frac_union"].notna() & ~out["modis_burned_frac_union"].between(0.0, 1.0)
-    annual_frac_bad = annual_valid & out["modis_burned_frac_annual"].notna() & ~out["modis_burned_frac_annual"].between(0.0, 1.0)
-    if union_frac_bad.any():
-        sample = out.loc[union_frac_bad, ["unit_id", "yyyymm", "modis_burned_frac_union"]].head(20)
-        fail(
-            f"{context}: modis_burned_frac_union outside [0, 1] when denominator is valid. "
-            f"Sample:\n{sample.to_string(index=False)}"
-        )
-    if annual_frac_bad.any():
-        sample = out.loc[annual_frac_bad, ["unit_id", "yyyymm", "modis_burned_frac_annual"]].head(20)
-        fail(
-            f"{context}: modis_burned_frac_annual outside [0, 1] when denominator is valid. "
-            f"Sample:\n{sample.to_string(index=False)}"
-        )
-
-    ba_any_bad = ((out["modis_ba_km2"] > 0) & (out["modis_ba_any"] != 1)) | (
-        (out["modis_ba_km2"] == 0) & (out["modis_ba_any"] != 0)
-    )
-    if ba_any_bad.any():
-        sample = out.loc[ba_any_bad, ["unit_id", "yyyymm", "modis_ba_km2", "modis_ba_any"]].head(20)
-        fail(f"{context}: modis_ba_any is inconsistent with modis_ba_km2. Sample:\n{sample.to_string(index=False)}")
-
+    """Validate all c3 source guards, then type the analytical projection."""
+    c3.validate_header(df.columns)
+    for record in df.to_dict('records'):
+        normalized = {k:('' if pd.isna(v) else str(v)) for k,v in record.items()}
+        try:
+            c3.validate_row(normalized, allow_technical=True,
+                observation_windows=c3.observation_windows(START_YYYYMM//100, END_YYYYMM//100))
+        except ValueError as exc:
+            fail(f'{context}: {exc}')
+    out = df.loc[:,BA_REQUIRED_COLUMNS].copy()
+    for name in c3.FIELDS[:13]:
+        if name in out:
+            out[name] = blank_to_na(out[name])
+    for name in ('yyyymm','year','month','modis_burned_pixel_count','modis_ba_any','modis_zero_union_den_flag','modis_zero_annual_den_flag'):
+        out[name] = parse_int_series(blank_to_na(out[name]), f'{context} :: {name}')
+    for name in BA_ANALYTICAL_COLUMNS:
+        if name not in ('modis_burned_pixel_count','modis_ba_any','modis_zero_union_den_flag','modis_zero_annual_den_flag'):
+            out[name] = parse_float_series(blank_to_na(out[name]), f'{context} :: {name}')
     return out
 
 
 def validate_file_lineage(df: pd.DataFrame, context: str) -> tuple[str, str]:
     """Require each source file to declare exactly one non-null run_id and schema_version."""
+    if df[["run_id", "schema_version"]].isna().any().any():
+        fail(f"{context}: run_id and schema_version must be populated on every row")
     run_ids = sorted({str(v).strip() for v in df["run_id"].dropna().tolist() if str(v).strip()})
     schema_versions = sorted({str(v).strip() for v in df["schema_version"].dropna().tolist() if str(v).strip()})
     if len(run_ids) != 1:
@@ -1550,6 +1441,28 @@ def validate_file_lineage(df: pd.DataFrame, context: str) -> tuple[str, str]:
     if len(schema_versions) != 1:
         fail(f"{context}: expected exactly one non-null schema_version in the file, got {schema_versions}")
     return run_ids[0], schema_versions[0]
+
+
+QA_FIELDS = tuple(c3.FIELDS)
+
+
+def apply_ba_profile(raw, typed=None, ext=None, profile=None, family=None, context='c3'):
+    """Project c3 primary values unchanged and retain the full source evidence."""
+    if ext is not None:
+        fail(f'{context}: c3 has one extended source, not paired base/QA files')
+    if not isinstance(profile,Mapping) or any(profile.get(k) != v for k,v in c3.PROFILE.items()):
+        fail(f'{context}: only the c3 admission policy is implemented')
+    if family not in ('ba2001','ba2012'):
+        fail(f'{context}: unknown c3 family')
+    projected = validate_ba_content(raw,context)
+    # Optional EE transport metadata remains in the immutable original file;
+    # the canonical evidence schema contains the 69 documented source fields.
+    evidence_fields = list(c3.FIELDS) + (["ba_annual_lc_source_index"] if "ba_annual_lc_source_index" in raw else [])
+    evidence = raw.loc[:, evidence_fields].copy()
+    if not evidence['ba_domain'].eq(family.upper()).all():
+        fail(f'{context}: c3 domain/family mismatch')
+    evidence['family'] = family
+    return projected,evidence
 
 
 def expected_supported_keys(spine: pd.DataFrame, support_start_yyyymm: int, support_end_yyyymm: int) -> pd.DataFrame:
@@ -1581,90 +1494,40 @@ def validate_supported_key_coverage(df: pd.DataFrame, expected_keys: pd.DataFram
         )
 
 
-def load_family(
-    spec: FamilySpec,
-    unit_universe: pd.DataFrame,
-    spine: pd.DataFrame,
-    partition_codes: Sequence[str],
-    paths: PathsConfig,
-) -> LoadedFamily:
-    """
-    Load, validate, and concatenate one source family.
-
-    Each family is validated in isolation before merge. This is where schema
-    drift, wrong folders, duplicate keys, and support-window confusion are
-    stopped early with clear errors.
-    """
-    files = discover_family_files(spec, partition_codes, paths.repo_root)
-    frames: list[pd.DataFrame] = []
-    inventory_rows: list[dict[str, Any]] = []
-    family_schema_versions: list[str] = []
-    family_run_ids: list[str] = []
-
-    canonical_units = unit_universe.loc[unit_universe["level"] == spec.level, IDENTITY_COLUMNS].copy()
-
+def _load_af_family(spec,unit_universe,spine,partition_codes,paths):
+    """Retain governed AF discovery, values and method population checks."""
+    if spec.source_kind not in ('modis_af','viirs_af'):
+        fail('AF loader cannot consume BA sources')
+    files=discover_family_files(spec,partition_codes,paths.repo_root)
+    frames,inventory,versions,run_ids=[],[],set(),set()
+    canonical=unit_universe.loc[unit_universe.level.eq(spec.level),IDENTITY_COLUMNS].copy()
     for path in files:
-        context = f"{spec.family_name} :: {relative_to_repo(path, paths.repo_root)}"
-        raw = read_csv_strict(path)
-        raw = require_columns_and_reorder(raw, spec.required_columns, context, allow_extra=False)
-        raw = clean_string_columns(raw, raw.columns)
-        for column in ["parent_level", "parent_id", "parent_code", "parent_name"]:
-            raw[column] = blank_to_na(raw[column])
-
-        run_id, schema_version = validate_file_lineage(raw, context)
-        family_run_ids.append(run_id)
-        family_schema_versions.append(schema_version)
-
-        raw = validate_time_columns(raw, spec, context)
-        validate_key_uniqueness(raw, MERGE_KEY, context)
-        validate_source_identity_against_canonical(raw, canonical_units, spec, context)
-
-        if spec.source_kind == "modis_af":
-            typed = validate_af_content(raw, "modis", context)
-        elif spec.source_kind == "viirs_af":
-            typed = validate_af_content(raw, "viirs", context)
-        else:
-            typed = validate_ba_content(raw, context)
-
-        inventory_rows.append(
-            {
-                "family_name": spec.family_name,
-                "source_kind": spec.source_kind,
-                "level": spec.level,
-                "partition_code": extract_partition_code(path, partition_codes),
-                "origin_path": relative_to_repo(path, paths.repo_root),
-                "staged_path": relative_to_repo(path, paths.repo_root),
-                "sha256": sha256_file(path),
-                "row_count": int(len(typed)),
-                "yyyymm_min": int(typed["yyyymm"].min()),
-                "yyyymm_max": int(typed["yyyymm"].max()),
-                "run_id": run_id,
-                "schema_version": schema_version,
-            }
-        )
+        context=f'{spec.family_name} :: {relative_to_repo(path,paths.repo_root)}'
+        raw=require_columns_and_reorder(read_csv_strict(path),spec.required_columns,context,allow_extra=False)
+        raw=clean_string_columns(raw,raw.columns)
+        for column in ('parent_level','parent_id','parent_code','parent_name'):
+            raw[column]=blank_to_na(raw[column])
+        run_id,version=validate_file_lineage(raw,context)
+        versions.add(version);run_ids.add(run_id)
+        raw=validate_time_columns(raw,spec,context)
+        validate_key_uniqueness(raw,MERGE_KEY,context)
+        validate_source_identity_against_canonical(raw,canonical,spec,context)
+        partition=extract_partition_code(path,partition_codes)
+        validate_file_partition(raw,spec.level,partition,context)
+        typed=validate_af_content(raw,'modis' if spec.source_kind=='modis_af' else 'viirs',context)
         frames.append(typed)
+        inventory.append({'family_name':spec.family_name,'source_kind':spec.source_kind,'level':spec.level,
+            'partition_code':partition,'origin_path':relative_to_repo(path,paths.repo_root),
+            'staged_path':relative_to_repo(path,paths.repo_root),'sha256':sha256_file(path),
+            'row_count':len(typed),'yyyymm_min':int(typed.yyyymm.min()),'yyyymm_max':int(typed.yyyymm.max()),
+            'run_id':run_id,'schema_version':version})
+    if len(versions)!=1:
+        fail(f'{spec.family_name}: inconsistent source schemas')
+    data=pd.concat(frames,ignore_index=True)
+    validate_key_uniqueness(data,MERGE_KEY,spec.family_name)
+    validate_supported_key_coverage(data,expected_supported_keys(spine,spec.support_start_yyyymm,spec.support_end_yyyymm),spec.family_name)
+    return LoadedFamily(spec,files,data.sort_values(MERGE_KEY).reset_index(drop=True),sorted(run_ids),next(iter(versions)),inventory,[])
 
-    data = pd.concat(frames, ignore_index=True)
-    validate_key_uniqueness(data, MERGE_KEY, f"{spec.family_name} :: concatenated family")
-
-    family_schema_versions = sorted(set(family_schema_versions))
-    if len(family_schema_versions) != 1:
-        fail(f"{spec.family_name}: inconsistent schema_version across files: {family_schema_versions}")
-
-    validate_supported_key_coverage(
-        data,
-        expected_supported_keys(spine, spec.support_start_yyyymm, spec.support_end_yyyymm),
-        f"{spec.family_name} :: supported-key audit",
-    )
-
-    return LoadedFamily(
-        spec=spec,
-        files=files,
-        data=data.sort_values(MERGE_KEY).reset_index(drop=True),
-        run_ids=sorted(set(family_run_ids)),
-        schema_version=family_schema_versions[0],
-        file_inventory_rows=inventory_rows,
-    )
 
 
 # =============================================================================
@@ -1906,6 +1769,8 @@ def derive_final_fields(panel: pd.DataFrame, merge_run_id: str) -> pd.DataFrame:
 
     out["viirs_det_primary_per_active_day"] = safe_divide(out["viirs_det_primary"], out["viirs_days_active_nh"])
     out["viirs_frp_sum_daily_max_mw_per_active_day"] = safe_divide(out["viirs_frp_sum_daily_max_mw"], out["viirs_frp_active_days"])
+    # VIIRS numerator and denominator are independently deduplicated streams.
+    # A recovered FRP record can coexist with a zero primary count.
     out["viirs_frp_sum_daily_max_mw_per_primary_det"] = safe_divide(out["viirs_frp_sum_daily_max_mw"], out["viirs_det_primary"])
 
     # Concordance flags remain family-specific for the same reason the BA fields
@@ -2054,7 +1919,7 @@ def validate_final_panel(final_panel: pd.DataFrame, level: str) -> None:
     require_exact_columns(final_panel, FINAL_OUTPUT_COLUMNS, f"final_panel :: {level}")
     validate_key_uniqueness(final_panel, MERGE_KEY, f"final_panel :: {level}")
 
-    expected_rows = 1440 if level == "acz" else 74880
+    expected_rows = expected_panel_rows(level)
     if len(final_panel) != expected_rows:
         fail(f"final_panel :: {level}: expected {expected_rows} rows, got {len(final_panel)}")
 
@@ -2113,9 +1978,7 @@ def validate_final_panel(final_panel: pd.DataFrame, level: str) -> None:
         "modis_det_nh_share_of_all",
         "viirs_det_nh_share_of_all",
         "modis_burned_frac_union_ba2001",
-        "modis_burned_frac_annual_ba2001",
         "modis_burned_frac_union_ba2012",
-        "modis_burned_frac_annual_ba2012",
     ]:
         coerced = pd.to_numeric(final_panel[column], errors="coerce")
         bad_mask = final_panel[column].notna() & ~coerced.between(0.0, 1.0)
@@ -2228,8 +2091,8 @@ def build_key_audit(acz_panel: pd.DataFrame, district_panel: pd.DataFrame) -> pd
     """Build a compact deterministic key audit for the two final outputs."""
     rows: list[dict[str, Any]] = []
     for level, panel, expected_rows in [
-        ("acz", acz_panel, 1440),
-        ("district", district_panel, 74880),
+        ("acz", acz_panel, expected_panel_rows("acz")),
+        ("district", district_panel, expected_panel_rows("district")),
     ]:
         rows.append(
             {
@@ -2249,6 +2112,125 @@ def build_key_audit(acz_panel: pd.DataFrame, district_panel: pd.DataFrame) -> pd
             }
         )
     return pd.DataFrame(rows).sort_values("level").reset_index(drop=True)
+
+
+def verified_active_fire_method(paths: PathsConfig, loaded_families: Sequence[LoadedFamily]) -> dict[str, Any]:
+    """Verify the aggregation-policy-to-export chain before admitting FRP inputs."""
+    receipt_path = paths.af_root.parent / "qa" / "combine_panels_manifest.json"
+    if not receipt_path.is_file():
+        fail("Active-fire combine receipt missing; generate panels with the current workflow")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as exc:
+        fail(f"Invalid active-fire combine receipt: {exc}")
+    method = receipt.get("active_fire_method", {})
+    if method.get("status") != "VERIFIED_AGGREGATION_INPUTS" or method.get("method_version") != "viirs_frp_dual_stream_v1" or method.get("frp_selection_stage") != "before_independent_deduplication" or method.get("frp_population_viirs") != "nominal_high_independently_deduplicated" or method.get("frp_confidence_categories") != ["n", "h"] or method.get("frp_aggregation") != "mean_of_daily_maxima_over_eligible_utc_days":
+        fail("Active-fire inputs lack verified nominal/high FRP aggregation evidence")
+    dedup = method.get("deduplication")
+    if (not isinstance(method.get("config_sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", method["config_sha256"]) or
+        not isinstance(dedup, dict) or not isinstance(dedup.get("tie_break"), list) or not dedup["tie_break"] or
+        not isinstance(dedup.get("latlon_round_decimals"), int) or not isinstance(dedup.get("include_satellite_in_key"), bool) or
+        not isinstance(method.get("frp_min_mw"), (int, float)) or not math.isfinite(method["frp_min_mw"]) or method["frp_min_mw"] < 0):
+        fail("Active-fire configuration, deduplication or FRP threshold evidence is missing")
+    # FIRMS writes all receipt paths relative to its own subproject root.
+    # Resolve only within that root and normalize the verified paths for the
+    # project-level merger manifest. Never modify or re-hash the source receipt.
+    project_root = paths.repo_root.resolve()
+    firms_root = (project_root / "RP1_Project" / "rp1_mv_firms_panels").resolve()
+    if not firms_root.is_relative_to(project_root) or not paths.af_root.resolve().is_relative_to(firms_root):
+        fail("Active-fire export root is outside the FIRMS subproject")
+
+    def receipt_path_for(value: Any) -> Path:
+        if not isinstance(value, str) or not value or Path(value).is_absolute():
+            fail("Invalid active-fire receipt path")
+        source = (firms_root / value).resolve()
+        if not source.is_relative_to(firms_root):
+            fail("Active-fire receipt path escapes FIRMS subproject")
+        return source
+
+    evidence = method.get("evidence_files")
+    if not isinstance(evidence, list) or len(evidence) != 6:
+        fail("Active-fire aggregation evidence is incomplete")
+    normalized = []
+    for entry in evidence:
+        if not isinstance(entry, dict):
+            fail("Invalid active-fire aggregation evidence")
+        source = receipt_path_for(entry.get("path"))
+        if not source.is_file() or sha256_file(source) != entry.get("sha256"):
+            fail("Active-fire aggregation evidence missing or hash mismatch: " + str(source))
+        normalized.append({"path": relative_to_repo(source, project_root), "sha256": entry["sha256"]})
+    preparation_evidence = method.get("viirs_preparation_evidence")
+    if not isinstance(preparation_evidence, list) or len(preparation_evidence) < 5 or method.get("frp_deduplication_independent") is not True or method.get("frp_finite_values_rank_first") is not True:
+        fail("VIIRS independent preparation evidence is incomplete")
+    normalized_preparation = []
+    for entry in preparation_evidence:
+        if not isinstance(entry, dict):
+            fail("Invalid VIIRS preparation evidence")
+        if entry.get("scope") == "workspace":
+            value = entry.get("path")
+            if not isinstance(value, str) or not value or Path(value).is_absolute():
+                fail("Invalid workspace geography evidence path")
+            source = (project_root / value).resolve()
+            if not source.is_relative_to(project_root):
+                fail("Geography evidence escapes project workspace")
+        else:
+            source = receipt_path_for(entry.get("path"))
+        if not source.is_file() or sha256_file(source) != entry.get("sha256"):
+            fail("VIIRS preparation evidence missing or changed: " + str(source))
+        normalized_preparation.append({"path": relative_to_repo(source, project_root), "sha256": entry["sha256"]})
+    profiles = method.get("input_profiles")
+    source_preparation = method.get("source_preparation_evidence", [])
+    normalized_sources = []
+    if profiles is not None:
+        allowed_profiles = {"native_firms_v1", "ghana_firms_archive_sp_v1"}
+        if (not isinstance(profiles, dict) or set(profiles) != {"modis", "viirs"}
+                or any(not isinstance(value, str) or value not in allowed_profiles for value in profiles.values())):
+            fail("Invalid active-fire input profile declarations")
+        if (not isinstance(source_preparation, list)
+                or ("ghana_firms_archive_sp_v1" in profiles.values() and not source_preparation)):
+            fail("Archive SP source preparation evidence is incomplete")
+        for entry in source_preparation:
+            if not isinstance(entry, dict):
+                fail("Invalid active-fire source preparation evidence")
+            if entry.get("scope") == "workspace":
+                value = entry.get("path")
+                if not isinstance(value, str) or not value or Path(value).is_absolute():
+                    fail("Invalid source preparation workspace path")
+                source = (project_root / value).resolve()
+                if not source.is_relative_to(project_root):
+                    fail("Source preparation evidence escapes project workspace")
+            else:
+                source = receipt_path_for(entry.get("path"))
+            if not source.is_file() or sha256_file(source) != entry.get("sha256"):
+                fail("Active-fire source preparation evidence missing or changed: " + str(source))
+            normalized_sources.append({"path": relative_to_repo(source, project_root), "sha256": entry["sha256"]})
+    elif source_preparation:
+        fail("Source preparation evidence requires explicit input profiles")
+    recorded: dict[Path, str] = {}
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if "path" in node and "sha256" in node:
+                source = receipt_path_for(node["path"])
+                digest = str(node["sha256"])
+                if source in recorded and recorded[source] != digest:
+                    fail("Conflicting active-fire export receipt entries")
+                recorded[source] = digest
+            for child in node.values(): walk(child)
+        elif isinstance(node, list):
+            for child in node: walk(child)
+    walk(receipt.get("rp1_af_exports", {}))
+    for family in loaded_families:
+        if family.spec.source_kind not in {"modis_af", "viirs_af"}: continue
+        for entry in family.file_inventory_rows:
+            source_rel = str(entry["origin_path"])
+            source = (project_root / source_rel).resolve()
+            if not source.is_relative_to(paths.af_root.resolve()) or not source.is_file() or recorded.get(source) != sha256_file(source):
+                fail("Active-fire export is not bound to its combine receipt: " + source_rel)
+    result = dict(method) | {"evidence_files": normalized, "viirs_preparation_evidence": normalized_preparation, "combine_receipt": {"path": relative_to_repo(receipt_path, project_root), "sha256": sha256_file(receipt_path)}}
+    if profiles is not None:
+        result["source_preparation_evidence"] = normalized_sources
+    return result
+
 
 
 def build_manifest(
@@ -2303,15 +2285,48 @@ def build_manifest(
 
     return {
         "merge_run_id": merge_run_id,
+        "study": {"start_yyyymm": START_YYYYMM, "end_yyyymm": END_YYYYMM,
+                  "viirs_support_start_yyyymm": VIIRS_SUPPORT_START_YYYYMM,
+                  "ba2012_support_start_yyyymm": BA2012_SUPPORT_START_YYYYMM,
+                  **({'analysis_overlap_start_yyyymm': ANALYSIS_OVERLAP_START_YYYYMM}
+                     if ANALYSIS_OVERLAP_START_YYYYMM is not None else {})},
+        "active_fire_method": verified_active_fire_method(paths, loaded_families),
         "merge_schema_version": MERGE_SCHEMA_VERSION,
         "written_at_utc": stable_now_iso(),
         "repo_root": ".",
         "provenance_schema_version": PROVENANCE_SCHEMA_VERSION,
         "path_semantics": PROVENANCE_PATH_SEMANTICS,
+        "profile_id": paths.profile_id,
+        "profile_contract": dict(paths.profile_contract or {}),
+        "configuration": {
+            "path": relative_to_repo(paths.config_path, paths.repo_root) if paths.config_path else None,
+            "sha256": paths.config_sha256,
+        },
+        "ba_bundle": {
+            "manifest_sha256": sha256_file(paths.bundle_manifest_path),
+            "handoff_sha256": sha256_file(paths.bundle_handoff_path),
+            "scope": json.loads(paths.bundle_manifest_path.read_text(encoding="utf-8"))["scope"],
+        },
+        "ba_source_lock": {
+            "path": relative_to_repo(paths.source_lock_path, paths.repo_root) if paths.source_lock_path else None,
+            "sha256": sha256_file(paths.source_lock_path) if paths.source_lock_path else None,
+            "identity_scope": "Lock binds selected CSV bytes only; historical GEE script and live asset identity remain unverified.",
+        },
+        "ba_observation_support": {
+            "schema_version": "rp1-ba-c3-evidence-v1",
+            "profile_id": paths.profile_id,
+            "quality_policy": c3.POLICY,
+            "method_version": c3.METHOD,
+            "source_schema_version": c3.SCHEMA,
+            "sidecar_output": "ba_observation_support.csv",
+            "source_values_preserved": True,
+            "provenance_limitation": "File hashes and declared metadata do not prove historical GEE script or live asset identity.",
+        },
         "source_roots": {
             "unit_universe": {
                 "origin_path": relative_to_repo(paths.unit_universe_path, paths.repo_root),
                 "staged_path": relative_to_repo(paths.unit_universe_path, paths.repo_root),
+                "sha256": sha256_file(paths.unit_universe_path),
             },
             "active_fire": {
                 "origin_path": relative_to_repo(paths.af_root, paths.repo_root),
@@ -2333,31 +2348,23 @@ def build_manifest(
     }
 
 
-def build_merge_summary(
-    merge_run_id: str,
-    acz_panel: pd.DataFrame,
-    district_panel: pd.DataFrame,
-) -> dict[str, Any]:
-    """Build a concise summary JSON for rapid audit review."""
-    def level_block(panel: pd.DataFrame) -> dict[str, Any]:
-        return {
-            "row_count": int(len(panel)),
-            "column_count": int(panel.shape[1]),
-            "yyyymm_min": int(panel["yyyymm"].min()),
-            "yyyymm_max": int(panel["yyyymm"].max()),
-            "unique_units": int(panel["unit_id"].nunique()),
-            "viirs_structural_missing_rows": int(panel["viirs_structural_missing_flag"].fillna(0).astype(int).sum()),
-            "ba2012_structural_missing_rows": int(panel["ba2012_structural_missing_flag"].fillna(0).astype(int).sum()),
-            "viirs_supported_rows": int(panel["viirs_supported_flag"].fillna(0).astype(int).sum()),
-            "ba2012_supported_rows": int(panel["ba2012_supported_flag"].fillna(0).astype(int).sum()),
-        }
-
-    return {
-        "merge_run_id": merge_run_id,
-        "merge_schema_version": MERGE_SCHEMA_VERSION,
-        "acz": level_block(acz_panel),
-        "district": level_block(district_panel),
-    }
+def build_merge_summary(merge_run_id,acz_panel,district_panel,evidence=None):
+    """Keep dimensions separate from c3 result/evidence admission counts."""
+    def level_block(panel):
+        return {'row_count':len(panel),'column_count':panel.shape[1],
+            'yyyymm_min':int(panel.yyyymm.min()),'yyyymm_max':int(panel.yyyymm.max()),
+            'unique_units':int(panel.unit_id.nunique()),
+            'viirs_structural_missing_rows':int(panel.viirs_structural_missing_flag.sum()),
+            'ba2012_structural_missing_rows':int(panel.ba2012_structural_missing_flag.sum()),
+            'viirs_supported_rows':int(panel.viirs_supported_flag.sum()),
+            'ba2012_supported_rows':int(panel.ba2012_supported_flag.sum())}
+    result={'merge_run_id':merge_run_id,'merge_schema_version':MERGE_SCHEMA_VERSION,
+        'acz':level_block(acz_panel),'district':level_block(district_panel)}
+    if evidence is not None:
+        result['c3_evidence']={'schema_version':'rp1-ba-c3-evidence-v1','method_version':c3.METHOD,
+            'quality_policy':c3.POLICY,'records':evidence.groupby(
+                ['family','level','ba_status','ba_coverage_status'],dropna=False).size().rename('rows').reset_index().to_dict('records')}
+    return result
 
 
 # =============================================================================
@@ -2385,15 +2392,77 @@ def default_merge_run_id() -> str:
     return datetime.now(timezone.utc).strftime("merge_fire_panel_%Y%m%dT%H%M%SZ")
 
 
+def publish_directory_no_replace(staging: Path, target: Path) -> None:
+    """Publish through the shared local utility, retaining the merger error API."""
+    try:
+        _local_io.publish_directory_no_replace(staging, target)
+    except _local_io.PublicationError as exc:
+        fail(str(exc))
+
+
+def preflight_directory_publication(target: Path) -> None:
+    """Probe the shared primitive on the selected output filesystem."""
+    def publish(staging, destination):
+        try:
+            publish_directory_no_replace(staging, destination)
+        except ValidationError as exc:
+            raise _local_io.PublicationError(str(exc)) from exc
+    try:
+        _local_io.preflight_directory_publication(target, publisher=publish)
+    except _local_io.PublicationError as exc:
+        fail(str(exc))
+
+
+def verify_c3_admission(paths: PathsConfig) -> None:
+    """Recheck admission at execution, including callers constructing PathsConfig."""
+    if (not paths.admission_verified or paths.bundle_manifest_path is None
+            or paths.bundle_handoff_path is None or paths.source_lock_path is None):
+        fail("A verified admitted c3 handoff is required before merge")
+    if paths.config_path is not None and (
+            not paths.config_sha256 or sha256_file(paths.config_path) != paths.config_sha256):
+        fail("Merger configuration changed after input resolution")
+    from RP1_Project.rp1_ba_consolidator.handoff import verify_handoff
+    study = {"start_yyyymm": START_YYYYMM, "end_yyyymm": END_YYYYMM,
+             "viirs_support_start_yyyymm": VIIRS_SUPPORT_START_YYYYMM,
+             "ba2012_support_start_yyyymm": BA2012_SUPPORT_START_YYYYMM,
+             "expected_units": dict(EXPECTED_UNITS)}
+    if ANALYSIS_OVERLAP_START_YYYYMM is not None:
+        study['analysis_overlap_start_yyyymm'] = ANALYSIS_OVERLAP_START_YYYYMM
+    try:
+        admitted = verify_handoff(paths.bundle_handoff_path.parent,
+            unit_universe=paths.unit_universe_path, profile_id="c3", study=study)
+    except (ValueError, OSError) as exc:
+        fail(f"c3 admission changed before execution: {exc}")
+    for name in ("ba2001_root", "ba2012_root"):
+        if Path(admitted[name]).resolve() != getattr(paths, name).resolve():
+            fail("c3 execution sources differ from the admitted bundle")
+    if Path(admitted["source_lock"]).resolve() != paths.source_lock_path.resolve():
+        fail("c3 execution source lock differs from admission")
+    locked = json.loads(paths.source_lock_path.read_text(encoding="utf-8"))
+    if list(paths.source_lock_entries) != locked.get("files"):
+        fail("c3 in-memory source records differ from the admitted source lock")
+    if Path(admitted["bundle_manifest"]).resolve() != paths.bundle_manifest_path.resolve():
+        fail("c3 execution manifest differs from admission")
+
+
 def run(paths: PathsConfig, merge_run_id: str) -> dict[str, Path]:
     """Execute the full merger workflow and write all primary outputs."""
-    ensure_directory(paths.output_dir)
+    if paths.output_dir.exists() or paths.output_dir.is_symlink():
+        fail(f"Output directory already exists; choose a new --output-dir: {paths.output_dir}")
+
+    preflight_directory_publication(paths.output_dir)
+    verify_c3_admission(paths)
 
     unit_universe = load_unit_universe(paths)
     partition_codes = canonical_partition_codes(unit_universe)
     spines = {level: build_canonical_spine(unit_universe, level) for level in SUPPORTED_LEVELS}
 
     family_specs = build_family_specs(paths)
+    if not paths.admission_verified or paths.bundle_manifest_path is None or paths.bundle_handoff_path is None:
+        fail("A verified admitted c3 handoff is required before merge")
+    initial_binding = {p:sha256_file(p) for p in (paths.bundle_manifest_path,paths.bundle_handoff_path,paths.source_lock_path,paths.unit_universe_path)}
+    if paths.config_path is not None:
+        initial_binding[paths.config_path] = paths.config_sha256
     loaded_families = [
         load_family(spec, unit_universe, spines[spec.level], partition_codes, paths)
         for spec in family_specs
@@ -2404,22 +2473,45 @@ def run(paths: PathsConfig, merge_run_id: str) -> dict[str, Path]:
     district_panel = build_level_panel("district", spines["district"], families_by_name, merge_run_id)
 
     output_paths = {
-        "fire_panel_acz": paths.output_dir / "fire_panel_acz_monthly_consolidated_2001_2024.csv",
-        "fire_panel_district": paths.output_dir / "fire_panel_district_monthly_consolidated_2001_2024.csv",
+        "fire_panel_acz": paths.output_dir / f"fire_panel_acz_monthly_consolidated_{START_YYYYMM // 100}_{END_YYYYMM // 100}.csv",
+        "fire_panel_district": paths.output_dir / f"fire_panel_district_monthly_consolidated_{START_YYYYMM // 100}_{END_YYYYMM // 100}.csv",
         "key_audit": paths.output_dir / "fire_panel_key_audit.csv",
         "manifest": paths.output_dir / "fire_panel_manifest.json",
         "merge_summary": paths.output_dir / "fire_panel_merge_summary.json",
+        "ba_observation_support": paths.output_dir / "ba_observation_support.csv",
     }
-
-    write_csv(acz_panel, output_paths["fire_panel_acz"])
-    write_csv(district_panel, output_paths["fire_panel_district"])
-    write_csv(build_key_audit(acz_panel, district_panel), output_paths["key_audit"])
-
-    # Write the merge summary first so the manifest can hash it deterministically.
-    write_json(build_merge_summary(merge_run_id, acz_panel, district_panel), output_paths["merge_summary"])
-
-    # Write the manifest last. It does not hash itself before write time.
-    write_json(build_manifest(paths, merge_run_id, loaded_families, output_paths), output_paths["manifest"])
+    sidecars = [item for family in loaded_families for item in (family.qa_sidecars or [])]
+    if not sidecars:
+        fail("BA observation-support sidecar is missing")
+    sidecar = pd.concat(sidecars, ignore_index=True).sort_values(MERGE_KEY + ["family"]).reset_index(drop=True)
+    optional = ['ba_annual_lc_source_index'] if 'ba_annual_lc_source_index' in sidecar else []
+    sidecar = sidecar[list(c3.FIELDS) + optional + ['family', 'source_path', 'source_sha256', 'source_row']]
+    validate_key_uniqueness(sidecar, MERGE_KEY + ["family"], "BA observation support")
+    paths.output_dir.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix="." + paths.output_dir.name + ".staging-", dir=paths.output_dir.parent))
+    staged = {key: staging / path.name for key, path in output_paths.items()}
+    try:
+        write_csv(acz_panel, staged["fire_panel_acz"])
+        write_csv(district_panel, staged["fire_panel_district"])
+        write_csv(build_key_audit(acz_panel, district_panel), staged["key_audit"])
+        write_csv(sidecar, staged["ba_observation_support"])
+        write_json(build_merge_summary(merge_run_id, acz_panel, district_panel, sidecar), staged["merge_summary"])
+        manifest = build_manifest(paths, merge_run_id, loaded_families, output_paths)
+        for key, path in staged.items():
+            if key != "manifest":
+                manifest["outputs"][key]["sha256"] = sha256_file(path)
+        write_json(manifest, staged["manifest"])
+        for bound_path,digest in initial_binding.items():
+            if sha256_file(bound_path) != digest:
+                fail("c3 source/geography/admission changed during merge")
+        for family in loaded_families:
+            if family.spec.source_kind in ("ba2001","ba2012"):
+                for entry,path in zip(sorted([e for e in paths.source_lock_entries if e["family"]==family.spec.source_kind and e["level"]==family.spec.level], key=lambda x:(x["partition"],x["year"])),family.files):
+                    verify_locked_file(path,entry,"prepublication c3 source")
+        publish_directory_no_replace(staging, paths.output_dir)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
 
     return output_paths
 
@@ -2434,6 +2526,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Merge governed AF and BA source families into final consolidated RP1 fire panels."
     )
+    parser.add_argument("--config", default=None, help="Merger profile configuration JSON (paths relative to repository root).")
+    parser.add_argument("--profile", default="c3", choices=["c3"], help="The sole operational BA source profile.")
+    parser.add_argument("--ba-handoff", default=None, help="Verified c3 bundle handoff.json; preparation is required.")
     parser.add_argument(
         "--repo-root",
         default=None,
@@ -2452,12 +2547,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ba2001-root",
         default=None,
-        help="Root directory of BA-2001 base exports.",
+        help="Admitted c3 sources directory; cannot override bundle identity.",
     )
     parser.add_argument(
         "--ba2012-root",
         default=None,
-        help="Root directory of BA-2012 base exports.",
+        help="Admitted c3 sources directory; cannot override bundle identity.",
     )
     parser.add_argument(
         "--output-dir",
@@ -2478,15 +2573,96 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     merge_run_id = args.run_id or default_merge_run_id()
-    paths = build_paths_config(args)
-
     try:
+        paths = build_paths_config(args)
         run(paths, merge_run_id)
-    except ValidationError as exc:
+    except (ValidationError, c3.C3ValidationError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     return 0
 
+
+
+
+def load_family(spec, unit_universe, spine, partition_codes, paths):
+    """Load AF unchanged or a complete locked set of annual c3 partitions."""
+    if spec.source_kind not in ('ba2001','ba2012'):
+        return _load_af_family(spec,unit_universe,spine,partition_codes,paths)
+    if paths.profile_id != 'c3' or any((paths.profile_contract or {}).get(k) != v for k,v in c3.PROFILE.items()):
+        fail('Only the c3 burned-area profile is supported')
+    entries = [entry for entry in paths.source_lock_entries if entry['family'] == spec.source_kind and entry['level'] == spec.level]
+    expected = {(code,year) for code in partition_codes for year in range(spec.support_start_yyyymm//100,spec.support_end_yyyymm//100+1)}
+    observed = {(entry['partition'],entry['year']) for entry in entries}
+    if observed != expected or len(entries) != len(expected):
+        fail(f'{spec.family_name}: source lock does not exactly cover annual zone/year identities')
+    if paths.bundle_manifest_path is None:
+        fail('c3 source bundle manifest is required')
+    bundle = paths.bundle_manifest_path.parent.resolve()
+    units = unit_universe.loc[unit_universe.level.eq(spec.level),IDENTITY_COLUMNS].copy()
+    canonical = {str(row['unit_id']):row for row in units.to_dict('records')}
+    frames,evidence_frames,inventory,files,run_ids = [],[],[],[],set()
+    for entry in sorted(entries,key=lambda x:(x['partition'],x['year'])):
+        relative = entry.get('path','')
+        path = (bundle/relative).resolve()
+        if not relative or path == bundle or not path.is_relative_to(bundle) or path.is_symlink() or not path.is_file():
+            fail('Unsafe or missing c3 source path: ' + str(relative))
+        observation_windows = c3.observation_windows(START_YYYYMM//100, END_YYYYMM//100)
+        identity = c3.parse_filename(path.name, observation_windows=observation_windows)
+        if any(identity[key] != entry[key] for key in ('family','level','partition','year','role')):
+            fail('c3 lock identity disagrees with filename')
+        verify_locked_file(path,entry,spec.family_name)
+        if path.stat().st_size != entry.get('size_bytes'):
+            fail('c3 source byte size differs from source lock')
+        with path.open(encoding='utf-8-sig',newline='') as stream:
+            reader = csv.DictReader(stream,strict=True)
+            c3.validate_header(reader.fieldnames or [])
+            rows = list(reader)
+        if not rows:
+            fail('Empty c3 annual source: ' + path.name)
+        for row in rows:
+            if None in row or any(value is None for value in row.values()):
+                fail('Malformed c3 CSV row width: ' + path.name)
+            unit = canonical.get(row.get('unit_id',''))
+            if unit is None:
+                fail('Unexpected c3 unit: ' + row.get('unit_id',''))
+            unit = {key:('' if pd.isna(value) else value) for key,value in unit.items()}
+            try:
+                c3.validate_row(row,identity=identity,unit=unit,allow_technical=True,
+                    observation_windows=observation_windows)
+            except ValueError as exc:
+                fail(f'{path.name}: {exc}')
+        raw = pd.DataFrame(rows)
+        typed,evidence = apply_ba_profile(raw,profile=paths.profile_contract,family=spec.source_kind,context=path.name)
+        typed = validate_time_columns(typed,spec,path.name)
+        validate_key_uniqueness(typed,MERGE_KEY,path.name)
+        expected_units = {str(row['unit_id']) for row in canonical.values() if str(row['unit_code'] if spec.level=='acz' else row['parent_code']) == identity['partition']}
+        expected_keys = {(unit,identity['year']*100+month) for unit in expected_units for month in range(1,13)}
+        if set(zip(typed.unit_id.astype(str),typed.yyyymm.astype(int))) != expected_keys:
+            fail(f'{path.name}: incomplete annual unit/month coverage')
+        evidence['source_path'] = relative
+        evidence['source_sha256'] = entry['sha256']
+        evidence['source_row'] = range(1,len(evidence)+1)
+        source_ids = sorted(set(raw.run_id))
+        run_ids.update(source_ids)
+        frames.append(typed); evidence_frames.append(evidence); files.append(path)
+        inventory.append({'family_name':spec.family_name,'source_kind':spec.source_kind,'level':spec.level,
+            'partition_code':identity['partition'],'year':identity['year'],'domain':identity['domain'],
+            'origin_path':relative_to_repo(path,paths.repo_root),'staged_path':relative_to_repo(path,paths.repo_root),
+            'source_path':relative,'sha256':entry['sha256'],'size_bytes':entry['size_bytes'],'row_count':len(raw),
+            'yyyymm_min':int(typed.yyyymm.min()),'yyyymm_max':int(typed.yyyymm.max()),
+            'run_id':source_ids[0] if len(source_ids)==1 else None,'run_ids':source_ids,'schema_version':c3.SCHEMA})
+    data = pd.concat(frames,ignore_index=True)
+    validate_key_uniqueness(data,MERGE_KEY,spec.family_name)
+    validate_supported_key_coverage(data,expected_supported_keys(spine,spec.support_start_yyyymm,spec.support_end_yyyymm),spec.family_name)
+    evidence = pd.concat(evidence_frames,ignore_index=True)
+    for field,keys in [('ba_known_union_area_km2',['unit_id']),('modis_burnable_km2_union',['unit_id']),('modis_burnable_km2_annual',['unit_id','year'])]:
+        values = pd.to_numeric(blank_to_na(evidence[field]),errors='raise')
+        audit = evidence[keys].copy(); audit[field] = values
+        spread = audit.groupby(keys,observed=True)[field].agg(['min','max'])
+        if ((spread['max']-spread['min']) > 1e-9).any():
+            fail(f'{spec.family_name}: nonconstant c3 domain/annual denominator {field}')
+    return LoadedFamily(spec=spec,files=files,data=data.sort_values(MERGE_KEY).reset_index(drop=True),
+        run_ids=sorted(run_ids),schema_version=c3.SCHEMA,file_inventory_rows=inventory,qa_sidecars=evidence_frames)
 
 if __name__ == "__main__":
     raise SystemExit(main())

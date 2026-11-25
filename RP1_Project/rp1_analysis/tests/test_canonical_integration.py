@@ -44,15 +44,16 @@ def test_publication_contract_is_final_identity() -> None:
     from rp1_analysis_v1.config import load_configuration_bundle
     bundle=load_configuration_bundle(ROOT/"config")
     assert [x.output_id for x in bundle.output.tables if x.role=="manuscript"] == ["T1","T2","T3"]
-    assert [x.output_id for x in bundle.output.tables if x.role=="supplementary"] == ["S1","S2","S3","S4","S5","S6"]
+    assert [x.output_id for x in bundle.output.tables if x.role=="supplementary"] == [f"S{n}" for n in range(1, 26)]
     assert [x.figure_id for x in bundle.figure.figures if x.role=="manuscript"] == ["F2","F3","F4","F5","F6"]
-    assert [x.figure_id for x in bundle.figure.figures if x.role=="supplementary"] == ["S1"]
+    assert [x.figure_id for x in bundle.figure.figures if x.role=="supplementary"] == ["FS1","FS2","FS3","FS4"]
 
 
 def test_public_docs_are_standalone_and_describe_current_contract() -> None:
     public = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]
     text = "\n".join(path.read_text(encoding="utf-8") for path in public)
-    assert "1.2.3" in text
+    assert "Ghana Fire Dynamics Analysis" in text
+    assert "release identity" not in text.lower()
     assert "Romano–Tirlea" in text
     assert "Firth-type penalised GEE" in text
     assert "hierarchical" in text.lower()

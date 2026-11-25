@@ -672,6 +672,40 @@ def build_cluster_summary_source(
     for model_id in sorted(parsed_by_model):
         parsed = parsed_by_model[model_id]
         scenario = scenario_map[model_id]
+        if parsed.model != scenario.model:
+            raise ExternalResultValidationError(f"Parsed model does not match scenario: {model_id}")
+        expected_stat = "TEST_STAT" if scenario.model == MODEL_SPACE_TIME_PERMUTATION else "LLR"
+        if not parsed.clusters.empty and not parsed.clusters["test_statistic_type"].eq(expected_stat).all():
+            raise ExternalResultValidationError(f"Parsed statistic type does not match scenario: {model_id}")
+        # Never erase model-incompatible values to make a result appear valid.
+        # A parsed STP expectation is conditional on its case margins; it is
+        # not a Poisson exposure-based expected count.
+        required = ("expected_count", "conditional_expected", "relative_risk", "log_likelihood_ratio")
+        if not set(required).issubset(parsed.clusters.columns):
+            raise ExternalResultValidationError(f"Parsed cluster lacks model-specific fields: {model_id}")
+        if scenario.model == MODEL_SPACE_TIME_PERMUTATION:
+            if parsed.clusters["conditional_expected"].isna().any() or any(
+                parsed.clusters[c].notna().any()
+                for c in ("expected_count", "relative_risk", "log_likelihood_ratio")
+            ):
+                raise ExternalResultValidationError(f"STP cluster contains invalid model-specific fields: {model_id}")
+        else:
+            if parsed.clusters["conditional_expected"].notna().any() or any(
+                parsed.clusters[c].isna().any()
+                for c in ("expected_count", "relative_risk", "log_likelihood_ratio")
+            ):
+                raise ExternalResultValidationError(f"Poisson cluster contains invalid model-specific fields: {model_id}")
+        for field in (
+            ("case_count", "observed_expected_ratio", "test_statistic", "conditional_expected")
+            if scenario.model == MODEL_SPACE_TIME_PERMUTATION
+            else ("case_count", "observed_expected_ratio", "test_statistic", "expected_count", "relative_risk", "log_likelihood_ratio")
+        ):
+            try:
+                values = pd.to_numeric(parsed.clusters[field], errors="raise").to_numpy(dtype=float)
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ExternalResultValidationError(f"Invalid numeric cluster field {field}: {model_id}") from exc
+            if not np.isfinite(values).all() or (values < 0).any():
+                raise ExternalResultValidationError(f"Invalid numeric cluster field {field}: {model_id}")
         for row in parsed.clusters.itertuples(index=False):
             members = parsed.membership.loc[parsed.membership["cluster_id"].eq(row.cluster_id), "location_id"].astype(str).tolist()
             start, end = _parse_result_month(row.start_date), _parse_result_month(row.end_date)
@@ -688,16 +722,22 @@ def build_cluster_summary_source(
                     "duration_months": int(end.ordinal - start.ordinal + 1),
                     "case_count": row.case_count,
                     "expected_count": "" if scenario.model == MODEL_SPACE_TIME_PERMUTATION else row.expected_count,
+                    "conditional_expected": row.conditional_expected if scenario.model == MODEL_SPACE_TIME_PERMUTATION else "",
+                    "observed_expected_ratio": row.observed_expected_ratio,
                     "relative_risk": "" if scenario.model == MODEL_SPACE_TIME_PERMUTATION else row.relative_risk,
-                    "likelihood_ratio": row.likelihood_ratio,
+                    "log_likelihood_ratio": row.log_likelihood_ratio,
+                    "test_statistic": row.test_statistic,
+                    "test_statistic_type": row.test_statistic_type,
                     "p_value": row.p_value,
+                    "p_value_report": row.p_value_report,
                     "reporting_rule": scenario.reporting_rule,
                 }
             )
     columns = [
         "model_id", "product", "model", "cluster_id", "cluster_rank", "district_location_ids", "start_month",
-        "end_month", "duration_months", "case_count", "expected_count", "relative_risk",
-        "likelihood_ratio", "p_value", "reporting_rule",
+        "end_month", "duration_months", "case_count", "expected_count", "conditional_expected",
+        "observed_expected_ratio", "relative_risk", "log_likelihood_ratio", "test_statistic",
+        "test_statistic_type", "p_value", "p_value_report", "reporting_rule",
     ]
     return pd.DataFrame(rows, columns=columns).sort_values(["model_id", "cluster_id"], kind="mergesort").reset_index(drop=True)
 

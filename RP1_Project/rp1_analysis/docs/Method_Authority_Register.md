@@ -1,14 +1,17 @@
-# Method authority register
+# Method register
 
-The executable method identities are governed by `config/method_authorities.yml` together with `analysis_contract.yml`.
+Methods are declared in the executable configuration and implemented by the analysis package. Numerical tests verify specified calculations; source admission, scientific interpretation and external-engine execution require additional evidence.
 
-- RQ1: circular mean/resultant length; Gini; first-order Queen row-standardised weights; Global Moran permutation; Local Moran conditional permutation; BH-FDR.
-- RQ2: Sen slope for effect magnitude plus Romano–Tirlea studentized global Mann–Kendall permutation inference. The global reference null is strict stationarity under the stated weak-dependence conditions. The strict route requires tie-free realised annual series and fails closed on ties. Method-derived components are the global rank statistic, studentisation, long-run-variance construction and re-studentisation of every permutation. Study/computational authorities are the exact `floor(n^(1/3))` finite-sample bandwidth rule, variance floor 0.001, 9,999 permutations, two-sided absolute tail, seed 20260822, plus-one Monte Carlo p-value and the five-ACZ BH family. The reference paper provides practical simulation context for `floor(n^(1/3))` and 0.001 but does not uniquely mandate them by theorem.
-- RQ3: Firth-type penalised GEE, binomial-logit mean, district clusters, working independence, MBN covariance and standard-normal Wald inference. VIF is diagnostic only. Q25/Q75 standardised probabilities use predictive standardisation over the observed covariate distribution.
-- Secondary: MCD64A1 discrete-Poisson SaTScan with fixed BA-2001 exposure and VIIRS space-time-permutation SaTScan without exposure; both use hierarchical non-overlapping cluster reporting.
+- RQ1: fixed-support burned-area summaries, circular seasonality, Queen-contiguity spatial inference and conditional Local Moran inference. The Local Moran two-sided rule is documented in `Local_Moran_Two_Sided.md`.
+- RQ2: Sen slope and Romano–Tirlea studentized global Mann–Kendall permutation inference. The configured bandwidth, variance floor, simulation count, seed and multiplicity family are study choices; inspect realised data and assumptions.
+- RQ3: Firth-type penalised GEE, Morel–Bokossa–Neerchal covariance adjustment, standard-normal Wald inference and covariate standardisation. FRP is the mean of eligible UTC daily maxima using nominal/high confidence, not a mean across detections or calendar days.
+- Secondary analysis: model-specific discrete Poisson and case-only space–time permutation scans with hierarchical non-overlapping reporting, specifically hierarchical geographically non-overlapping cluster selection. Genuine external SaTScan execution and input/output reconciliation are required.
 
-The Local Moran conditional-permutation convention holds the focal standardised value fixed and samples other non-island standardised values without replacement according to the configured scheme.
+Methods documentation describes current behavior. It does not certify source lineage or replace run-specific manifests, statistical diagnostics or scientific review.
 
-Both space-time analyses use the registered hierarchical geographically non-overlapping cluster-reporting authority.
-
-The current human-readable methods documents are stored under `docs/` and their exact DOCX/PDF byte identities are recorded in `data/authorities/methods_document_authority.json`. Updating that current documentation authority does not rewrite historical RQ run metadata: those run records remain immutable snapshots of the methods-document identity bound when the scientific authorities were materialised.
+The c3 source measurement and admission authority is `c3_methods_v1_schema_v2`
+with CSV schema `rp1_ba_c3_extended_v2` and local policy
+`c3_preserve_admission_v1`. This revises the source/scenario contract while
+retaining the statistical estimators listed above. Original c3 evidence,
+scenario zeros and guarded nulls remain bound to the selected input manifest;
+an editorial document hash cannot certify that source change.

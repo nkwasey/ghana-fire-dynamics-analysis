@@ -36,3 +36,6 @@ def test_source_qualifier_uses_governed_projection_authority_and_full_estate() -
     assert source.count('"-m", "pytest"') == 1
     assert 'cwd=projection_root' in source
     assert "clean_generated_outputs" not in source
+    assert "tests/run_offline.py" in source
+    assert "'node', '--version'" in source
+    assert "rp1_ba_contracts.c3" in source

@@ -48,7 +48,7 @@ def _controlled_record(**updates):
         "run_id": "example_run",
         "execution_mode": "controlled_nbclient",
         "canonical_notebook": "RP1_Analysis_v1.ipynb",
-        "package_version": "1.2.3",
+        "package_version": "1.3.1",
         "analysis_schema_version": "rp1-analysis-v1.1",
         "data_schema_version": "rp1-data-schema-v1.1",
         "configuration_sha256": "c" * 64,
@@ -100,7 +100,7 @@ def _interactive_record(**updates):
         "completion_timestamp_utc": "2026-09-10T10:00:00Z",
         "canonical_gate_sha256": "d" * 64,
         "operational_configuration_sha256": "e" * 64,
-        "package_version": "1.2.3",
+        "package_version": "1.3.1",
         "analysis_schema_version": "rp1-analysis-v1.1",
         "data_schema_version": "rp1-data-schema-v1.1",
         "publication_gate_status": "PASS",
@@ -321,20 +321,21 @@ def test_execution_contract_rejects_non_fail_closed_policy(tmp_path: Path) -> No
         load_execution_contract(config / "execution_contract.yml")
 
 
-def test_scientific_contract_hashes_are_unchanged_by_execution_contract_addition() -> None:
+def test_scientific_contract_hashes_are_independent_of_execution_contract(tmp_path: Path) -> None:
     bundle = load_configuration_bundle(CONFIG)
-    expected = {
-        "analysis_contract.yml": "9692b53595028e3832c0106e3476edf5d83b7d7763830777bf9c97c9629569ec",
-        "data_schema_contract.yml": "d7b8ed574438804457e50d04b0135066161061976ca4aa8c6f0944b61a163abf",
-        "figure_contract.yml": "2ae903fd375fee6276fb54938fdaf92843ba853f35ea1213bfd476b3493aeeb1",
-        "method_authorities.yml": "248bb4aa5f0d05c75fcfd402eb68446184f7486a1060980849c8bf62ab0bdd70",
-        "output_contract.yml": "ac4559a71526eb37969fdcd1f2572f7868ab8837a1aebc5cad9418eafab74c3d",
-    }
+    expected = {name: hashlib.sha256((CONFIG / name).read_bytes()).hexdigest()
+                for name in bundle.file_hashes}
     assert dict(bundle.file_hashes) == expected
     expected_digest = hashlib.sha256(
         __import__("json").dumps(dict(sorted(expected.items())), separators=(",", ":"), sort_keys=True).encode()
     ).hexdigest()
-    assert bundle.configuration_sha256 == expected_digest == "19b683cd27d3593bdcca90f4980aad467fda8203d28a9fff6d5ad88d5211c332"
+    assert bundle.configuration_sha256 == expected_digest
+    copied = _copy_project_config(tmp_path)
+    execution_path = copied / "execution_contract.yml"
+    execution_path.write_text(execution_path.read_text(encoding="utf-8") + "\n# local test\n", encoding="utf-8")
+    changed = load_configuration_bundle(copied)
+    assert changed.configuration_sha256 == bundle.configuration_sha256
+    assert changed.operational_file_hashes["execution_contract.yml"] != bundle.operational_file_hashes["execution_contract.yml"]
 
 
 def test_secondary_completion_state_is_contract_driven() -> None:

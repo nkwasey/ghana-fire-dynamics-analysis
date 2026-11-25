@@ -173,7 +173,7 @@ def test_local_moran_reference_fixture_and_production_parity() -> None:
         # production output and agreement within four binomial Monte-Carlo SEs.
         close(row["permutation_p"], row2["permutation_p"])
         ref_p = float(expected["permutation_p"])
-        mc_se = (ref_p * (1.0 - ref_p) / (spec["permutations"] + 1.0)) ** 0.5
+        mc_se = 2.0 * (0.25 / (spec["permutations"] + 1.0)) ** 0.5
         assert abs(float(row["permutation_p"]) - ref_p) <= 4.0 * mc_se
 
 

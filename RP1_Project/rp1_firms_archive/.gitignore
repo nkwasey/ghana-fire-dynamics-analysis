@@ -1,0 +1,33 @@
+.venv/
+.conda/
+__pycache__/
+.pytest_cache/
+private/*
+!private/README.md
+downloads/
+output/
+output-*/
+*.egg-info/
+build/
+dist/
+tmp/
+parallel/
+
+# Local settings, provider/installation temporary files and release artifacts.
+.env
+.env.*
+!.env.example
+*.log
+*.partial
+condaenv.*.requirements.txt
+/Ghana_Fire_Archive_*.zip
+/Ghana_Fire_Archive_*.zip.sha256
+.DS_Store
+Thumbs.db
+
+# Native RP1 source layout.
+data/raw/*
+!data/raw/README.md
+data/metadata/*
+!data/metadata/README.md
+out/

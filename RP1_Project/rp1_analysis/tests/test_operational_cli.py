@@ -22,15 +22,15 @@ def test_console_script_metadata_is_package_owned() -> None:
     assert raw["project"]["scripts"] == {"rp1-analysis": "rp1_analysis_v1.cli:main"}
 
 
-def test_version_report_is_phase_neutral_and_uses_governed_identities() -> None:
+def test_version_report_is_current_product_and_uses_governed_identities() -> None:
     report = version_report()
     assert report == {
         "product": "Ghana Fire RP1 Analysis",
-        "version": "1.2.3",
+        "version": "1.3.1",
         "distribution": "rp1-analysis-v1",
         "package": "rp1_analysis_v1",
         "analysis_schema": "rp1-analysis-v1.1",
-        "data_schema": "rp1-data-schema-v1.1",
+        "data_schema": "rp1-data-schema-v1.2",
     }
     assert re.search(r"\bV\d{3,}(?:[-_]\d+)?\b", json.dumps(report), flags=re.IGNORECASE) is None
 

@@ -1,0 +1,27 @@
+{
+  "schema": "rp1-local-workflow-v1",
+  "study": {
+    "start_yyyymm": 200101,
+    "end_yyyymm": 202412,
+    "viirs_support_start_yyyymm": 201201,
+    "ba2012_support_start_yyyymm": 201201,
+    "analysis_overlap_start_yyyymm": 201202
+  },
+  "geo_config": "geo_data_prep/configs/example_acz.yaml",
+  "firms_config": "RP1_Project/rp1_mv_firms_panels/configs/ghana_full.yaml",
+  "merge_config": "RP1_Project/configs/merge_profiles.json",
+  "output_root": "out/workflows",
+  "land_mask": "geo_data_prep/data/raw/aoi/gha_admin0.shp",
+  "firms_archive": {
+    "mode": "build",
+    "producer_config": "RP1_Project/rp1_firms_archive/configs/rp1.yaml",
+    "geography_policy": "pinned_archive_population_rp1_rejoin_v1"
+  },
+  "ba_preparation": {
+    "c3": {
+      "input_dir": "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release",
+      "boundary_label": "",
+      "scope": "full"
+    }
+  }
+}

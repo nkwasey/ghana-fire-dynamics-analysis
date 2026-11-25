@@ -1,4 +1,5 @@
 from __future__ import annotations
+from generated_run_reference import selected_run_base, require_selected_run
 
 import hashlib
 import json
@@ -18,15 +19,13 @@ from rp1_analysis_v1.presentation_rq4 import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = selected_run_base(ROOT)
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 RUN_SEC = ROOT / "out" / "runs" / f"{RUN_BASE}_sec"
 MEMBERSHIP = RUN_SEC / "04_secondary_concentration" / "publication_sources" / "cluster_membership_source.csv"
 RECURRENCE = RUN_SEC / "04_secondary_concentration" / "publication_sources" / "cluster_recurrence_source.csv"
 STATUS = RUN_SEC / "04_secondary_concentration" / "secondary_external_execution_status.json"
 MANIFEST = RUN_SEC / "04_secondary_concentration" / "publication_sources" / "M_SATSCAN_PUBLICATION_SOURCE_MANIFEST.json"
-EXPECTED_MEMBERSHIP_SHA = "857fc399ab87e97c0a3ff753628bf3f94171d206e23441ef3083a53359ee369b"
-EXPECTED_RECURRENCE_SHA = "379df7566b6a3aa5428766fe142de9dc969bd6f19f5a424f40622baafc6d74aa"
 EXPORTS = (
     "rq4_mcd64a1_clusters",
     "rq4_viirs_clusters",
@@ -36,6 +35,7 @@ EXPORTS = (
 
 
 def _context_and_source(export_id: str):
+    require_selected_run(ROOT, RUN_BASE, external=True)
     paths = ProjectPaths(ROOT)
     bundle = load_configuration_bundle(ROOT / "config")
     registry = bundle.figure.presentation_export
@@ -64,53 +64,43 @@ def _context_and_source(export_id: str):
     return spec, context, source, run
 
 
-def test_rq4_governed_secondary_sources_are_byte_identical() -> None:
-    assert hashlib.sha256(MEMBERSHIP.read_bytes()).hexdigest() == EXPECTED_MEMBERSHIP_SHA
-    assert hashlib.sha256(RECURRENCE.read_bytes()).hexdigest() == EXPECTED_RECURRENCE_SHA
+def test_rq4_secondary_sources_match_their_local_manifest() -> None:
+    require_selected_run(ROOT, RUN_BASE, external=True)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for name, path in (("cluster_membership_source", MEMBERSHIP), ("cluster_recurrence_source", RECURRENCE)):
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == manifest["sources"][name]["sha256"]
 
 
 def test_rq4_secondary_state_and_publication_source_manifest_are_validated() -> None:
+    require_selected_run(ROOT, RUN_BASE, external=True)
     status = json.loads(STATUS.read_text(encoding="utf-8"))
     assert status["external_execution_state"] == "RESULTS_VALIDATED"
-    assert status["validated_model_count"] == 2
-    assert status["satscan_engine_version_authority"] == "10.3.3"
+    assert status["validated_model_count"] == len(load_configuration_bundle(ROOT / "config").analysis.secondary_analysis["scenarios"])
+    assert status["satscan_engine_version_authority"]
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert manifest["external_execution_state"] == "RESULTS_VALIDATED"
     assert manifest["secondary_run_id"] == f"{RUN_BASE}_sec"
-    assert manifest["sources"]["cluster_membership_source"]["rows"] == 5861
-    assert manifest["sources"]["cluster_recurrence_source"]["rows"] == 520
+    assert manifest["sources"]["cluster_membership_source"]["rows"] == len(pd.read_csv(MEMBERSHIP))
+    assert manifest["sources"]["cluster_recurrence_source"]["rows"] == len(pd.read_csv(RECURRENCE))
 
 
-def test_rq4_governed_cluster_and_membership_counts_are_exact() -> None:
-    membership = pd.read_csv(MEMBERSHIP)
-    recurrence = pd.read_csv(RECURRENCE)
-    assert membership.shape == (5861, 3)
-    assert recurrence.shape == (520, 7)
-    by_product = membership.groupby("product", observed=True)["cluster_id"].agg(["nunique", "size"]).reset_index()
-    counts = {str(row.product): {"clusters": int(row.nunique), "memberships": int(row.size)} for row in by_product.itertuples(index=False)}
-    assert counts == {
-        "mcd64a1": {"clusters": 104, "memberships": 2435},
-        "viirs": {"clusters": 108, "memberships": 3426},
-    }
-    totals = recurrence.groupby("product", observed=True)["total_significant_clusters"].nunique().to_dict()
-    assert totals == {"mcd64a1": 1, "viirs": 1}
-    assert int(recurrence.loc[recurrence["product"].eq("mcd64a1"), "total_significant_clusters"].iloc[0]) == 104
-    assert int(recurrence.loc[recurrence["product"].eq("viirs"), "total_significant_clusters"].iloc[0]) == 108
+def test_rq4_membership_and_recurrence_share_current_cluster_counts() -> None:
+    require_selected_run(ROOT, RUN_BASE, external=True)
+    membership, recurrence = pd.read_csv(MEMBERSHIP), pd.read_csv(RECURRENCE)
+    assert {"product", "cluster_id", "unit_id"}.issubset(membership.columns)
+    assert not membership.duplicated(["product", "cluster_id", "unit_id"]).any()
+    for product, group in recurrence.groupby("product", observed=True):
+        selected = membership.loc[membership["product"].eq(product)]
+        assert group.total_significant_clusters.eq(selected.cluster_id.nunique()).all()
 
 
-@pytest.mark.parametrize(
-    ("export_id", "expected_rows"),
-    [
-        ("rq4_mcd64a1_clusters", 2435),
-        ("rq4_viirs_clusters", 3426),
-        ("rq4_mcd64a1_recurrence", 260),
-        ("rq4_viirs_recurrence", 260),
-    ],
-)
-def test_presentation_export_selectors_resolve_expected_rq4_shapes(export_id: str, expected_rows: int) -> None:
+@pytest.mark.parametrize("export_id", EXPORTS)
+def test_presentation_export_selectors_resolve_expected_rq4_shapes(export_id: str) -> None:
     _spec, _context, source, _run = _context_and_source(export_id)
     assert source.frame is not None
-    assert len(source.frame) == expected_rows
+    origin = pd.read_csv(RECURRENCE if "recurrence" in export_id else MEMBERSHIP)
+    product = "mcd64a1" if "mcd64a1" in export_id else "viirs"
+    assert len(source.frame) == int(origin["product"].eq(product).sum())
 
 
 @pytest.mark.parametrize("export_id", ("rq4_mcd64a1_clusters", "rq4_viirs_clusters"))
@@ -175,3 +165,5 @@ def test_deterministic_repeat_rendering_for_all_four_rq4_exports(tmp_path: Path,
         pe.export_one_presentation_figure(run_dir=RUN_CLOSE, output_dir=second, export_id=export_id, paths=paths)
         assert (first / f"{export_id}.png").read_bytes() == (second / f"{export_id}.png").read_bytes()
         assert (first / f"{export_id}.pdf").read_bytes() == (second / f"{export_id}.pdf").read_bytes()
+
+

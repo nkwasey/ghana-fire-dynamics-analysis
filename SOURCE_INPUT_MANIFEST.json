@@ -1,0 +1,1565 @@
+{
+  "files": {
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2001_ext.csv": {
+      "bytes": 13878,
+      "sha256": "574a990938228a4ce7dc1a2a31fc236ad31283e287547a85b1ad845d6ccdab7f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2002_ext.csv": {
+      "bytes": 14296,
+      "sha256": "343ffd6ff08489dd5640fa95a83e75b06286e2b1bd2f81b1e563562c2add7761"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2003_ext.csv": {
+      "bytes": 14413,
+      "sha256": "0741696d50995f8e4dc075a1f031e7e21da66ea91ba595891bc3baef9d1ca183"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2004_ext.csv": {
+      "bytes": 14289,
+      "sha256": "d8d39749c5a8a2cf000e39b53b944e3d1f1666166e9fa4d92153bdc08aacae50"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2005_ext.csv": {
+      "bytes": 14284,
+      "sha256": "78849f225c7d4c308edd0dbd66dde878bc6cea9471260ad7b18dea3b8bde8d58"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2006_ext.csv": {
+      "bytes": 14199,
+      "sha256": "5cf6421b681f9bc5838c7b76a3cccc26ef4732f5cbcd8808d500e23239a4c036"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2007_ext.csv": {
+      "bytes": 14268,
+      "sha256": "73f36fac4f82f96fe6a988ec40ef0b88bd10a7e46d4dc8990405701953611919"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2008_ext.csv": {
+      "bytes": 14073,
+      "sha256": "045fe4ddf043a7ba2b591c272e91baed29a325f0c73d3588ad5091a168f40a70"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2009_ext.csv": {
+      "bytes": 14164,
+      "sha256": "bce575ec246b2e0505e8484d624f849a029405d4370c36c5ce612b4b7e1e3e89"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2010_ext.csv": {
+      "bytes": 14313,
+      "sha256": "3cb8968e344e01046657c87808da7c405a3ecd1620e014449261540b681d9a84"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2011_ext.csv": {
+      "bytes": 14187,
+      "sha256": "cfaeb5553154be668333f09679146b6226e175dac2cc4d53b3a131c9158b51f5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2012_ext.csv": {
+      "bytes": 14071,
+      "sha256": "5ea211b0fe9c1c847d4966120afe796c7a54765a7dca4d2d51069221abb56051"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2013_ext.csv": {
+      "bytes": 14260,
+      "sha256": "6c9446d265f9cd3a64d8753ef9241ffa6ee418be2ee247eb29b9c1a206fa5f1f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2014_ext.csv": {
+      "bytes": 14090,
+      "sha256": "c474d4ac3df6556eada7f130651fc43f04ca7bd50ce14c20ee64edbcae38f2ce"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2015_ext.csv": {
+      "bytes": 14084,
+      "sha256": "dee98beb4931e5046ced0735e6b3c6b257c615f0708e2c7c5a6e1379bc2f1728"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2016_ext.csv": {
+      "bytes": 14095,
+      "sha256": "f0be9ec3958326160f1607c4af1e617291f45877d5d1856bff5bdc39d6e478b1"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2017_ext.csv": {
+      "bytes": 14080,
+      "sha256": "b7ae9c1cd75853eb902325f68b3bf9cf92c615e514c9ed805505e484c2c3972e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2018_ext.csv": {
+      "bytes": 14210,
+      "sha256": "e9b8274aff2f15bd65938399201c5b9c46e6378b2a8218dfcff830035ef2f6fe"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2019_ext.csv": {
+      "bytes": 13979,
+      "sha256": "2614ded554bac38bb261568bb8975bcfc9980614b0bc6bab0a626fc38575ef33"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2020_ext.csv": {
+      "bytes": 14074,
+      "sha256": "7e4228307765c390db109337678cdbeb1631c1d66e1c668fe577c125a9eff4dd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2021_ext.csv": {
+      "bytes": 14216,
+      "sha256": "1a8c6158ab434d14abf5c79dc8a5b7c1f7b201f441c1e9b8b71c9084e37b6cda"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2022_ext.csv": {
+      "bytes": 13970,
+      "sha256": "a0cee72fa4e672c1153c50c07555ce0536493591b0b520256981c6c963ef239b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2023_ext.csv": {
+      "bytes": 14183,
+      "sha256": "9263ea3da5c0d3b5652cf9391a5437b40bc1ad20b1add03613ed3318efc7897a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2001_2024_ext.csv": {
+      "bytes": 14176,
+      "sha256": "fbb5fb04092dd6e282c7179c13ab73a16f6072992d58fb24f87769927ccaeced"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2012_ext.csv": {
+      "bytes": 12644,
+      "sha256": "68317c04646954ed0c273d9cff08795e76f62092ed022c49123069ecd43b2b97"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2013_ext.csv": {
+      "bytes": 12843,
+      "sha256": "b1f9a2421f97bf4df5cf6439adc921b28602e280c186528fb462b15c484b1c80"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2014_ext.csv": {
+      "bytes": 12667,
+      "sha256": "54f083b8a7e113f54fa8f77deda9beae771240c3e9920f0295015c9cb6249cd5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2015_ext.csv": {
+      "bytes": 12558,
+      "sha256": "11045510940096fec11322cb2c332f533ead044f37a660ceb3f8ebec38b26952"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2016_ext.csv": {
+      "bytes": 12675,
+      "sha256": "37c66d91a4ea0da55403110ebee2def3ea830b9bce787aa2d827e8134ab5b43a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2017_ext.csv": {
+      "bytes": 12669,
+      "sha256": "c0e5ff5b8fb41e8344f2fd5e0f6ddc5bbc7f4fcfda5e8d677e8fbceab261ebbb"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2018_ext.csv": {
+      "bytes": 12794,
+      "sha256": "d40fca0e83af9476becd048f4d3b3f35f90e95b3049bab89e28b128649788f46"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2019_ext.csv": {
+      "bytes": 12566,
+      "sha256": "e95836afc0f18e8fe5d4be46aff55eeae83755f04f50b77f0f05f7b237880a30"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2020_ext.csv": {
+      "bytes": 12672,
+      "sha256": "116a28ef23226c7dc17bec5262be01912ab4a25c851f24cbd7467a8c381b218d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2021_ext.csv": {
+      "bytes": 12806,
+      "sha256": "eff9eb55413e34236b0cccfa1e05245a06e9b72724e4c3f9c4b66c0f03e412dc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2022_ext.csv": {
+      "bytes": 12564,
+      "sha256": "728fe954df7b0d52c2d1143cad8ae8c0b3653ed4751b3637ec1d4df54c2c9ab0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2023_ext.csv": {
+      "bytes": 12770,
+      "sha256": "530dd6b58af28f68efaadf00b788cf0211c7a39339682cd7fdd5c41d0b2337dc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_CZ_BA2012_2024_ext.csv": {
+      "bytes": 12649,
+      "sha256": "52cbf7286723020db60f8eccce853a3034f47acc497f6ed35109e4d21fa53a40"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2001_ext.csv": {
+      "bytes": 14109,
+      "sha256": "8c1f5d06b37a204d036f638c504fd5f5c306200a8d8fb16f493b208309d6c12d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2002_ext.csv": {
+      "bytes": 14058,
+      "sha256": "59c49a3fc7dcfa95c5cd390df42b2f77d6fe40e6f3f01e2e1adf23ad0ef468ca"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2003_ext.csv": {
+      "bytes": 14154,
+      "sha256": "a07dbb0020346692c4f47ec55d368ab2f6b561f889e3e1e7ec8269234592763a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2004_ext.csv": {
+      "bytes": 14183,
+      "sha256": "f8ddb92e5bb4041433e5fcf4c31a8aca8df42f2e9b50080e7e119f1b91656483"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2005_ext.csv": {
+      "bytes": 14162,
+      "sha256": "14f3e0025a6e5105332d1dbf2fc90b8d76c2cabfb7c0ac859f7596b9f6e837c9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2006_ext.csv": {
+      "bytes": 14203,
+      "sha256": "94d2065b5108da214ab063d67037e2063995d9e8f9373bb464a80cc3dc6bb32f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2007_ext.csv": {
+      "bytes": 13893,
+      "sha256": "c18f68e7f6db92b40f31850be5648c19a79c2723099f0acfe1576c5ad338aab4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2008_ext.csv": {
+      "bytes": 14143,
+      "sha256": "7e676fe757e123fb7ba03daf85a24f63452db5695f46b408d4901ead9ab8e852"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2009_ext.csv": {
+      "bytes": 14184,
+      "sha256": "3f7731dfd8ebcb2fafbb72fd838a8962a92dee7b63c5554a96e7391c5e020b40"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2010_ext.csv": {
+      "bytes": 14104,
+      "sha256": "b16988e16d4c05724e85b5f984a191d431d17d3ee85d16802d59c7316de713b6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2011_ext.csv": {
+      "bytes": 14159,
+      "sha256": "1847d92ab40036ea640e102b2cc59fb45a32690307d0326a26fa6c7f58988b56"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2012_ext.csv": {
+      "bytes": 13959,
+      "sha256": "abf62dd040b988c0bf9cb2bb583e76cc3316e9bdb88fcdf131f839f917417671"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2013_ext.csv": {
+      "bytes": 14279,
+      "sha256": "592cdf9a8e6e05a21747f6898a6a59fa5233b7a005a4929b329cd29405fe84a5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2014_ext.csv": {
+      "bytes": 14082,
+      "sha256": "f1fa988a9f1fc4a11bc9b38f7ad9d5e3febe65b03ca717764d516be20ced3b32"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2015_ext.csv": {
+      "bytes": 14073,
+      "sha256": "26a1b5500d142ec781546f04bca406ecd26094a5b9fedcdd916460ded92697e4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2016_ext.csv": {
+      "bytes": 14181,
+      "sha256": "aa672f9e0c2eb47967b03ab16fda871c3c311b027e5ef6c189b65e449ed7de31"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2017_ext.csv": {
+      "bytes": 14073,
+      "sha256": "54de17a9a9d4768f7654fe84523fcfdd67c9eae555041a2ecf086aee77f32607"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2018_ext.csv": {
+      "bytes": 13962,
+      "sha256": "f4e8b7e666b48d71219accc9a45f053e0efbc90d17e655645b11e4c7eccc093a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2019_ext.csv": {
+      "bytes": 13964,
+      "sha256": "9fa50b8a389747f6e449a5622af79cf42ff3de0e9b400b53743d811af17c2d9a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2020_ext.csv": {
+      "bytes": 14182,
+      "sha256": "2fa309af975a091c96aacd34865e13be4a97e3126b51a7873e237beb89cb5e41"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2021_ext.csv": {
+      "bytes": 13966,
+      "sha256": "601d9de5c61df82c809da482f170b17a97b1135584c6ffa75cf078682f1a0c22"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2022_ext.csv": {
+      "bytes": 14075,
+      "sha256": "551e7597c289461d88d4a71795c4ff6595dadbd97638733b526ba8f0f0420b86"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2023_ext.csv": {
+      "bytes": 14164,
+      "sha256": "43290c733be286a61e0d60e6ba02bc6bced45047f2cb2bb468a065fed90ae61f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2001_2024_ext.csv": {
+      "bytes": 14073,
+      "sha256": "767095af0c8fcdbac06d377612861f00ffd2ba6804337d2f4ed45515cd5aaf2d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2012_ext.csv": {
+      "bytes": 12570,
+      "sha256": "42fd10235294b561e759fd69b2bfdc8356cc3d04d99ead12a824f56cb8357c46"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2013_ext.csv": {
+      "bytes": 12875,
+      "sha256": "e9085e078ed4d9f5b6c43802934c43af9798e10d3e7986cee52dd850a5d58b77"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2014_ext.csv": {
+      "bytes": 12676,
+      "sha256": "2ff56411d225f2f47673138a01fddc69bcef3c6be823a657f2c943d1c66320b3"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2015_ext.csv": {
+      "bytes": 12557,
+      "sha256": "23a507816c5e9b5e0a3a0ce7ad5937a0b31684582dc1f976f2d324ad99e58824"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2016_ext.csv": {
+      "bytes": 12774,
+      "sha256": "40ffd810a5e68656d5094d54777f68fa5dc1af0e74f46a5afe52e2aff1c8c452"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2017_ext.csv": {
+      "bytes": 12663,
+      "sha256": "425c61208f9dae1b3277e111109162c2dd6b5055b8164dea4cdf46472d2dbbfe"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2018_ext.csv": {
+      "bytes": 12567,
+      "sha256": "db52137a6396c0a0701cf0adb84de721751a54ddb3590196511c49b892b61a23"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2019_ext.csv": {
+      "bytes": 12569,
+      "sha256": "8b9923a88abe5f1d14ff5185dd7b37370d01e98b513a5772c9d59b02b489f9ab"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2020_ext.csv": {
+      "bytes": 12786,
+      "sha256": "577510aab5427eac2dbb47490c5d65e8c40262cb01c015c44dff144fdad03294"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2021_ext.csv": {
+      "bytes": 12570,
+      "sha256": "27366e7d4943cda605015bda2f8cbb9d3d0a575054d998fb0d2d8d3e3cbe8f54"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2022_ext.csv": {
+      "bytes": 12667,
+      "sha256": "e8127847a14664eee272b17864c8eeecf7b4e839d79a664b5b8bdabb4d91ac59"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2023_ext.csv": {
+      "bytes": 12754,
+      "sha256": "756078a1bf8f319f2d4c0820c191c7bace8bf8c7a4155b86ea317f2d28381061"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_FZ_BA2012_2024_ext.csv": {
+      "bytes": 12650,
+      "sha256": "c1db67accdab770c4b96fe1b386a21f70e5ad20f73779c8eda2f95ca13f010b8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2001_ext.csv": {
+      "bytes": 14317,
+      "sha256": "2f399dc6d0c3934c5afc3fb4f7ba1d915cec53e01ce9936ceb30919e5dd23240"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2002_ext.csv": {
+      "bytes": 14423,
+      "sha256": "c2b7b2de3da77f0d287a4fe324b9c9f673e9d7dba400edceba78961fd570bd5e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2003_ext.csv": {
+      "bytes": 14340,
+      "sha256": "133fc4991602c9bf49a1edfe29d3b19ce70852819d3d372fdb363d1a1be8557a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2004_ext.csv": {
+      "bytes": 14366,
+      "sha256": "ca1336ac4fb8433406a5a2fb1117adbc22f6b11e812c4de25e94c23642446c21"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2005_ext.csv": {
+      "bytes": 14377,
+      "sha256": "bb6b96bf61ce946b2703e6afaca487267f84f5edd4be1d2f636e3b1eb4d7e60b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2006_ext.csv": {
+      "bytes": 14277,
+      "sha256": "bd2e77b69fbb3128dea5e3fa600974512793d790b9168330ba9fb065a9a14b2e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2007_ext.csv": {
+      "bytes": 14324,
+      "sha256": "8a6033729d736994fff5649d1e47a7fec3c173e03499870460585f6b6d502446"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2008_ext.csv": {
+      "bytes": 14418,
+      "sha256": "ac2269b0ade9e2ef6eeef14f21d0f7f643733967bb3a3e23c27295e4aa902421"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2009_ext.csv": {
+      "bytes": 14377,
+      "sha256": "cae759a03a62f914c4330f56cffb403c2bc9af5e4fd8e4ba36bd3ad0a9f105a6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2010_ext.csv": {
+      "bytes": 14280,
+      "sha256": "7a812ccd4b0b51c66ffc3c6c4c27224483a74297d5888a34e5931abacf36e0d5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2011_ext.csv": {
+      "bytes": 14469,
+      "sha256": "5ab1c94e4df5648627597509a73f0c1b53075da26a979aef8bc13ee1a3104c66"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2012_ext.csv": {
+      "bytes": 14166,
+      "sha256": "1f1f8be7a49d647b6a0d8a20bfb9d8cac842200a4eccdd2d258fa6229a49d868"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2013_ext.csv": {
+      "bytes": 14412,
+      "sha256": "d9018796f49a08db777853ca1ef15f26d60e755ce158f763a2ddf232fe67ecf8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2014_ext.csv": {
+      "bytes": 14310,
+      "sha256": "3274d9185a016b827424d49d4201dcd1966fd1ce854cf9cc59cb2e7e339ac9eb"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2015_ext.csv": {
+      "bytes": 14415,
+      "sha256": "accb1b4f8a6fb509c14c2778bd6782b0ae79dcad4390f5ce86cf82a4fb123ad4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2016_ext.csv": {
+      "bytes": 14261,
+      "sha256": "91ac6b16b1225a8065bcf51d06510180e939cce170b35b6db6c2f4e552a62a00"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2017_ext.csv": {
+      "bytes": 14386,
+      "sha256": "d00cf31b2d7a053002a5fdf132bd8c0eb8b13b4eaf750a24b86c9ca7b3072aec"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2018_ext.csv": {
+      "bytes": 14307,
+      "sha256": "2162fa1c80c1247fdab933497ec5d1c09705e80011d360195ce6ac7e6f96cf20"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2019_ext.csv": {
+      "bytes": 14256,
+      "sha256": "e868d04abb70ff8a795fa1de0ce93d2fd27e8d84610a167f4d8443910e0634f4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2020_ext.csv": {
+      "bytes": 14355,
+      "sha256": "b825ea4eba2574d7639b1e251ffa084c4633ea9e16056b3e1c7c39a926175561"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2021_ext.csv": {
+      "bytes": 14361,
+      "sha256": "7df230f083d2e190957cdbfa9fc3de2a77ead0dc37454b034f2ca350f9d2051a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2022_ext.csv": {
+      "bytes": 14498,
+      "sha256": "5705fc3406d9035e1ab760fc6ba89dd987945eea46d0b9f74f1aa8e2cb0c36c1"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2023_ext.csv": {
+      "bytes": 14583,
+      "sha256": "489bda40770636cf2332530093c2a1fe47de807a5c352241d74657737754126e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2001_2024_ext.csv": {
+      "bytes": 14286,
+      "sha256": "592e2130b34789b80fbd227072506794e7692dca9810c59ad02d86c4e0cfdbdc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2012_ext.csv": {
+      "bytes": 12760,
+      "sha256": "cc42d8e4e7ece1298bea7d15100d5c2a9fcfb19ab9e1f1db148a17ce44bcfd8f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2013_ext.csv": {
+      "bytes": 13005,
+      "sha256": "fe387f52ff4a3e81c5aa102cbd2f194ef24e72abdb226e91751295573cdd5094"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2014_ext.csv": {
+      "bytes": 12905,
+      "sha256": "013b4afb8e314a6dcdb4fb11a4d87333bb3e9f51c33802e696815b1de166c41e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2015_ext.csv": {
+      "bytes": 13006,
+      "sha256": "9ea39a84b7c0a617512cf8ffb1943ead4b7defca68794d834c909538d3b39404"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2016_ext.csv": {
+      "bytes": 12847,
+      "sha256": "eee73be3598a981550a532b605a6852761e3bece40e35ed5ed3cf53bce603231"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2017_ext.csv": {
+      "bytes": 12973,
+      "sha256": "55bfd0fe082511836cd3585a970f0b5bbd9b65774342d05054dcb8ad722d784a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2018_ext.csv": {
+      "bytes": 12906,
+      "sha256": "9fd7491c7eef6295719a54c44ccda76f145f1175ee98d8c83199be124bd572c7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2019_ext.csv": {
+      "bytes": 12858,
+      "sha256": "6f1f8eebb4e5773781340970541c50bfbf282aadca3667a417a5c2e95e7a5946"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2020_ext.csv": {
+      "bytes": 12954,
+      "sha256": "af326e77010570bd47a17aff9c3369acda3059d1015c86791f07db32cc2a8866"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2021_ext.csv": {
+      "bytes": 12966,
+      "sha256": "f9a8e28e6ce3576d6aa5bb7f155bd8310e54873982735ca965bff7a55b84c565"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2022_ext.csv": {
+      "bytes": 13085,
+      "sha256": "ed2e46b2e8139f7c7f0a0011da1e880e0aa5a1ade09aa5ff6abf0e4ed41998aa"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2023_ext.csv": {
+      "bytes": 13175,
+      "sha256": "fa977135c5518e4f93a8c0b6d84e8b020d2c9d57b96e9a1f4764526bf2ed3a20"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_GS_BA2012_2024_ext.csv": {
+      "bytes": 12880,
+      "sha256": "25b6cb472708535f90e3c330157872bba856aa4e84338bb598d62be5dab63cfd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2001_ext.csv": {
+      "bytes": 13820,
+      "sha256": "fef7e14f8bda3807842ee28f3b58d6106fa89fa0d95fa49915262ad1093d8eee"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2002_ext.csv": {
+      "bytes": 13870,
+      "sha256": "537a6d9f4fdcc8c953346860849c8808ca6e4b329dfaa5bfc96c22986a3a9697"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2003_ext.csv": {
+      "bytes": 13633,
+      "sha256": "bb03d56d7b7a10a6e3b73b8d4b443ca0993bc57e882ea0ecba522493b97d0bef"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2004_ext.csv": {
+      "bytes": 13703,
+      "sha256": "487b39931b0a9f865f7d99f46980274ed5cb67d2395426c3e0d7030507fa13b3"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2005_ext.csv": {
+      "bytes": 13633,
+      "sha256": "42dfa1cffe577f0070d485f4c2573779cf6f3aca01f53c7b0d27944838fafee4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2006_ext.csv": {
+      "bytes": 13735,
+      "sha256": "9948f5943202bdf3cfac5c0503168fb7a87214e876dcc9ae5e00071dc087d36a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2007_ext.csv": {
+      "bytes": 13708,
+      "sha256": "9b1f2c2418f545c6ab7d2851fb073aa9601b7cb4cf65ecad423fa5f71888e28d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2008_ext.csv": {
+      "bytes": 13655,
+      "sha256": "5f61846929eeb45b608c4309cfa93c33cf74f600cdc6ad12b3d395b7d05a6c97"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2009_ext.csv": {
+      "bytes": 13725,
+      "sha256": "cac928246953218a78482d128bcca97bae8be002ebdc286cf08b42ae6a8608e5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2010_ext.csv": {
+      "bytes": 13707,
+      "sha256": "bc0324b5b914ade6e409e2d6b1751768ea13ad8a2fd67e91774d015510bbf0ae"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2011_ext.csv": {
+      "bytes": 14066,
+      "sha256": "639be6e418bd0c32895c8c752e55daeb181ff6613833afca347832b5984e04d2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2012_ext.csv": {
+      "bytes": 14115,
+      "sha256": "6335510acd8dd740684c78a95015eb82d31ba81b76898eac91f43af19b39afbd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2013_ext.csv": {
+      "bytes": 13767,
+      "sha256": "df32884b537fa8c66cf9e017ee5ef4e97caeb2e51cae904df602361066c5eff6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2014_ext.csv": {
+      "bytes": 13703,
+      "sha256": "f3f67104b84892361a9fe344ad3162ce3f82e053679cbc7b998ec0c40b67177b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2015_ext.csv": {
+      "bytes": 13644,
+      "sha256": "1fb8cd5ee52a9fcf006c12c5866faa8d169606b5c2ccc998aee2672afea0c5d2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2016_ext.csv": {
+      "bytes": 13686,
+      "sha256": "518bd5ce74fb50692decc04fcf4ab2f5ea72f4eacfac075924c4bdbe52610af4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2017_ext.csv": {
+      "bytes": 13734,
+      "sha256": "a73b28847271b14a78ce1c9b10b0833f10ca2c7d0d23780f106b5bd5a8032591"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2018_ext.csv": {
+      "bytes": 13696,
+      "sha256": "c342cbb2224edfcaf4028bb6a146f45e386b56b6e66369c46d91679b0105d411"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2019_ext.csv": {
+      "bytes": 13726,
+      "sha256": "7f2272c96244cd42c97407df1b7872d121eedd15dbd00b4d317c45875b3ee145"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2020_ext.csv": {
+      "bytes": 13882,
+      "sha256": "0a7011935a847eb76e26674dcc83413263f97dee029c4d15b8c2e6f1076091d9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2021_ext.csv": {
+      "bytes": 13812,
+      "sha256": "b291dfa58b42039002f846da9425b6f326a0af1a967e19de4587c80081489533"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2022_ext.csv": {
+      "bytes": 13623,
+      "sha256": "50e4a4766f6e815394a4b00215d2ace3befccc3cdf49358119b454b3b697e101"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2023_ext.csv": {
+      "bytes": 13759,
+      "sha256": "5989a13f767963335c97ff2538663f17a63a681986bc429d6343b33a4bf7a690"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2001_2024_ext.csv": {
+      "bytes": 13688,
+      "sha256": "cb4edc4a736bb8062929cdfc35d0af3c228a6bf3d47522240cb2b1d9d2fa5eb2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2012_ext.csv": {
+      "bytes": 12663,
+      "sha256": "2c7be30ece05f07249b2b7d32dae60e84721a609999beda14b2179a144ceee49"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2013_ext.csv": {
+      "bytes": 12303,
+      "sha256": "ff7a15d3640db580020633d2170756dc4f771690be3bc565029d04ca6a8033b5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2014_ext.csv": {
+      "bytes": 12239,
+      "sha256": "58384fd586ca5b56339edac06c3fc246a01c51a1e3863f648adc3d3848f57db2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2015_ext.csv": {
+      "bytes": 12192,
+      "sha256": "5f83df2860828f50542d63c1206941a7a81ab95827ae061adf38110a49d612c9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2016_ext.csv": {
+      "bytes": 12234,
+      "sha256": "8e7ea433d44b15b93d40b78fbfbd7489d24324113b38e82dda315114b76b745c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2017_ext.csv": {
+      "bytes": 12282,
+      "sha256": "1ee9e2f119d6b9ed96867ea8830143a4368928855e66d0adc6432e21b9581f4c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2018_ext.csv": {
+      "bytes": 12244,
+      "sha256": "bc1b33cac30c048ba590b7b3d9896952c14c9d95237ee5a8fe8d1aae3f9553a1"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2019_ext.csv": {
+      "bytes": 12274,
+      "sha256": "fe482938764045558a4af38d06c02be4b17540685fc7e282dca8ab520e233622"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2020_ext.csv": {
+      "bytes": 12430,
+      "sha256": "c96a5d5c1a39c3aa4f3fc9db147ee2456689062e2617c5e8a1525dffbdda5755"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2021_ext.csv": {
+      "bytes": 12372,
+      "sha256": "356a5bca09b87b084b8755efda16b6bad801352eabbae4d2b90457c62a9b5afd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2022_ext.csv": {
+      "bytes": 12183,
+      "sha256": "8c69324b30d345fe0aafe2d8ec651d1ee572e6aada9711bc81a4fbbf38a00c69"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2023_ext.csv": {
+      "bytes": 12295,
+      "sha256": "e81706a076d917cbcacc078744638744d478d90e4312a262560aac8116397d17"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_SS_BA2012_2024_ext.csv": {
+      "bytes": 12236,
+      "sha256": "d90b1dadc15dd3b805149fd6f0169233a5d1a932790801941f654d136bd43980"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2001_ext.csv": {
+      "bytes": 14287,
+      "sha256": "ba8d12adf7f1f5a1dba976ec51d78469ef842c147fc4aa678983a98bd4cb7b23"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2002_ext.csv": {
+      "bytes": 14147,
+      "sha256": "6f58235b11464fb4a6354ec6fe7ed6bc2b290934812d150ce088db6c642e8148"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2003_ext.csv": {
+      "bytes": 13997,
+      "sha256": "c40623f521fc7294ae50c3b2b00a8df90ad986e11b3f103fdcc43dcd52dff9a0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2004_ext.csv": {
+      "bytes": 14226,
+      "sha256": "50c3e3b7533f4d0bcfec686df3d940fb24cf3ae06370e1167f7bdf43199b1bad"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2005_ext.csv": {
+      "bytes": 14043,
+      "sha256": "ffd96aecebf095deaafd9a14d00fc3395f3f68ffe1d19ee333012c64e57965e9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2006_ext.csv": {
+      "bytes": 14150,
+      "sha256": "74d5bde975e7627703c0909c707daacfaf5d984a87c58c3de6dbf7d62443fc40"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2007_ext.csv": {
+      "bytes": 13961,
+      "sha256": "0b8f6a1d46139d73441da86e71ce4888588182d98b168ccbd697488dee643bb0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2008_ext.csv": {
+      "bytes": 14181,
+      "sha256": "6395c383a646f753d018f9c19d7ca33af8bc95b6d63e06d67908e8ceacbc71b9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2009_ext.csv": {
+      "bytes": 14238,
+      "sha256": "ff2519ee28784c6f1940a41430c674b13378f535e3964f7d430f6295710b28b2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2010_ext.csv": {
+      "bytes": 14084,
+      "sha256": "e1597f492c652d49396c31951cad682428b681f580e32693d55172604bd48660"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2011_ext.csv": {
+      "bytes": 14306,
+      "sha256": "af4e291ba3119438fe065d152862a4e8165cf4f6d7e0d6593ce33381f41108ce"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2012_ext.csv": {
+      "bytes": 14213,
+      "sha256": "6fa892cd494ae80aeae7b05588405246dc12bc8ba2c23dc9a360cdc179a91578"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2013_ext.csv": {
+      "bytes": 14292,
+      "sha256": "dd4d30c4ba76a0ed166efcd1528d97e9e819b8d9f8a3dbe8a5714092df0a7a07"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2014_ext.csv": {
+      "bytes": 14133,
+      "sha256": "6e0ce2e4f806dca6e84d3a916f473a3f7da2db3da129d75464af6216d65c418f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2015_ext.csv": {
+      "bytes": 14165,
+      "sha256": "494c7d1e043fffef8f766b5a12bf0d19ecc36a80106d45481d98a6ad13118622"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2016_ext.csv": {
+      "bytes": 14238,
+      "sha256": "d337f97e7b353095e941d13bd781f4d5bc01d0e4161ac80b593d4e522cd44687"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2017_ext.csv": {
+      "bytes": 14360,
+      "sha256": "9827e8f1cb936ec5f2caab86e6c88d2d36f47c562105dc4d572b1f410a653031"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2018_ext.csv": {
+      "bytes": 14181,
+      "sha256": "689902bac73cf48287475322690e00ddae28a1dfe3ff7f14f8b2e67586e07ce5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2019_ext.csv": {
+      "bytes": 14112,
+      "sha256": "f58fe368f1734a8dec4674d286d72efcdae4315735a7a281ec94a1027d23308b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2020_ext.csv": {
+      "bytes": 14237,
+      "sha256": "38c26316b79e56f7a8505cf2e1ed0394c7afa877cff7df154968c59f28aecec1"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2021_ext.csv": {
+      "bytes": 14260,
+      "sha256": "97204b4db17b9008abea0f528b90ff759ccf1949eff856344d4e692453fc6413"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2022_ext.csv": {
+      "bytes": 14337,
+      "sha256": "21d724fa5c547b32c42ea3886964f269efc6ba953fe0236d1fc86df988aca4c1"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2023_ext.csv": {
+      "bytes": 14227,
+      "sha256": "6487cd1d5f6c17b9fc0b082ec1524279034aaee894e10f162577332eb2428a7d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2001_2024_ext.csv": {
+      "bytes": 14142,
+      "sha256": "00bcf494c5e66a51d375ef2271d528a97e6a0bac764cf43aeedf5f6080126a4e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2012_ext.csv": {
+      "bytes": 12741,
+      "sha256": "4a1a0ee639896ee0f63c05ac861f6584da2eba43525102ac9e652510d6aa9c23"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2013_ext.csv": {
+      "bytes": 12852,
+      "sha256": "68b4e8022f2718835eacd8b6ba88f5b2fbdba4c3bfd4e5c6120bed23112c48c5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2014_ext.csv": {
+      "bytes": 12659,
+      "sha256": "1f2bff4ce76cf981459b29e5d734f9f293bd430e44782f51f8aae0fd21f34600"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2015_ext.csv": {
+      "bytes": 12705,
+      "sha256": "f0c25cdca036f2c7962e780370c60a6186f5162308bdedd3433f5385f39d81a8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2016_ext.csv": {
+      "bytes": 12755,
+      "sha256": "0123219dc1b56fed677e43a9ebc1b5f85ca5a74446226185147fea7cb297ab72"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2017_ext.csv": {
+      "bytes": 12872,
+      "sha256": "c05306a66b78ada1201143f5edfb9e13310ede68fcbc5da2f8aac7769c7e9904"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2018_ext.csv": {
+      "bytes": 12699,
+      "sha256": "7ba95892c661e02cd07bcfabba618fc0e148cf59bcf57e3e89b1008082ae4c2c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2019_ext.csv": {
+      "bytes": 12666,
+      "sha256": "a0353b1e44d080878ee4f54b8248c035e164b069d5b28f7590cd7967c020a26b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2020_ext.csv": {
+      "bytes": 12764,
+      "sha256": "a20703dc8102f5e73e82ce456cb5897127985804c9f05e1f353acecaaeafd360"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2021_ext.csv": {
+      "bytes": 12797,
+      "sha256": "66319678bff230a5c64661df95d2bb0d5b98c6a5daae68dea394c98412da20e9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2022_ext.csv": {
+      "bytes": 12902,
+      "sha256": "ad5ed8d7d1ffbf670b001a88fb9a248bf384c9b5a6397f0ba68282d3362b9f95"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2023_ext.csv": {
+      "bytes": 12754,
+      "sha256": "8bbc051e22a80a34e98fd2c306e72bb107a8135dc75d59775f981889022fcd1e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_acz_monthly_c3_TZ_BA2012_2024_ext.csv": {
+      "bytes": 12673,
+      "sha256": "8b69d458499d7ca27c0c4198cabd1ef99287088a01acda23509a9a9526dbddac"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2001_ext.csv": {
+      "bytes": 722881,
+      "sha256": "1c4bc6ef65a055f26affc697ad1a5b3a3b908c0f8e2a9e1e7474b3d2d3e3f313"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2002_ext.csv": {
+      "bytes": 725355,
+      "sha256": "d5307c2c4dd0ee6b7f5661d0b504b9ddd52f9acd355bc7272686c195698e9887"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2003_ext.csv": {
+      "bytes": 722081,
+      "sha256": "9e390c010022281d9ea60ee35141a09ef1ff434631b1dbde687f02de527c6ba6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2004_ext.csv": {
+      "bytes": 726177,
+      "sha256": "e4aef0bc945106742cac0b165cc5bbd61a58e706cb1ce0bf0a801519458e7efc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2005_ext.csv": {
+      "bytes": 724660,
+      "sha256": "b9750ed0933f817b49be785f7357f378e3601b5e2708772d2bd71d8104b30004"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2006_ext.csv": {
+      "bytes": 723467,
+      "sha256": "89145011104422f04e08aab2b2537697ff52b4a6829f71c90f9128a27be8446a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2007_ext.csv": {
+      "bytes": 723903,
+      "sha256": "fe41bf3a04ed40881d48efea324375fd7185aaf82ff2f5d61ddb9ad702a402cc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2008_ext.csv": {
+      "bytes": 724355,
+      "sha256": "03a7a62825cbc9bfc302328598b43a8928c73faea710d575e79125e1b15a46b8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2009_ext.csv": {
+      "bytes": 721676,
+      "sha256": "495f010ab0afcb83d7be147088a6e4125905caa70badfbe80381773a3ce02058"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2010_ext.csv": {
+      "bytes": 724059,
+      "sha256": "a67ce89184a933c72ada9a7666343d0e2b97632d915ee398577cf1850aac507e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2011_ext.csv": {
+      "bytes": 723565,
+      "sha256": "b66ee2dc9efbd6cccbe3a60e5b74d65fc9cdb95a54901c5fcf985f6c079eaa95"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2012_ext.csv": {
+      "bytes": 724604,
+      "sha256": "11b91d8caf8f06cee1d1c0a4598e4256cbd3c5c66dfc145f9ae6579efa39d4d4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2013_ext.csv": {
+      "bytes": 721952,
+      "sha256": "709f4659a348075f901b2c732a21980fb65dcf6d723297436fc113a25af989fc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2014_ext.csv": {
+      "bytes": 721871,
+      "sha256": "5109c4ee0b3d5a80774a833933bc412ce10145b4a1368f5a6fd17ea81223a405"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2015_ext.csv": {
+      "bytes": 720599,
+      "sha256": "e45cc2ca76c7d70c5385ea9c0137934fc326adc77fc0c94061794af9be1857c0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2016_ext.csv": {
+      "bytes": 721224,
+      "sha256": "8e71cc5dad0e3e95df3e9e0f5aa8710f9a8386ecc93cafad56be416215afc610"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2017_ext.csv": {
+      "bytes": 720135,
+      "sha256": "d402743cab13e520f0f39469645bdd0f334097e381714474ecce028e8adf4312"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2018_ext.csv": {
+      "bytes": 721935,
+      "sha256": "8299d4bee3c336c4010d21fef57e10bd40ab1e97adca8af71e0fbb998cd19abc"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2019_ext.csv": {
+      "bytes": 719735,
+      "sha256": "226d9e450332b60aec72cd0c638c48c12078a66d76c479757e3c085c511ba3c0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2020_ext.csv": {
+      "bytes": 720884,
+      "sha256": "e1cb3fcb4b0d536eba16fd8862af6f2c2018e3ae087c266fcfb1603052d804aa"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2021_ext.csv": {
+      "bytes": 719736,
+      "sha256": "2e9bf95bacb2d0f81521b2aec79ada21479f2d65baa90781bdd85b545925eea9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2022_ext.csv": {
+      "bytes": 721213,
+      "sha256": "363029a4d9dd0b675d7895172dd4c301416fb1a32888ee20a39cad56e19fce61"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2023_ext.csv": {
+      "bytes": 720207,
+      "sha256": "81dcbeee6f413102449c5dab52c0388d8ef5b25417c8f4f93e1aa2afa62382b6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2001_2024_ext.csv": {
+      "bytes": 720113,
+      "sha256": "5a7c40c48688b084f402f702138fa07723758cce0005a64834d836c5c70e7ab8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2012_ext.csv": {
+      "bytes": 639798,
+      "sha256": "8f25296b379967e2325256505550d4690f26d5f4fe18ab93431b01cb51f18ba7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2013_ext.csv": {
+      "bytes": 636906,
+      "sha256": "d96effb35bdf1f94be4aaf51fa39e3a9289ecb12768b5af8739ffc3ccc0113ea"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2014_ext.csv": {
+      "bytes": 636813,
+      "sha256": "4e6680b4f0d781578a3559f88c82149479784b905a521a5732e913a5dd412b5b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2015_ext.csv": {
+      "bytes": 635424,
+      "sha256": "85506d9501894aa257d13c4fdbc1229b64e5726791e0451759fe9473022e9d9f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2016_ext.csv": {
+      "bytes": 636270,
+      "sha256": "3bfb9ededf7ae02b20d91c90077d9359678d792cf555a4cb74e23eee78e45d59"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2017_ext.csv": {
+      "bytes": 635071,
+      "sha256": "033442b5363bd9d6ffe3eed4e3e6fff218ad45adfe4d4f4dce045943267391e6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2018_ext.csv": {
+      "bytes": 636713,
+      "sha256": "305657fdfcb090c9d1c1a86f55cb5109fba8e433ee8acaf39c7845338605fbde"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2019_ext.csv": {
+      "bytes": 634672,
+      "sha256": "d4299813a4bbfa9282159afa6fcde4d66284d7e56f30a1682dd1425151e17e9d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2020_ext.csv": {
+      "bytes": 635825,
+      "sha256": "12bb8889186455f8bca3c1b29436a15637d98c060cea74bd783c6a061c58f2a4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2021_ext.csv": {
+      "bytes": 634721,
+      "sha256": "f5cae6f4279ac26d1caa020e616c7f8d902439cc2aca08494ef1d090ac8aabea"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2022_ext.csv": {
+      "bytes": 636263,
+      "sha256": "144f7b2ae5be8cbe3b89051fa53e1606eed382b5956aa1ac61144fe5c7a7e4a2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2023_ext.csv": {
+      "bytes": 635003,
+      "sha256": "2b3ad290c92dd902c4435c519fdd55ee74e50c5093e32bdd1ad23e104286f37e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_CZ_BA2012_2024_ext.csv": {
+      "bytes": 634907,
+      "sha256": "73459a364f0a31981fc0780cec5e5a55db83be6c25e808e48361b394c55cb324"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2001_ext.csv": {
+      "bytes": 1389768,
+      "sha256": "478aa3e8cddc5781f439b224aca5626d1106d199d346a9a55d8d6ae2427884a3"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2002_ext.csv": {
+      "bytes": 1389877,
+      "sha256": "5babb096e0e28dc136ea505aeeb163604277ffdee021f269096a713a13954915"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2003_ext.csv": {
+      "bytes": 1370599,
+      "sha256": "ec2bf477c1ce504f9b98742eb4d90c17ed8f27409b5b5a5defeb3e5feab56e06"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2004_ext.csv": {
+      "bytes": 1380115,
+      "sha256": "824ef97a5db9533b67ef64de7ac5207cfad83de3ecb36264568daaac55aea09c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2005_ext.csv": {
+      "bytes": 1378731,
+      "sha256": "4f9325bb47a260215329ec0975887d028dc8fd8d4c15273bdf2a974052fe1253"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2006_ext.csv": {
+      "bytes": 1381216,
+      "sha256": "330a1ad6efcb0a485913d1181665600a61c20c056169dac0211e4d65f7ba5ef6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2007_ext.csv": {
+      "bytes": 1378814,
+      "sha256": "56c264b4f581dc59ca39a17dc78fd64edd43718dc8fcdc71b6b4ad9bc4ba27e6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2008_ext.csv": {
+      "bytes": 1376231,
+      "sha256": "054224185519306099edf55351db475978c26e7bed341409c79e82a6e543fed0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2009_ext.csv": {
+      "bytes": 1372316,
+      "sha256": "a57aaf9e5b2ac70773bdcccfd36cacd7515670b0141fe73f4aeadb7ac1ff826c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2010_ext.csv": {
+      "bytes": 1386331,
+      "sha256": "80b416e98159f99dfece8713d9bc388e65f8e9bb1df173def84b46bb896cd002"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2011_ext.csv": {
+      "bytes": 1388265,
+      "sha256": "49ca657a756873d12ab996034ba6a6645032a8492360975828990ff7003644e7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2012_ext.csv": {
+      "bytes": 1398646,
+      "sha256": "45dacf3daa9c444ecd3677fdbe48a4c34beb947933223ea5d8eb2e083511b93e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2013_ext.csv": {
+      "bytes": 1379329,
+      "sha256": "8c112bb53d416acb169819beb66d928857456e7c446e9090863bef58fe22db6e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2014_ext.csv": {
+      "bytes": 1379129,
+      "sha256": "d8349a5d367c50d8f00f932f3aa233808aadafe5507242962d91bfad4ddbed2e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2015_ext.csv": {
+      "bytes": 1384312,
+      "sha256": "dd9b62d16dfca1ee60f1692ca00377965abe6506c49574ffb4307a76efb2e97b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2016_ext.csv": {
+      "bytes": 1382151,
+      "sha256": "e6fa2ac22e2f24c4c2fbbc02b71ccafebd3ec685b297d8bbaef78e7f5facb630"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2017_ext.csv": {
+      "bytes": 1380548,
+      "sha256": "83be9a137339c14a32b7709756d4e6da1ce8f9db364d11c16266ba9d04f45b47"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2018_ext.csv": {
+      "bytes": 1383398,
+      "sha256": "f07426d741e47cc186f3c23fd1ed640982814aa0c110effdf25fb7096a8b4272"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2019_ext.csv": {
+      "bytes": 1379147,
+      "sha256": "d08b2f2cfd83609de4b0a37fa2fc6c083b1b7da243281635506b127ece06e20c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2020_ext.csv": {
+      "bytes": 1383490,
+      "sha256": "96004287a8a9d26d1ce36928d1c131eb194945e4a2d07071615625736157d692"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2021_ext.csv": {
+      "bytes": 1378403,
+      "sha256": "38d7df1f047108b867e519a1677322aa506d3017c212e87a8a85b6a66381d8d3"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2022_ext.csv": {
+      "bytes": 1386081,
+      "sha256": "c7d6eea0f88143488324293b77bd1a24edea93068f05f04673e63529134038d7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2023_ext.csv": {
+      "bytes": 1381108,
+      "sha256": "6f0feaab649229d69092ff5c8623c122f578644a3f6f95ddcf36c3a4804f5a93"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2001_2024_ext.csv": {
+      "bytes": 1380283,
+      "sha256": "b49c936e4ed89bd2c5d6d000380cc472d71e7afdd2e86628fdf1fee1fc5dad41"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2012_ext.csv": {
+      "bytes": 1238197,
+      "sha256": "e4e29ab9443acf90053f251edea6d1b4c51cee8901c81456d3f605d53c0673db"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2013_ext.csv": {
+      "bytes": 1218699,
+      "sha256": "9c9644c23b8163bc1d86bb1c54a6f94e87e9f769223fe69b29bd5f6041dcf0da"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2014_ext.csv": {
+      "bytes": 1218343,
+      "sha256": "3c430ee969a6484b43936839de51eec263579d46370153b545bb559f78583e31"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2015_ext.csv": {
+      "bytes": 1223492,
+      "sha256": "f47ca9e287bcfecd9cb16f9479bb9b3011092332ee8c82fbf14bba09c85c6342"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2016_ext.csv": {
+      "bytes": 1221474,
+      "sha256": "edad40022d3f4aa9e1eef38ebe4f00d077f58e4092da9fad08716e6993fe86a9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2017_ext.csv": {
+      "bytes": 1220052,
+      "sha256": "da1635185af63162733d484391af971b31814481f1756a559be0d67b654c1b3c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2018_ext.csv": {
+      "bytes": 1222705,
+      "sha256": "571ece3bd0ad10318133d14df42f9e10acf7d3bf277db00a7d1729ff5f47358a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2019_ext.csv": {
+      "bytes": 1218548,
+      "sha256": "2ea0002db3fda25c22a77a35473c233230624e13070a87caf32f4046773b26d4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2020_ext.csv": {
+      "bytes": 1222845,
+      "sha256": "1e75cde7a3a3e9db4d84f05276e599169dc556b10bcb2dbc13729f1eeb3951b2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2021_ext.csv": {
+      "bytes": 1217807,
+      "sha256": "a5a79ef75733bc232fb6d88e1b2adb22122f48bf6c8942e99b114016d0f6641b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2022_ext.csv": {
+      "bytes": 1225409,
+      "sha256": "0a0674dd742783d4a57586ec8e02479bcf53be7a2052e1fdf343f4d9a558bbe0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2023_ext.csv": {
+      "bytes": 1220538,
+      "sha256": "b6f0ea8e35c492c69ca52b0ba6a9cdb2dae77d53e750ef706e1b5e2af1b50f81"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_FZ_BA2012_2024_ext.csv": {
+      "bytes": 1219708,
+      "sha256": "98f8652d2915bab1ac3ffb8f77eb15be79fe7768203d92f2246fb8b40e3be97b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2001_ext.csv": {
+      "bytes": 579911,
+      "sha256": "d9393b218dcbd9c1080fb76a4b09a896d0e32f01e3d1caff06d532fe2b57f93c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2002_ext.csv": {
+      "bytes": 579936,
+      "sha256": "de230268282d6f04e8e7b0f8680b26bb8d28d5cc27cb7cfdcb72312cc1c84dee"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2003_ext.csv": {
+      "bytes": 578514,
+      "sha256": "466fd6b36c63a16b92c97401eaf9b8ecc2cb3213df84a2816ed52f9d6d4bffa7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2004_ext.csv": {
+      "bytes": 580096,
+      "sha256": "f32859c694d0a30a37884fe21238a35ea2a3f311a2206a4543c9a6a92ee51fd0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2005_ext.csv": {
+      "bytes": 578794,
+      "sha256": "3c2f9b66a67e1adf6b806d6eac857d1cf77f88eb072da5646840a13429df448c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2006_ext.csv": {
+      "bytes": 579061,
+      "sha256": "0b42200d3cc565d4635eadf1494f68e8b4a7ce6bd68e9fe9110c33dbfa171420"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2007_ext.csv": {
+      "bytes": 578160,
+      "sha256": "4b55a54142ab9c867b85bb27b610c1a9ebdf5c0f7c3a5475acd40568a9b61e64"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2008_ext.csv": {
+      "bytes": 578820,
+      "sha256": "2671107d76e8c00140a4c048187341af9b7b8d765492e66918023215e6c58a29"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2009_ext.csv": {
+      "bytes": 577480,
+      "sha256": "b5ce9f8ff52fb12cd1322d177ed37d112ebfd2c17cc2eef5b6155d1d95383c83"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2010_ext.csv": {
+      "bytes": 581029,
+      "sha256": "bdb5903156bfb4b8bc04c454d539566bbd249fadcae03f35adb278c5888d2bed"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2011_ext.csv": {
+      "bytes": 583625,
+      "sha256": "03699eadb82f95057e5ccfc3551d9609bb4bdfe285d08ea905aa0b9dc976a9f4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2012_ext.csv": {
+      "bytes": 581116,
+      "sha256": "ad1e0e1e9d2690d7fb86ed11cfc1d755e3662b9a63727c27a0d9310a899829e9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2013_ext.csv": {
+      "bytes": 580488,
+      "sha256": "9fc043d53525181c1a3bf5b1cb17d684650f2b354584fb5113b5dccd8ac88a37"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2014_ext.csv": {
+      "bytes": 579643,
+      "sha256": "b662db82e1f5a55201099c1ac4ddc575e08ab5b848d5a6950d08d7348a9eca49"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2015_ext.csv": {
+      "bytes": 580344,
+      "sha256": "7870dfc53e48534eeb57c35f4225647e889454ad863842bcedbbfe232f7bcc46"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2016_ext.csv": {
+      "bytes": 579979,
+      "sha256": "43fcad3df2396c9bda9ab898d99f26bb2865367e05e4a70170878d54ecec14ea"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2017_ext.csv": {
+      "bytes": 581947,
+      "sha256": "28f1ecba581b10f73d9798713068cd79378d06a383b5b23da1f506b3160d2935"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2018_ext.csv": {
+      "bytes": 579966,
+      "sha256": "d3ed0b51aede74c409a5779865c3ad6bfd110b8a65802b6d93e7b073e7ad7d1b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2019_ext.csv": {
+      "bytes": 581953,
+      "sha256": "e555c52eaec71ec7c8e5f28762074bceb48763826bd691cc6ff59015e6c63790"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2020_ext.csv": {
+      "bytes": 582749,
+      "sha256": "ce4166d400e2523913341f9a29a0642003cd16fccff90c1fbffbb25453376094"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2021_ext.csv": {
+      "bytes": 578572,
+      "sha256": "ac21b1a5fb8df2cdaceca05ea9214d11ceb4831c241b428278fd00afea1fe3a7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2022_ext.csv": {
+      "bytes": 582181,
+      "sha256": "b24d13f54f841e95015171e8a98c52d057970806d6028ef914d0fa4f6041a3dd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2023_ext.csv": {
+      "bytes": 580082,
+      "sha256": "3cfbaad97025263c3a2bc738eacecd32c364dfe3fe49835705492f485cb9df0c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2001_2024_ext.csv": {
+      "bytes": 580717,
+      "sha256": "def3176f30ad142e7bf10f8dfc5f78494de9413028884ad0a7f2b71637b2e6d8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2012_ext.csv": {
+      "bytes": 515844,
+      "sha256": "5cfa3abaabfd54b5ecbb4fe28ce636265fcb0ac109f06d82012d70654f0fe0ed"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2013_ext.csv": {
+      "bytes": 515198,
+      "sha256": "10777343836eac7ce294f1aeee966d88b4d2fa1059f9aa12b2f87ec543ab5f9d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2014_ext.csv": {
+      "bytes": 514329,
+      "sha256": "d6f69f1bf69e5fae6b6172632e2415d505b89ac95cf431b15e0df0c09e5df2de"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2015_ext.csv": {
+      "bytes": 515038,
+      "sha256": "c877ffe487fc8d4e1a45c1f13493b6cdd16dab58b4d7a451352fc385cd86f85f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2016_ext.csv": {
+      "bytes": 514666,
+      "sha256": "45347b36cea08797ebcb33e2924286d057af33c616a8e1c2634d6f01b0ed8185"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2017_ext.csv": {
+      "bytes": 516661,
+      "sha256": "3636707c5bdde505258e732f776926f6f5aeaf76dbd18cbc2409f50df4c5a39f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2018_ext.csv": {
+      "bytes": 514647,
+      "sha256": "14caa7e6d1771dbfd1dcd08c3f388d15c925a68b930b4b233d3a8649f3c7cc28"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2019_ext.csv": {
+      "bytes": 516671,
+      "sha256": "71e1862f1941863f136263175fbb5d19b4c9ac24d57b44d25d87628384fe42dd"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2020_ext.csv": {
+      "bytes": 517466,
+      "sha256": "7b65a46ff7618d5517618e57ecdd31c19623699d8aa291b8d404cb8d17d021e9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2021_ext.csv": {
+      "bytes": 513267,
+      "sha256": "ff5af19bc31588b8ef92c107a2fcc84e51a976f67ced097952ad525093a33b13"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2022_ext.csv": {
+      "bytes": 516884,
+      "sha256": "3f0a34611188004ccb88c1991e9398bfe46a2a03e4d9551c7ec26e46dca5fe51"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2023_ext.csv": {
+      "bytes": 514780,
+      "sha256": "df8b24d5a62540724993ef756d23168a2a952b4cc4a0e1e94678f5e599ab7aa6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_GS_BA2012_2024_ext.csv": {
+      "bytes": 515406,
+      "sha256": "58b23a301da6f18736fbb2228d3c18dc48ef73e4a9c610dc9740eeb508adeba2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2001_ext.csv": {
+      "bytes": 250246,
+      "sha256": "f12e13c445dff6692c3a4d627f113abea3f7f3eb8d167f56381269e2445988a8"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2002_ext.csv": {
+      "bytes": 249750,
+      "sha256": "b03dbe9e5b65ee85b1291b9592bfc234ad5b6c3062f3f2c1745319d7ef03c802"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2003_ext.csv": {
+      "bytes": 249904,
+      "sha256": "25a16336e4df1db7baaf30ff44236e0b71ae404e9c73e6dc9f0307b9d9a77d27"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2004_ext.csv": {
+      "bytes": 249983,
+      "sha256": "9a48df5c4ed6afe7486cf12e4a45c5401b68c9707c7e727988079cbff0f7428f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2005_ext.csv": {
+      "bytes": 249643,
+      "sha256": "b7c206d3e77aae7eda85b1b77e702dcace014b5925a50c0f6f659fe90f9f8813"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2006_ext.csv": {
+      "bytes": 249255,
+      "sha256": "29de170b7b8cb4a24a633e250af14ea9a9cf9bb7601a9b5b6da5586ee1cd2d63"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2007_ext.csv": {
+      "bytes": 249759,
+      "sha256": "2095569b411bcc8e971431fb207f8d3874a8934839663efcce81bebd725d5cf5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2008_ext.csv": {
+      "bytes": 250065,
+      "sha256": "aca2bebeb0c4d857f1f2487bfda15812b6b2e75854276f185adbb792f4ae719f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2009_ext.csv": {
+      "bytes": 250647,
+      "sha256": "2a63f849a00cc7819f68c624897b6f9d8b4524e5038b68f7d636688a2eb76550"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2010_ext.csv": {
+      "bytes": 251267,
+      "sha256": "26c2a95c5e3d2eb21a8b06f85db2b1a448a58b65ef526d27a6be69781f4b7a00"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2011_ext.csv": {
+      "bytes": 250223,
+      "sha256": "216bd8c6f490f0bed68623c3426e4bda7a652e3f6c1b1bca1e0e7044e1474ee5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2012_ext.csv": {
+      "bytes": 249937,
+      "sha256": "486711e65c7b2d391bb3d12e4bd74fbe55fd8add6de81678c5fdb78299960bef"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2013_ext.csv": {
+      "bytes": 249243,
+      "sha256": "a5b91e3a008b9a1a42c7da86652291c5e98fc049c3bf0dc16943e7f1756ad90a"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2014_ext.csv": {
+      "bytes": 249899,
+      "sha256": "2dfc6a6bedb3e99db95a94a201aab85f29aa3ddc87f817c5b7753ce8827584f0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2015_ext.csv": {
+      "bytes": 249338,
+      "sha256": "c355d5c052377362592703d82ba071d9d98fdd2ffe49a09271c3ddb6e9ab81d7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2016_ext.csv": {
+      "bytes": 249634,
+      "sha256": "6149542c484f307b09c03294231be71d0cebe85a5202977504cfc8d9f9f10cd5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2017_ext.csv": {
+      "bytes": 249883,
+      "sha256": "ed24895bdd622d50d69a409cf3762032751aacc6472413465fc6267fece47670"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2018_ext.csv": {
+      "bytes": 249729,
+      "sha256": "83e6507ebce2f993095a9ee04516ae8297c364a61a130617a815c421313e4752"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2019_ext.csv": {
+      "bytes": 249679,
+      "sha256": "09cf8ee453d2083e9456a9b587220bdc6ba3b293685464da13e023736e168ad4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2020_ext.csv": {
+      "bytes": 250906,
+      "sha256": "394a22a60af24a1714b9e0590eef70ae2267d7aa61cb309df134b3323f945115"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2021_ext.csv": {
+      "bytes": 249215,
+      "sha256": "0cbdce20420d901cb1178fdaed455bdba6fc3ecd535055da10b6ee8bc57bc82b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2022_ext.csv": {
+      "bytes": 250113,
+      "sha256": "0f05d130998236d65df6e33a1541195381f750e9d8905958739cd8b88d42051b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2023_ext.csv": {
+      "bytes": 248723,
+      "sha256": "c513c2894f20d359ca4a4a4e9a2f6d35d1db94fb41f09aaf394616e6f19b212b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2001_2024_ext.csv": {
+      "bytes": 248853,
+      "sha256": "bf67f9f65509368e80fdde40067408e151b620dd633160df422c41c8c4bc0128"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2012_ext.csv": {
+      "bytes": 220897,
+      "sha256": "f51f4351488f8e7ba269dce34d6642969df4eabdd053c5b0b4ce729e207479c5"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2013_ext.csv": {
+      "bytes": 220203,
+      "sha256": "93ffabe5a20b11fff2b7bf80a8c9e1199e838c5e75f67874f10674e578fd3447"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2014_ext.csv": {
+      "bytes": 220859,
+      "sha256": "394640eecc3f616fd0fc8172b991373e1686f74c8e7f2a92d4ce121d3e01d42c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2015_ext.csv": {
+      "bytes": 220298,
+      "sha256": "be88f121cf7021520b71c6410f2323e08504581f5d41e1bbbd996e2515147277"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2016_ext.csv": {
+      "bytes": 220594,
+      "sha256": "6580795c60d4ff533f49bc28f15f3450b3b93a4067f60863c405270744d44b3c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2017_ext.csv": {
+      "bytes": 220843,
+      "sha256": "6118fbd82c7c50e80db01017cd039a24abb4195bf180b214bff51ec3169d9b02"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2018_ext.csv": {
+      "bytes": 220689,
+      "sha256": "e4b39cee40e98ac7350b8c2d424cae18bd7362c8988fdbde329e239927f96fde"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2019_ext.csv": {
+      "bytes": 220639,
+      "sha256": "6e805b6ca0955c3e7a1af570fc1b2d62255251796b40a2ff26a8872feab45cc4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2020_ext.csv": {
+      "bytes": 221866,
+      "sha256": "e3aaab3f7f737b37ea2b89f4064a7057db5e988c669ac87fc6c86dcb79c5428b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2021_ext.csv": {
+      "bytes": 220175,
+      "sha256": "be2cb5b738a02ea371eabc28d5d94697707b10b339a41115e57557f24ade3da7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2022_ext.csv": {
+      "bytes": 221073,
+      "sha256": "ca0eeb2b0e0393a2fd1be206f61f051c6d7d8b5303cbea7652a619dabc8e01a7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2023_ext.csv": {
+      "bytes": 219683,
+      "sha256": "26abefd0df1acf8814a863a2e01d2d0759cae83aca2c9557b44012dc8ebb32e9"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_SS_BA2012_2024_ext.csv": {
+      "bytes": 219813,
+      "sha256": "452442140d4160f0959a55ad45e426d136e25c11d8bd771987a6b670601ad69e"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2001_ext.csv": {
+      "bytes": 347093,
+      "sha256": "13499ce430f2eccd0f2bb845c9371cf70fa1b6fa388b2a29f057fab67f56ffc0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2002_ext.csv": {
+      "bytes": 343499,
+      "sha256": "91e3c922af08d0b2b193a12464bfc4559a8d653b27960b20d680436d105deddf"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2003_ext.csv": {
+      "bytes": 343469,
+      "sha256": "442514897f8c94999ac303acd8c0bd7d2b545bb3a415e50a931448be9103e3d4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2004_ext.csv": {
+      "bytes": 345050,
+      "sha256": "1127766d11b16908632f7b044bf3e58d639ea8e688242a231b4990b93c231ee4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2005_ext.csv": {
+      "bytes": 344341,
+      "sha256": "66038ec0d45912e03021f9eefbfbf976bf8dd684ea230292a95054ebb8f2fe8b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2006_ext.csv": {
+      "bytes": 345456,
+      "sha256": "1c0f9d2d2514962cf6e8d962274d0b29930b0d7cce67a579f0db9fdf6b93d1ed"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2007_ext.csv": {
+      "bytes": 345402,
+      "sha256": "ef90edbb3d3b5a1daff031f5ca7b9f1e8ac3e1378bf1767d13665a08c3101ec4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2008_ext.csv": {
+      "bytes": 344292,
+      "sha256": "0e57e94ef52ba3c1839bb4f43a60cf852f466ad1e3d45a54abcb00cee31f2137"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2009_ext.csv": {
+      "bytes": 342427,
+      "sha256": "911d962492320732f22ee8e8e5e37f379ccc0ee0e70fd97bbbc41254c8ead878"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2010_ext.csv": {
+      "bytes": 344596,
+      "sha256": "6244981186b2063e3a40faa43cc3a9d15b52000d0fa2399257687fd4582c1ce0"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2011_ext.csv": {
+      "bytes": 345666,
+      "sha256": "0aec773e23ad1b2bf7dfe26f4379b8f60563c38e9f2521f516c6816950d36a5f"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2012_ext.csv": {
+      "bytes": 347374,
+      "sha256": "4c387baf285142e38ea8483b2140ba423ad936d481353f96bc02043f133c7310"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2013_ext.csv": {
+      "bytes": 343425,
+      "sha256": "2ec2475f6b32438c562c1b880e39bcb7a7a5b2c9b4a202b955f05a95fe786b04"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2014_ext.csv": {
+      "bytes": 344564,
+      "sha256": "c2d63517ca97a87daa7f51e81dde8b4b1fa07b9aecd0b7ac2d8b8e3eb1f80c65"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2015_ext.csv": {
+      "bytes": 345817,
+      "sha256": "786231b06ef152a0b496a3a71b5faa53c35b06226cb581003ecbe195aa1898c7"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2016_ext.csv": {
+      "bytes": 344873,
+      "sha256": "3b29f3516206a8852cc4b0cf62265dfc5f467fb74dffb764a3a98750c7fad825"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2017_ext.csv": {
+      "bytes": 343695,
+      "sha256": "2d76ab47a0093bc84afd0642e465ee85635933de3b2db3fbd81e84e319db0538"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2018_ext.csv": {
+      "bytes": 345043,
+      "sha256": "68a0ca767021a8664b150bd1ad3328180299b6c121357b72a66884e7de1941be"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2019_ext.csv": {
+      "bytes": 344686,
+      "sha256": "63c7762d42aab78c989796c9c5fccae8d78d4ee46b7d6ed23851b6308b72942d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2020_ext.csv": {
+      "bytes": 344446,
+      "sha256": "95cfc9d20b4a0e7c35042633db765a9bd96a24bb1269343b2de096672e382861"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2021_ext.csv": {
+      "bytes": 342128,
+      "sha256": "4b18a15267b10b0f14ce1e9b083a8833cbde4bf57f90e6e403e9ad3ceda0f0f4"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2022_ext.csv": {
+      "bytes": 344121,
+      "sha256": "4e6cfbea6093b999a8840cd4379539db4f1f0031beb4f500708c2150b27ef020"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2023_ext.csv": {
+      "bytes": 341775,
+      "sha256": "377fd6665e0f8e8eebf87f2438d06a4fac1adfc0e2b37d8f9c6a602c01b4908b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2001_2024_ext.csv": {
+      "bytes": 342696,
+      "sha256": "4770ba77f43b808f70538885172732252941823475b3720780d8af2be4af4b9b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2012_ext.csv": {
+      "bytes": 308377,
+      "sha256": "ae2fd63c1e23155e00bb704389b2c4772eebc0c6df516ab42d702eb503da290c"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2013_ext.csv": {
+      "bytes": 304420,
+      "sha256": "0004ca2df1881e465b8502296a2635b04482f9b4b7a7bc276c0bc84a2d7b5758"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2014_ext.csv": {
+      "bytes": 305480,
+      "sha256": "031474028625823c21674e85658e7dcd008c27b9f379ebb963740f10fc6cb64b"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2015_ext.csv": {
+      "bytes": 306831,
+      "sha256": "e53ba21d146369e0700d2a3e37c5cc9df284514f3fca9a31ac7839c8b7cd4894"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2016_ext.csv": {
+      "bytes": 305832,
+      "sha256": "0f7b7e0d4782dff752c34f042e9ec33ce3e6fe18c64d61f640c4e2fa3b21dbd2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2017_ext.csv": {
+      "bytes": 304662,
+      "sha256": "0285073303917b662ca40541180d1510a8d974d266c289065ed174d51a82ee1d"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2018_ext.csv": {
+      "bytes": 306030,
+      "sha256": "f1ce534a290d0f91d175510f1743a56a1f701e8f658b06b9fd39372a84e6d8b6"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2019_ext.csv": {
+      "bytes": 305693,
+      "sha256": "6e7335143e2753d0b0ea69919529190bda66eb60ff4f0cc31423ceb30547cd82"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2020_ext.csv": {
+      "bytes": 305471,
+      "sha256": "eddb3edec7597340c9c12014e5da51c8eab240b6379d10ef9eec5c895ef225aa"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2021_ext.csv": {
+      "bytes": 303127,
+      "sha256": "27ff45e848a0f13e343402a9a68bb05c1da5dca40627d8e4d87b5c2b5d400d43"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2022_ext.csv": {
+      "bytes": 305106,
+      "sha256": "307718a40ca4fd7903849b969723f47bc25cb16925da792857cc3242824a3472"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2023_ext.csv": {
+      "bytes": 302759,
+      "sha256": "c774af71d3b16aa9e632e709bb752ca5aec987c841f9651e755adb5f0f0637b2"
+    },
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release/rp1_ba_district_monthly_c3_TZ_BA2012_2024_ext.csv": {
+      "bytes": 303678,
+      "sha256": "0af1893c0d97310ee466bca4cec7a9c9112d41bb0248483c1aaa3aa27c7ba1c4"
+    },
+    "geo_data_prep/data/raw/aoi/gha_admin0.cpg": {
+      "bytes": 5,
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824"
+    },
+    "geo_data_prep/data/raw/aoi/gha_admin0.dbf": {
+      "bytes": 1739,
+      "sha256": "f0ab5ff0277b0266026394951a4390e91bbf92685b50341a23ea6838904cf3b9"
+    },
+    "geo_data_prep/data/raw/aoi/gha_admin0.prj": {
+      "bytes": 145,
+      "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4"
+    },
+    "geo_data_prep/data/raw/aoi/gha_admin0.shp": {
+      "bytes": 70044,
+      "sha256": "0b0f0e5f7f68e1ed137f425c8c0d53268b4393e2fb0af3266aef5684d3e3b825"
+    },
+    "geo_data_prep/data/raw/aoi/gha_admin0.shx": {
+      "bytes": 108,
+      "sha256": "a0fe7a49c932432ceab2d201756ac5e6f261dcafd4d0c40369ed947a9e8d57d2"
+    },
+    "geo_data_prep/data/raw/districts/gha_admin2.cpg": {
+      "bytes": 5,
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824"
+    },
+    "geo_data_prep/data/raw/districts/gha_admin2.dbf": {
+      "bytes": 460806,
+      "sha256": "6055e69a88383ab7da0ccb18b9c46377e599b9fc12851c0520c3e5441301232c"
+    },
+    "geo_data_prep/data/raw/districts/gha_admin2.prj": {
+      "bytes": 145,
+      "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4"
+    },
+    "geo_data_prep/data/raw/districts/gha_admin2.shp": {
+      "bytes": 1227360,
+      "sha256": "b6489e63e44c74a3b98aeef8c24d08c0c843297aceeef3cbf0dbf7ff2c7c524f"
+    },
+    "geo_data_prep/data/raw/districts/gha_admin2.shx": {
+      "bytes": 2180,
+      "sha256": "6f7fedbc31edee918f5e3f221a1fe357c3a1c7e277662567f4ec707ea385be25"
+    },
+    "geo_data_prep/data/raw/zones/Agro_climatic_zone.cpg": {
+      "bytes": 5,
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824"
+    },
+    "geo_data_prep/data/raw/zones/Agro_climatic_zone.dbf": {
+      "bytes": 1275,
+      "sha256": "fa6322e526de4f0ddd421dd43b76f020079b481919cafcd535990cca741cc507"
+    },
+    "geo_data_prep/data/raw/zones/Agro_climatic_zone.prj": {
+      "bytes": 401,
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b"
+    },
+    "geo_data_prep/data/raw/zones/Agro_climatic_zone.shp": {
+      "bytes": 218404,
+      "sha256": "b5e95136539e3da7765c295e43eb8afc0e547e04263dc13439232d176da4a309"
+    },
+    "geo_data_prep/data/raw/zones/Agro_climatic_zone.shx": {
+      "bytes": 140,
+      "sha256": "c4bda44b4d6ad488cbd739ebb0125042c1ff3c4b8cf740b323321be697f6b80c"
+    },
+    "geo_data_prep/data/raw/zones/Agro_ecological_zone.cpg": {
+      "bytes": 5,
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824"
+    },
+    "geo_data_prep/data/raw/zones/Agro_ecological_zone.dbf": {
+      "bytes": 922,
+      "sha256": "ff0d0cca8927c82f82608f405e741f5f33360a06b98bed77cde693995cbe2173"
+    },
+    "geo_data_prep/data/raw/zones/Agro_ecological_zone.prj": {
+      "bytes": 401,
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b"
+    },
+    "geo_data_prep/data/raw/zones/Agro_ecological_zone.shp": {
+      "bytes": 99980,
+      "sha256": "e730a8b70f41335c5e4d8e9df78deca76c5d385c734510fea125b12cd77c8b4f"
+    },
+    "geo_data_prep/data/raw/zones/Agro_ecological_zone.shx": {
+      "bytes": 156,
+      "sha256": "b545f7323ca60beaea037326ae69922932ed474917f5f4b2442139e3d2b2d9cd"
+    }
+  },
+  "schema": "rp1-source-input-inventory-v1"
+}

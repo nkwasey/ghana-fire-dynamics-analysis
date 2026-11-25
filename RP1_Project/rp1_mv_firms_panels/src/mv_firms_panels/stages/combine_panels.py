@@ -75,6 +75,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+import json
 
 import pandas as pd
 from mv_firms_panels.core.config import AppConfig, candidate_format_order, choose_preferred_format
@@ -502,6 +503,123 @@ def combine_panels(
         modis = modis_monthly_df.copy()
     else:
         modis, modis_path = _read_sensor_monthly_if_exists(run_dir, cfg=cfg, sensor="modis")
+    active_fire_method = {"method_version": "viirs_frp_dual_stream_v1",
+                          "count_population_viirs": ("all_confidence_deduplicated" if cfg.processing.confidence_model.include_low else "nominal_high_deduplicated_by_global_switch"),
+                          "frp_population_viirs": "nominal_high_independently_deduplicated",
+                          "frp_selection_stage": "before_independent_deduplication",
+                          "frp_deduplication_independent": True,
+                          "frp_finite_values_rank_first": True,
+                          "frp_min_mw": float(cfg.processing.frp_policy.min_frp_mw),
+                          "deduplication": cfg.processing.deduplication.model_dump(mode="json"),
+                          "config_sha256": sha256_text(stable_json_dumps(cfg.to_canonical_dict())),
+                          "viirs_preparation_evidence": [],
+                          "source_preparation_evidence": [],
+                          "input_profiles": {sensor: cfg.io.inputs.firms_points[sensor].input_profile
+                                             for sensor in ("modis", "viirs")},
+                          "frp_confidence_categories": ["n", "h"],
+                          "frp_aggregation": "mean_of_daily_maxima_over_eligible_utc_days",
+                          "evidence_files": [], "status": "UNVERIFIED_IN_MEMORY_INPUT"}
+    if write_outputs and any(profile == "ghana_firms_archive_sp_v1" for profile in active_fire_method["input_profiles"].values()) and (viirs_path is None or modis_path is None):
+        raise CombinePanelsError("Archive governed combine requires file-backed sensor monthly inputs")
+    # Bind actual disk inputs to their aggregation policy before exporting them.
+    if viirs_path is not None and modis_path is not None:
+        for sensor, panel_source in (("viirs", viirs_path), ("modis", modis_path)):
+            manifest_source = run_dir / "qa" / f"aggregate_monthly_{sensor}_manifest.json"
+            policy_source = run_dir / "qa" / f"aggregate_monthly_{sensor}_summary.json"
+            if not manifest_source.is_file() or not policy_source.is_file():
+                raise CombinePanelsError("Aggregation provenance is missing; rebuild sensor monthly panels")
+            receipt = json.loads(manifest_source.read_text(encoding="utf-8"))
+            policy = json.loads(policy_source.read_text(encoding="utf-8"))
+            frp = policy.get("steps", {}).get("frp", {})
+            if sensor == "viirs":
+                from mv_firms_panels.stages.aggregate_monthly import _validate_viirs_partitions
+                partitions = policy.get("steps", {}).get("read_fires_canonical", {}).get("partitions", [])
+                if not partitions or frp.get("method_version") != "viirs_frp_dual_stream_v1" or frp.get("selection_stage") != "before_independent_deduplication":
+                    raise CombinePanelsError("VIIRS dual-stream aggregation evidence is missing")
+                for item in partitions:
+                    if sha256_file(repo_root / item["path"]) != item["sha256"] or sha256_file(repo_root / item["frp_path"]) != item["frp_sha256"]:
+                        raise CombinePanelsError("VIIRS aggregation inputs changed after aggregation")
+                _validate_viirs_partitions(
+                    repo_root=repo_root, cfg=cfg, run_dir=run_dir, run_id=run_id,
+                    annual_paths=[(int(item["year"]), repo_root / item["path"]) for item in partitions],
+                    explicit_paths=[repo_root / item["frp_path"] for item in partitions],
+                )
+                for item in partitions:
+                    preparation_receipt = run_dir / "qa" / f"prepare_year_viirs_{int(item['year'])}_manifest.json"
+                    preparation = json.loads(preparation_receipt.read_text(encoding="utf-8"))
+                    prep_qa = repo_root / preparation["qa_summary_json"]["path"]
+                    source_qa = json.loads(prep_qa.read_text(encoding="utf-8"))
+                    paths = [preparation_receipt, prep_qa, repo_root / item["path"], repo_root / item["frp_path"]]
+                    paths += [repo_root / source["path"] for source in source_qa["source_file_identity"]]
+                    for source in paths:
+                        active_fire_method["viirs_preparation_evidence"].append({"path": source.relative_to(repo_root).as_posix(), "sha256": sha256_file(source)})
+                    for record in source_qa.get("geography_file_identity", []):
+                        source = (repo_root / record["path"]).resolve()
+                        workspace = repo_root.parent.parent.resolve()
+                        if not source.is_relative_to(workspace):
+                            raise CombinePanelsError("Geography evidence is outside the project workspace")
+                        active_fire_method["viirs_preparation_evidence"].append({"path": source.relative_to(workspace).as_posix(), "scope": "workspace", "sha256": sha256_file(source)})
+            if cfg.io.inputs.firms_points[sensor].input_profile == "ghana_firms_archive_sp_v1":
+                from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+                partitions = policy.get("steps", {}).get("read_fires_canonical", {}).get("partitions", [])
+                if not partitions:
+                    raise CombinePanelsError(f"{sensor.upper()} annual preparation evidence is missing")
+                for item in partitions:
+                    year = int(item["year"])
+                    count_path = repo_root / item["path"]
+                    if sha256_file(count_path) != item["sha256"]:
+                        raise CombinePanelsError(f"{sensor.upper()} count inputs changed after aggregation")
+                    try:
+                        source_qa = validate_preparation_partition(repo_root=repo_root, cfg=cfg,
+                            run_dir=run_dir, run_id=run_id, sensor=sensor, year=year,
+                            count_path=count_path,
+                            frp_path=repo_root / item["frp_path"] if sensor == "viirs" else None,
+                            require_configured_source=True)
+                    except ValueError as exc:
+                        raise CombinePanelsError(str(exc)) from exc
+                    preparation_receipt = run_dir / "qa" / f"prepare_year_{sensor}_{year}_manifest.json"
+                    preparation = json.loads(preparation_receipt.read_text(encoding="utf-8"))
+                    paths = [preparation_receipt, repo_root / preparation["qa_summary_json"]["path"], count_path]
+                    if sensor == "viirs":
+                        paths.append(repo_root / item["frp_path"])
+                    for identity_key in ("source_file_identity", "geography_file_identity", "schema_file_identity"):
+                        paths.extend(repo_root / identity["path"] for identity in source_qa.get(identity_key, []))
+                    paths.append(repo_root / source_qa["source_observation_trace_csv"]["path"])
+                    admission_path = repo_root / source_qa["input_profile_evidence"]["admission_manifest"]
+                    paths.append(admission_path)
+                    paths.extend(repo_root / entry["path"]
+                                 for entry in source_qa["input_profile_evidence"]["source_evidence"])
+                    workspace = repo_root.parent.parent.resolve()
+                    for source in paths:
+                        source = source.resolve()
+                        if source.is_relative_to(repo_root.resolve()):
+                            entry = {"path":source.relative_to(repo_root.resolve()).as_posix(), "sha256":sha256_file(source)}
+                        elif source.is_relative_to(workspace):
+                            entry = {"path":source.relative_to(workspace).as_posix(), "scope":"workspace", "sha256":sha256_file(source)}
+                        else:
+                            raise CombinePanelsError("Source preparation evidence is outside the project workspace")
+                        active_fire_method["source_preparation_evidence"].append(entry)
+            if frp.get("confidence_categories") != ["n", "h"] or frp.get("aggregation") != "mean_of_daily_maxima_over_eligible_utc_days":
+                raise CombinePanelsError("Aggregation FRP policy is missing or incompatible; rebuild sensor monthly panels")
+            if receipt.get("panel_sensor_monthly", {}).get("sha256") != sha256_file(panel_source) or receipt.get("qa_summary_json", {}).get("sha256") != sha256_file(policy_source):
+                raise CombinePanelsError("Aggregation provenance hash mismatch")
+            for source in (panel_source, manifest_source, policy_source):
+                active_fire_method["evidence_files"].append({"path": source.relative_to(repo_root).as_posix(), "sha256": sha256_file(source)})
+        unique_preparation = {}
+        for entry in active_fire_method["viirs_preparation_evidence"]:
+            key = (entry.get("scope", "firms"), entry["path"])
+            if key in unique_preparation and unique_preparation[key]["sha256"] != entry["sha256"]:
+                raise CombinePanelsError("Conflicting VIIRS preparation evidence hashes")
+            unique_preparation[key] = entry
+        active_fire_method["viirs_preparation_evidence"] = list(unique_preparation.values())
+        unique_sources = {}
+        for entry in active_fire_method["source_preparation_evidence"]:
+            key = (entry.get("scope", "firms"), entry["path"])
+            if key in unique_sources and unique_sources[key]["sha256"] != entry["sha256"]:
+                raise CombinePanelsError("Conflicting source preparation evidence hashes")
+            unique_sources[key] = entry
+        active_fire_method["source_preparation_evidence"] = list(unique_sources.values())
+        active_fire_method["status"] = "VERIFIED_AGGREGATION_INPUTS"
     qa["steps"]["read_sensor_panels"] = {
         "viirs_rows": int(len(viirs)),
         "modis_rows": int(len(modis)),
@@ -560,6 +678,31 @@ def combine_panels(
         start_yyyymm=start_yyyymm,
         end_yyyymm=end_yyyymm,
     )
+    for sensor, panel_source in (("modis", modis_path), ("viirs", viirs_path)):
+        if cfg.io.inputs.firms_points[sensor].input_profile != "ghana_firms_archive_sp_v1" or panel_source is None:
+            continue
+        policy = json.loads((run_dir / "qa" / f"aggregate_monthly_{sensor}_summary.json").read_text(encoding="utf-8"))
+        expected_start, expected_end = int(s_ym), int(e_ym)
+        coverage = cfg.processing.sensor_time_ranges.get(sensor)
+        if coverage is not None:
+            if coverage.start_yyyymm is not None:
+                expected_start = max(expected_start, int(coverage.start_yyyymm))
+            if coverage.end_yyyymm is not None:
+                expected_end = min(expected_end, int(coverage.end_yyyymm))
+        if expected_start <= expected_end:
+            effective = policy.get("effective_time_window", {})
+            actual_start, actual_end = effective.get("start_yyyymm"), effective.get("end_yyyymm")
+            years = {int(part["year"]) for part in policy.get("steps", {}).get("read_fires_canonical", {}).get("partitions", [])}
+            required = set(range(expected_start // 100, expected_end // 100 + 1))
+            if (type(actual_start) is not int or type(actual_end) is not int or actual_start > expected_start or actual_end < expected_end
+                    or not required <= years):
+                raise CombinePanelsError(f"{sensor.upper()} aggregation coverage does not cover requested study window")
+            for year in required:
+                preparation = json.loads((run_dir / "qa" / f"prepare_year_{sensor}_{year}_manifest.json").read_text(encoding="utf-8"))
+                accepted_study = preparation.get("input_profile_evidence", {}).get("study")
+                if accepted_study is not None and (accepted_study["start_yyyymm"] > expected_start
+                        or accepted_study["end_yyyymm"] < expected_end):
+                    raise CombinePanelsError(f"{sensor.upper()} validation acceptance does not cover requested study window")
     spine = build_monthly_time_spine(int(s_ym), int(e_ym))
     qa["steps"]["time_spine"] = {
         "start_yyyymm": int(s_ym),
@@ -626,6 +769,14 @@ def combine_panels(
         need_calc = (~zero) & out[mean].isna()
         out.loc[need_calc, mean] = out.loc[need_calc, ssum] / out.loc[need_calc, ad]
         out[mean] = out[mean].astype("Float64")
+        for metric in ("days_active_nh", "streak_max_nh"):
+            column = f"{sensor}_{metric}"
+            if column in out:
+                values = pd.to_numeric(out[column], errors="coerce")
+                no_nh_detections = out[f"{sensor}_det_nh"].eq(0)
+                out[column] = values.mask(values.isna() & no_nh_detections, 0).astype("Int64")
+        # Sparse no-detection cells have no confidence-share denominator.
+        # Preserve missing percentages and any explicitly supplied source value.
         return out
 
     spine_rows = _apply_sensor_fill(spine_rows, "viirs")
@@ -826,6 +977,7 @@ def combine_panels(
         write_json(obj=qa, path=qa_path)
 
         manifest = {
+            "active_fire_method": active_fire_method,
             "panel_monthly": {
                 "format": fmt,
                 "path": panel_path.relative_to(repo_root).as_posix(),

@@ -3,8 +3,9 @@
 
 Binding method (from project CP)
 --------------------------------
-1) Per unit-day (UTC day), compute daily_max_frp_mw = max(frp_mw) across detections.
-2) Per unit-month, compute:
+1) The aggregation stage supplies nominal/high confidence detections only.
+2) Per unit-day (UTC day), compute daily_max_frp_mw = max(frp_mw) across those detections.
+3) Per unit-month, compute:
    - frp_active_days = number of UTC days with ≥1 detection (after gating)
    - frp_sum_daily_max_mw = sum(daily_max_frp_mw over active days)
    - frp_p95_daily_max_mw = 95th percentile of daily_max_frp_mw over active days
@@ -27,6 +28,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
 
 
@@ -69,11 +71,13 @@ def compute_daily_max_frp(
     if missing:
         raise ValueError(f"compute_daily_max_frp: missing columns: {missing}")
 
+    if not np.isfinite(float(min_frp_mw)) or float(min_frp_mw) < 0:
+        raise ValueError("min_frp_mw must be a finite nonnegative number")
     work = fires.loc[:, need].copy()
 
     # Gate invalid / non-physical values
     work[frp_col] = pd.to_numeric(work[frp_col], errors="coerce")
-    work = work.loc[work[frp_col].notna()].copy()
+    work = work.loc[work[frp_col].notna() & np.isfinite(work[frp_col])].copy()
     work = work.loc[work[frp_col] >= float(min_frp_mw)].copy()
 
     if len(work) == 0:

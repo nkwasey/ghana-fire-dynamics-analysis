@@ -19,7 +19,7 @@ def main() -> int:
     from rp1_analysis_v1.operations import json_text, validate_run_report
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", required=True, help="Run identifier used by execute_notebook.py.")
+    parser.add_argument("--run-id", required=True, help="Analysis base run ID for interactive or controlled execution.")
     parser.add_argument(
         "--write-report",
         action="store_true",

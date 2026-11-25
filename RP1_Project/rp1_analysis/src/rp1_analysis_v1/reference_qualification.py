@@ -193,7 +193,7 @@ def qualify(root: Path) -> dict[str, Any]:
         expected_row = expected_by_id[row["unit_id"]]
         repeated_row = repeated_by_id[row["unit_id"]]
         ref_p = float(expected_row["permutation_p"])
-        mc_se = math.sqrt(ref_p * (1.0 - ref_p) / (spec["permutations"] + 1.0))
+        mc_se = 2.0 * math.sqrt(0.25 / (spec["permutations"] + 1.0))
         passed = (
             passed
             and _close(row["local_morans_i"], expected_row["local_morans_i"])

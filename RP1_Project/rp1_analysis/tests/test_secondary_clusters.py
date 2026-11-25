@@ -1,4 +1,5 @@
 from __future__ import annotations
+from scientific_input_reference import long_run_input_reference, paired_input_reference
 
 import json
 import os
@@ -48,12 +49,6 @@ from rp1_analysis_v1.validation import validate_data_authorities
 
 SUBPROJECT = Path(__file__).resolve().parents[1]
 FIXTURE = SUBPROJECT / "tests/fixtures/reference_methods/satscan"
-EXPECTED_FALLBACK_IDS = {
-    "Awutu_Senya_East",
-    "Mfantseman_Municipal",
-    "Fanteakwa_South",
-    "Asutifi_South",
-}
 
 
 @pytest.fixture(scope="module")
@@ -112,8 +107,8 @@ def test_scan_parameters_are_projected_from_analysis_contract(governed) -> None:
 
 def test_governed_coordinate_authority_is_deterministic_and_spatially_valid(governed) -> None:
     _, _, authorities, _, location, _, params = governed
-    assert len(location) == 260
-    assert location.location_id.tolist() == list(range(1, 261))
+    assert len(location) == authorities.district_geometry.dist_id.nunique()
+    assert location.location_id.tolist() == list(range(1, len(location) + 1))
     assert location.unit_id.is_unique and location.location_id.is_unique
     assert location.crs.eq(params.coordinate_crs).all()
     assert set(location.anchor_method).issubset({"polygon_centroid", "point_on_surface"})
@@ -126,12 +121,13 @@ def test_governed_coordinate_authority_is_deterministic_and_spatially_valid(gove
         assert geometry.loc[row.unit_id].geometry.covers(Point(float(row.x), float(row.y)))
 
 
-def test_known_centroid_fallback_regressions_are_generic_rule_outputs(governed) -> None:
+def test_centroid_fallbacks_follow_current_geometry_rule(governed) -> None:
     _, _, authorities, _, location, _, _ = governed
     observed = set(location.loc[location["anchor_method"].eq("point_on_surface"), "unit_id"].astype(str))
-    assert observed == EXPECTED_FALLBACK_IDS
     geometry = authorities.district_geometry.set_index(authorities.district_geometry["dist_id"].astype(str))
-    for unit_id in EXPECTED_FALLBACK_IDS:
+    expected = {str(key) for key, shape in geometry.geometry.items() if not shape.covers(shape.centroid)}
+    assert observed == expected
+    for unit_id in expected:
         geom = geometry.loc[unit_id].geometry
         assert not geom.covers(geom.centroid)
 
@@ -140,8 +136,8 @@ def test_exact_secondary_populations_and_temporal_support(governed) -> None:
     _, bundle, authorities, _, _, scenarios, _ = governed
     mcd, mcd_ids, _ = _scenario_support_panel(scenarios["MCD64A1_POISSON_PRIMARY"], authorities, bundle.analysis)
     stp, stp_ids, _ = _scenario_support_panel(scenarios["VIIRS_STP_PRIMARY"], authorities, bundle.analysis)
-    assert len(mcd_ids) == 250 and len(mcd) == 250 * 288
-    assert len(stp_ids) == 249 and len(stp) == 249 * 155
+    assert len(mcd_ids) == long_run_input_reference().unit_id.nunique() and len(mcd) == len(long_run_input_reference())
+    assert len(stp_ids) == paired_input_reference().unit_id.nunique() and len(stp) == len(paired_input_reference())
     assert (mcd.yyyymm.min(), mcd.yyyymm.max()) == (200101, 202412)
     assert (stp.yyyymm.min(), stp.yyyymm.max()) == (201202, 202412)
 
@@ -155,8 +151,8 @@ def test_mcd_case_and_fixed_exposure_files_match_governed_source(governed) -> No
     coords = prepare_location_input(location, ids)
     times = prepare_time_input(bundle.analysis, scenario.temporal_window)
     validate_case_population_location_keys(scenario, cases, population, coords, times)
-    assert len(population) == 250 * 288
-    assert len(coords) == 250
+    assert len(population) == len(support)
+    assert len(coords) == len(ids)
     assert (cases["cases"] > 0).all()
     assert np.equal(cases["cases"], np.rint(cases["cases"])).all()
     assert int(cases["cases"].sum()) == int(pd.to_numeric(support[scenario.case_field], errors="raise").sum())
@@ -171,7 +167,7 @@ def test_viirs_case_file_has_no_exposure_and_matches_governed_source(governed) -
     coords = prepare_location_input(location, ids)
     times = prepare_time_input(bundle.analysis, scenario.temporal_window)
     validate_case_population_location_keys(scenario, cases, None, coords, times)
-    assert len(coords) == 249
+    assert len(coords) == len(ids)
     assert (cases["cases"] > 0).all()
     assert int(cases["cases"].sum()) == int(pd.to_numeric(support[scenario.case_field], errors="raise").sum())
     with pytest.raises(SecondaryClusterError, match="must not receive"):
@@ -376,6 +372,8 @@ def test_known_good_parser_fixtures() -> None:
     assert clusters.cluster_id.tolist() == expected["significant_cluster_ids"]
     assert clusters.cluster_rank.tolist() == expected["significant_cluster_ids"]
     assert membership.location_id.tolist() == expected["membership"]["1"]
+    for column in ("case_count", "expected_count", "observed_expected_ratio", "relative_risk", "log_likelihood_ratio", "p_value"):
+        assert clusters.iloc[0][column] == expected[column]
 
 
 def _external_fixture(tmp_path: Path, *, model: str = MODEL_DISCRETE_POISSON) -> dict[str, object]:
@@ -387,7 +385,7 @@ def _external_fixture(tmp_path: Path, *, model: str = MODEL_DISCRETE_POISSON) ->
     case = inp / "x.cas"
     geo = inp / "x.geo"
     pop = inp / "x.pop"
-    case.write_text("1 1 2020/1/1\n2 1 2020/1/1\n", encoding="utf-8")
+    case.write_text("1 2 2020/1/1\n2 2 2020/1/1\n", encoding="utf-8")
     geo.write_text("1 1 1\n2 2 2\n", encoding="utf-8")
     population_rel = "inputs/x.pop" if model == MODEL_DISCRETE_POISSON else ""
     if model == MODEL_DISCRETE_POISSON:
@@ -409,7 +407,8 @@ def _external_fixture(tmp_path: Path, *, model: str = MODEL_DISCRETE_POISSON) ->
         "Program completed\n",
         encoding="utf-8",
     )
-    col.write_bytes((FIXTURE / "known_good.col.txt").read_bytes())
+    cluster_fixture = "known_good.col.txt" if model == MODEL_DISCRETE_POISSON else "known_good_stp.col.txt"
+    col.write_bytes((FIXTURE / cluster_fixture).read_bytes())
     gis.write_bytes((FIXTURE / "known_good.gis.txt").read_bytes())
     now = max(prm.stat().st_mtime_ns, case.stat().st_mtime_ns, geo.stat().st_mtime_ns) + 5_000_000
     if model == MODEL_DISCRETE_POISSON:
@@ -457,8 +456,107 @@ def test_validated_parser_round_trip_without_external_provenance(tmp_path: Path)
     assert parsed.membership.location_id.tolist() == ["1", "2"]
     assert parsed.provenance["external_provenance_sidecar_required"] is False
     assert parsed.provenance["executable_version"] == "10.3.3"
+    native = parsed.provenance["native_reconciliation"]
+    assert native["significant_cluster_case_windows_verified"] == 1
+    assert native["simulation_maxima"]["status"] == "not_supplied"
+    assert "Total number of cases" in native["report_fields_unavailable"]
     assert not (tmp_path / "results/x.provenance.json").exists()
     assert not (tmp_path / "results/x.txt").exists()
+
+
+def _native_summary_fixture(tmp_path: Path) -> dict[str, object]:
+    row = _external_fixture(tmp_path)
+    case = tmp_path / str(row["case_path"])
+    case.write_text(case.read_text(encoding="utf-8") + "2 1 2020/5/1\n", encoding="utf-8")
+    row["case_sha256"] = sha256_file(case)
+    prm = tmp_path / str(row["prm_path"])
+    prm.write_text(
+        prm.read_text(encoding="utf-8")
+        + "CaseFile=inputs/x.cas\nCoordinatesFile=inputs/x.geo\n"
+        + "StartDate=2020/1/1\nEndDate=2020/12/31\nPrecisionCaseTimes=2\nModelType=0\n"
+        + "MaxSpatialSizeInPopulationAtRisk=50\nMaxTemporalSize=12\n"
+        + "PValueReportType=1\nReportGumbel=n\nMonteCarloReps=99\n",
+        encoding="utf-8",
+    )
+    row["prm_sha256"] = sha256_file(prm)
+    report = tmp_path / "results/x"
+    report.write_text(
+        report.read_text(encoding="utf-8").replace(
+            "Study period", "SUMMARY OF DATA\nStudy period"
+        ).replace(
+            "Program completed",
+            "Number of locations................: 2\n"
+            "Total number of cases..............: 5\n"
+            "Population, averaged over time.....: 200\n"
+            "Case File : C:\\portable\\inputs\\x.cas\n"
+            "Time Precision : Month\n"
+            "Maximum Spatial Cluster Size : 50 percent of population at risk\n"
+            "Maximum Temporal Cluster Size : 12 Months\n"
+            "Probability Model : Discrete Poisson\n"
+            "Number of Replications : 99\n"
+            "Program completed",
+        ),
+        encoding="utf-8",
+    )
+    cluster = tmp_path / "results/x.col.txt"
+    cluster.write_text(cluster.read_text(encoding="utf-8").replace("2020/3/1", "2020/3/31"), encoding="utf-8")
+    return row
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("locations................: 2", "locations................: 3", "Number of locations"),
+        ("cases..............: 5", "cases..............: 6", "Total number of cases"),
+        ("Total number of cases..............: 5\n", "", "missing Total number of cases"),
+        ("over time.....: 200", "over time.....: 900", "average population"),
+        ("Replications : 99", "Replications : 98", "Number of Replications"),
+        ("50 percent of population", "25 percent of population", "Maximum Spatial Cluster Size"),
+        ("12 Months", "12 Days", "Maximum Temporal Cluster Size"),
+        ("Probability Model : Discrete Poisson", "Probability Model : Space-Time Permutation", "Probability Model"),
+        ("inputs\\x.cas", "wrong\\x.cas", "Case File"),
+    ],
+)
+def test_native_report_rejects_disagreement(tmp_path: Path, old: str, new: str, message: str) -> None:
+    row = _native_summary_fixture(tmp_path)
+    report = tmp_path / "results/x"
+    content = report.read_text(encoding="utf-8")
+    assert old in content
+    report.write_text(content.replace(old, new), encoding="utf-8")
+    with pytest.raises(ExternalResultValidationError, match=message):
+        validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
+
+
+def test_native_observed_cases_require_exact_location_month_sum(tmp_path: Path) -> None:
+    row = _native_summary_fixture(tmp_path)
+    parsed = validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
+    assert parsed.clusters["case_count"].tolist() == [4.0]
+    assert parsed.provenance["native_reconciliation"]["governed_total_cases"] == 5
+
+    cluster = tmp_path / "results/x.col.txt"
+    cluster.write_text(cluster.read_text(encoding="utf-8").replace("0.01 4 2", "0.01 5 2"), encoding="utf-8")
+    with pytest.raises(ExternalResultValidationError, match="observed cases differ from the governed case window"):
+        validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
+
+
+def test_native_simulation_maxima_are_checked_with_printed_precision(tmp_path: Path) -> None:
+    row = _native_summary_fixture(tmp_path)
+    maxima = tmp_path / "results/x.llr.txt"
+    maxima.write_text("LLR\n" + "12.300000\n" + "10.000000\n" * 18 + "0.000000\n" * 80, encoding="utf-8")
+    parsed = validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
+    check = parsed.provenance["native_reconciliation"]["simulation_maxima"]
+    assert check["clusters_checked"] == 2
+    assert check["clusters_with_precision_ambiguous_rank"] == 1
+
+    # A changed p-value for a non-significant cluster can hide a real cluster.
+    cluster = tmp_path / "results/x.col.txt"
+    cluster.write_text(cluster.read_text(encoding="utf-8").replace("1.0 0.20", "1.0 0.30"), encoding="utf-8")
+    with pytest.raises(ExternalResultValidationError, match="cluster 2 p-value differs"):
+        validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
+
+    maxima.write_text("LLR\n0.000000\n", encoding="utf-8")
+    with pytest.raises(ExternalResultValidationError, match="maxima count differs"):
+        validate_external_results(row, run_dir=tmp_path, alpha=0.05, enforce_freshness=False)
 
 
 def test_stp_parser_neutralises_relative_risk(tmp_path: Path) -> None:
@@ -505,8 +603,37 @@ def test_external_parser_rejects_malformed_cluster_output(tmp_path: Path) -> Non
     col.write_text("Cluster Location X\n1 1 2\n", encoding="utf-8")
     newest = max((tmp_path / "inputs/x.prm").stat().st_mtime_ns, (tmp_path / "inputs/x.cas").stat().st_mtime_ns, (tmp_path / "inputs/x.geo").stat().st_mtime_ns, (tmp_path / "inputs/x.pop").stat().st_mtime_ns) + 5_000_000
     os.utime(col, ns=(newest, newest))
-    with pytest.raises(ExternalResultValidationError, match="fewer than 11 fields"):
+    with pytest.raises(ExternalResultValidationError, match="header"):
         validate_external_results(row, run_dir=tmp_path, alpha=0.05)
+
+
+@pytest.mark.parametrize(("cluster_p", "membership_p", "valid"), [
+    ("0.01", "0.0100", True),
+    ("<0.01", "<0.0100", True),
+    ("0.01", "0.02", False),
+    ("<0.01", "0.01", False),
+])
+def test_external_cluster_membership_p_concordance(
+    tmp_path: Path, cluster_p: str, membership_p: str, valid: bool
+) -> None:
+    row = _external_fixture(tmp_path)
+    col = tmp_path / "results/x.col.txt"
+    gis = tmp_path / "results/x.gis.txt"
+    col.write_text(col.read_text().replace(" 0.01 ", f" {cluster_p} "))
+    gis.write_text(gis.read_text().replace("0.01", membership_p))
+    newest = max(
+        (tmp_path / "inputs/x.prm").stat().st_mtime_ns,
+        (tmp_path / "inputs/x.cas").stat().st_mtime_ns,
+        (tmp_path / "inputs/x.geo").stat().st_mtime_ns,
+        (tmp_path / "inputs/x.pop").stat().st_mtime_ns,
+    ) + 5_000_000
+    for path in (col, gis):
+        os.utime(path, ns=(newest, newest))
+    if valid:
+        validate_external_results(row, run_dir=tmp_path, alpha=0.05)
+    else:
+        with pytest.raises(ExternalResultValidationError, match="p-value disagrees"):
+            validate_external_results(row, run_dir=tmp_path, alpha=0.05)
 
 
 def test_python_side_secondary_build_records_external_deferral_and_exact_hashes(governed) -> None:

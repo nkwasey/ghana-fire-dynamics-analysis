@@ -1,4 +1,5 @@
 from __future__ import annotations
+from generated_run_reference import selected_run_base, require_selected_run
 
 import json
 import shutil
@@ -19,11 +20,12 @@ from rp1_analysis_v1.presentation import get_presentation_export_spec, load_pres
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "export_presentation_figures.py"
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = selected_run_base(ROOT)
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 
 
 def _not_run_authority() -> pe.RunFamilyAuthority:
+    require_selected_run(ROOT, RUN_BASE)
     return pe.resolve_run_family(RUN_CLOSE, paths=ProjectPaths(ROOT), validate=False)
 
 
@@ -68,7 +70,7 @@ def test_cli_list_is_config_driven() -> None:
     assert completed.returncode == 0, completed.stderr
     payload = json.loads(completed.stdout)
     assert payload["schema"] == "rp1-presentation-export-list-v1"
-    assert len(payload["exports"]) == 24
+    assert len(payload["exports"]) == 26
     by_id = {row["export_id"]: row for row in payload["exports"]}
     assert by_id["rq1_acz_seasonality"]["implementation_status"] == "IMPLEMENTED"
     assert by_id["rq1_district_departure"]["implementation_status"] == "IMPLEMENTED"
@@ -85,6 +87,7 @@ def test_list_catalogue_matches_governed_registry() -> None:
 
 
 def test_valid_run_resolution_delegates_to_complete_run_validator(monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     called: dict[str, object] = {}
 
     def fake_validate(*, paths: ProjectPaths, run_id: str) -> RunValidationResult:
@@ -103,6 +106,7 @@ def test_valid_run_resolution_delegates_to_complete_run_validator(monkeypatch: p
 
 
 def test_invalid_run_rejection_missing_and_wrong_member() -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     with pytest.raises(pe.RunAuthorityError, match="does not exist"):
         pe.resolve_run_family(ROOT / "out" / "runs" / "missing_close", paths=paths)
@@ -138,10 +142,10 @@ def test_source_resolution_and_selector_are_governed() -> None:
     run = _not_run_authority()
     spec = get_presentation_export_spec("rq1_acz_seasonality", paths=paths)
     source = pe.resolve_source(spec, run, paths=paths)
-    assert source.source_identity == "seasonality_spatial_organisation_presentation_source"
-    assert source.project_relative_path.endswith("01_rq1_spatial_scale/figure_data/FD_F3.csv")
+    assert source.source_identity == "acz_seasonality_figure_source"
+    assert source.project_relative_path.endswith("01_rq1_spatial_scale/figure_data/FD_FS1.csv")
     assert source.frame is not None
-    assert source.selected_rows == len(source.frame) > 0
+    assert source.selected_rows == len(source.frame) == 60
     assert set(source.frame["panel"].astype(str)) == {"acz_seasonality"}
     assert len(source.sha256) == 64
 
@@ -196,6 +200,8 @@ def test_renderer_registry_lookup_and_unknown_rejection() -> None:
         "standardised_probability_pairs",
         "cluster_membership_map",
         "cluster_recurrence_map",
+        "rq1_burnable_support_sensitivity",
+        "rq2_trend_uncertainty",
     }
     assert set(registry.identities) == expected
     assert callable(registry.resolve("seasonality_lines"))
@@ -231,6 +237,59 @@ def test_output_destination_collision_and_run_nesting_fail_closed(tmp_path: Path
     nested = run.closeout_run / "presentation"
     with pytest.raises(pe.PresentationOutputError, match="outside the governed run root"):
         pe.validate_output_destination(nested, run=run)
+
+
+@pytest.mark.parametrize("winerror", [32, 33])
+def test_directory_publish_retries_transient_windows_lock(tmp_path, monkeypatch, winerror) -> None:
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    dest = tmp_path / "output"
+    original_rename = pe.os.rename
+    errors = [winerror, winerror]
+    delays = []
+
+    def move(source, destination):
+        if errors:
+            error = PermissionError("transient lock")
+            error.winerror = errors.pop()
+            raise error
+        original_rename(source, destination)
+
+    monkeypatch.setattr(pe.sys, "platform", "win32")
+    monkeypatch.setattr(pe.os, "rename", move)
+    monkeypatch.setattr(pe.time, "sleep", delays.append)
+    pe._publish_export_directory(stage, dest)
+    assert delays == [0.1, 0.25]
+    assert dest.is_dir() and not stage.exists()
+
+
+def test_directory_publish_never_overwrites_a_concurrent_destination(tmp_path, monkeypatch) -> None:
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    dest = tmp_path / "output"
+
+    def move(_source, destination):
+        destination.mkdir()
+        raise FileExistsError("an independent writer published")
+
+    monkeypatch.setattr(pe.sys, "platform", "win32")
+    monkeypatch.setattr(pe.os, "rename", move)
+    with pytest.raises(pe.PresentationOutputError, match="destination appeared"):
+        pe._publish_export_directory(stage, dest)
+    assert dest.is_dir() and stage.is_dir()
+
+
+def test_directory_publish_propagates_a_windows_permission_failure(tmp_path, monkeypatch) -> None:
+    def move(_source, _destination):
+        error = PermissionError("access denied")
+        error.winerror = 5
+        raise error
+
+    monkeypatch.setattr(pe.sys, "platform", "win32")
+    monkeypatch.setattr(pe.os, "rename", move)
+    monkeypatch.setattr(pe.time, "sleep", lambda _delay: pytest.fail("retried permanent access denial"))
+    with pytest.raises(PermissionError, match="access denied"):
+        pe._publish_export_directory(tmp_path / "stage", tmp_path / "output")
 
 
 def test_manifest_record_contains_required_provenance_fields(tmp_path: Path) -> None:
@@ -389,3 +448,5 @@ def test_cli_figure_requires_run_and_output() -> None:
     )
     assert completed.returncode == 2
     assert "requires both --run-dir and --output-dir" in completed.stderr
+
+

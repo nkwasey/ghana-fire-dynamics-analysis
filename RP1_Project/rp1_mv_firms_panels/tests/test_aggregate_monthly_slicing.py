@@ -91,6 +91,7 @@ def test_aggregate_monthly_explicit_window_filters_months() -> None:
         sensor="viirs",
         run_id="testrun",
         fires_canonical_df=fires,
+        fires_frp_canonical_df=fires.loc[fires.conf_cat.isin(["n", "h"])],
         start_yyyymm=202402,
         end_yyyymm=202402,
         write_outputs=False,

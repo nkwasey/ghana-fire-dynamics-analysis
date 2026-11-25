@@ -95,6 +95,11 @@ def test_current_scientific_targets_have_explicit_qualification_states() -> None
     assert by_id["discrete_poisson"].qualification_status == "python_interface_qualified_external_execution_deferred"
     assert by_id["space_time_permutation"].qualification_status == "python_interface_qualified_external_execution_deferred"
     assert by_id["hierarchical_non_overlapping"].qualification_status == "configuration_interface_qualified"
+    local = by_id["local_morans_i"]
+    assert local.status == "implemented"
+    assert local.qualification_status == "study_design_defined_implementation_reference_verified"
+    assert local.parameter_provenance["p_value_convention"] == "study_design_defined"
+    assert local.parameter_provenance["conditional_mechanism"] == "study_design_defined"
 
 
 def test_method_authority_set_is_exactly_the_current_scientific_contract() -> None:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from generated_run_reference import publication_source_root
 
 from pathlib import Path
 from io import BytesIO
@@ -8,6 +9,7 @@ import json
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 import numpy as np
 import pandas as pd
 import pytest
@@ -18,11 +20,11 @@ import io
 from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.data_io import load_data_authorities
 from rp1_analysis_v1.figures import (
+    common_trajectory_y_limits,
     draw_circular_mean_timing,
     draw_coefficient_or_plot,
     draw_district_seasonal_heatmap,
     draw_resultant_length_by_group,
-    draw_seasonality_lines,
     draw_shared_trajectory_key,
     draw_stacked_proportions,
     draw_trajectory_panel,
@@ -40,9 +42,8 @@ from rp1_analysis_v1.grid_rendering import (
     ensure_axis_labels_inside_canvas,
 )
 from rp1_analysis_v1.mapping import (
-    draw_acz_choropleth_axis,
-    draw_categorical_axis,
     draw_choropleth_axis,
+    draw_rate_comparison_maps,
     prepare_geography,
 )
 from rp1_analysis_v1.paths import ProjectPaths
@@ -50,7 +51,7 @@ from rp1_analysis_v1.presentation import load_figure_specs
 from rp1_analysis_v1.style import PublicationStyle
 
 ROOT = Path(__file__).resolve().parents[1]
-PUB = ROOT / "data/authorities/publication"
+
 
 
 def _intersects(a, b, tol=0.0) -> bool:
@@ -74,6 +75,7 @@ def _assert_visible_text_inside_canvas(fig, *, tol_px: float = 1.0) -> None:
 
 @pytest.fixture(scope="module")
 def context():
+    publication_source_root(ROOT)
     paths = ProjectPaths(ROOT)
     bundle = load_configuration_bundle(ROOT / "config")
     style = PublicationStyle.from_contract(bundle.figure)
@@ -84,20 +86,23 @@ def context():
 
 
 def _source(name: str) -> pd.DataFrame:
-    return pd.read_csv(PUB / name)
+    return pd.read_csv(publication_source_root(ROOT) / name)
 
 
 def test_f2_actual_paired_map_geometry_and_cartographic_alignment(context) -> None:
-    bundle, style, _auth, geo, specs = context
+    _bundle, style, _auth, geo, specs = context
     spec = specs["F2"]
+    opts = spec.renderer_options
     frame = _source("long_run_spatial_rate_presentation_source.csv")
     layout = style.grid_for(spec.layout_role)
     grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
     apply_grid_spacing(grid.figure, layout, style=style)
     a = frame.loc[frame["panel"].eq("direct_acz_long_run_rate")]
     b = frame.loc[frame["panel"].eq("district_long_run_rate")]
-    pa = draw_acz_choropleth_axis(grid.figure, grid.data_axes[0], geo, a, value="value", colorbar_label=str(spec.renderer_options["panel_colorbar_labels"][0]), style=style)
-    pb = draw_choropleth_axis(grid.figure, grid.data_axes[1], geo, b, value="value", colorbar_label=str(spec.renderer_options["panel_colorbar_labels"][1]), style=style)
+    pa, pb = draw_rate_comparison_maps(
+        grid.figure, grid.data_axes, geo, a, b,
+        colorbar_label=str(opts["shared_rate_colorbar_label"]), cmap=opts["panel_colormaps"][0], style=style,
+    )
     try:
         grid.figure.canvas.draw()
         ba = pa.map_ax.get_position().bounds
@@ -108,6 +113,12 @@ def test_f2_actual_paired_map_geometry_and_cartographic_alignment(context) -> No
         assert pa.map_ax.get_xlim() == pb.map_ax.get_xlim()
         assert pa.map_ax.get_ylim() == pb.map_ax.get_ylim()
         assert pa.map_ax.get_aspect() == pb.map_ax.get_aspect()
+        [shared] = [ax for ax in grid.figure.axes if ax.get_gid() == "map-shared-burned-area-rate-colorbar"]
+        assert shared.get_xlim()[0] == 0
+        assert shared.get_xlim()[1] >= max(a["value"].max(), b["value"].max())
+        assert shared.get_position().width > pa.original_cell_bounds[2] + pb.original_cell_bounds[2]
+        assert shared.get_position().height == pytest.approx(pa.colorbar_or_categorical_key_ax.get_position().height)
+        assert not any(ax.get_gid() == "map-colorbar-grid" for ax in grid.figure.axes)
         for panel in (pa, pb):
             assert any(line.get_gid() == "map-scale-bar" for line in panel.map_ax.lines)
             assert any(getattr(x, "get_gid", lambda: None)() == "map-north-arrow" for x in panel.map_ax.texts)
@@ -116,49 +127,91 @@ def test_f2_actual_paired_map_geometry_and_cartographic_alignment(context) -> No
         plt.close(grid.figure)
 
 
-def test_f3_dedicated_legend_band_clearance_and_equal_lower_maps(context) -> None:
-    _bundle, style, _auth, geo, specs = context
+def test_f3_equal_maps_with_separate_continuous_and_categorical_keys(context, monkeypatch) -> None:
+    from rp1_analysis_v1 import publication
+
+    _bundle, style, auth, _geo, specs = context
     spec = specs["F3"]
-    opts = spec.renderer_options
-    frame = _source("seasonality_spatial_organisation_presentation_source.csv")
-    layout = style.grid_for(spec.layout_role)
-    grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
-    apply_grid_spacing(grid.figure, layout, style=style)
-    banded = build_vertical_band_axes(
-        grid.figure, grid.data_axes[0],
-        band_fraction=float(opts["seasonality_legend_band_fraction"]),
-        gap_fraction=float(opts["seasonality_legend_gap_fraction"]),
-        horizontal_inset_fraction=float(opts["seasonality_horizontal_inset_fraction"]),
-        gid_prefix="f3-seasonality",
-    )
-    p0 = frame.loc[frame["panel"].eq("acz_seasonality")]
-    draw_seasonality_lines(banded.plot_ax, p0, xlabel=str(spec.panel_xlabels[0]), ylabel=str(spec.panel_ylabels[0]), style=style, legend_ax=banded.band_ax, legend_ncol=int(opts["seasonality_legend_ncol"]))
-    p1 = frame.loc[frame["panel"].eq("district_departure")]
-    p2 = frame.loc[frame["panel"].eq("local_moran")]
-    m1 = draw_choropleth_axis(grid.figure, grid.data_axes[1], geo, p1, value="value", colorbar_label=str(opts["panel_colorbar_labels"][1]), style=style, cmap=str(opts["panel_colormaps"][1]))
-    m2 = draw_categorical_axis(grid.figure, grid.data_axes[2], geo, p2, category="local_class", style=style)
-    try:
-        grid.figure.canvas.draw()
-        renderer = grid.figure.canvas.get_renderer()
-        xlabel_box = banded.plot_ax.xaxis.label.get_window_extent(renderer)
-        legend = banded.band_ax.get_legend()
+    authority = _source("seasonality_spatial_organisation_presentation_source.csv")
+    frame = publication._figure_data(spec, context={spec.source_attribute: authority}, summary=None)
+    assert frame is not None
+    assert list(dict.fromkeys(frame["panel"])) == ["district_departure", "local_moran"]
+    assert spec.panel_count == 2
+
+    def inspect(fig, render_style):
+        try:
+            m1, m2 = [ax for ax in fig.axes if str(ax.get_gid()).endswith("-map-viewport")]
+            [bar] = [ax for ax in fig.axes if ax.get_gid() == "map-colorbar-grid"]
+            [key] = [ax.get_legend() for ax in fig.axes
+                     if ax.get_legend() is not None and ax.get_legend().get_gid() == "map-local-moran-key"]
+            fig.canvas.draw()
+            renderer = fig.canvas.get_renderer()
+            assert m1.get_position().bounds[1:] == pytest.approx(m2.get_position().bounds[1:])
+            assert m1.get_xlim() == m2.get_xlim()
+            assert m1.get_ylim() == m2.get_ylim()
+            assert m1.get_aspect() == m2.get_aspect()
+            assert fig._suptitle is None and not any(ax.get_title() for ax in fig.axes)
+            assert {text.get_text() for ax in (m1, m2) for text in ax.texts} >= {"(a)", "(b)"}
+            bar_box = bar.get_window_extent(renderer)
+            key_box = key.get_window_extent(renderer)
+            assert bar_box.y1 < m1.get_window_extent(renderer).y0
+            assert key_box.y1 < m2.get_window_extent(renderer).y0
+            assert bar_box.x1 < key_box.x0
+            assert {label.get_text() for label in key.get_texts()} <= {"HH", "LL", "HL", "LH", "NS", "ISLAND"}
+            cmin, cmax = bar.get_xlim()
+            assert cmin < 0 and cmin == -cmax
+            _assert_visible_text_inside_canvas(fig)
+            return export_figure(fig, render_style)
+        finally:
+            plt.close(fig)
+
+    monkeypatch.setattr(publication, "export_figure", inspect)
+    publication._render(spec, frame, authorities=auth, style=style)
+
+
+def test_fs1_separate_climatology_preserves_data_and_toggles_plot_title(context, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from rp1_analysis_v1 import figures, publication
+    from rp1_analysis_v1.presentation import get_presentation_export_spec
+    from rp1_analysis_v1.presentation_rq1 import render_rq1_acz_seasonality
+
+    bundle, style, auth, _geo, specs = context
+    spec = specs["FS1"]
+    authority = _source("seasonality_spatial_organisation_presentation_source.csv")
+    frame = publication._figure_data(spec, context={spec.source_attribute: authority}, summary=None)
+    assert frame is not None and len(frame) == 60
+    assert set(frame["panel"]) == {"acz_seasonality"}
+    observed_titles: list[str] = []
+
+    def inspect(fig, render_style):
+        axes = {ax.get_gid(): ax for ax in fig.axes}
+        plot = axes["acz-seasonality-plot"]
+        legend = axes["acz-seasonality-band"].get_legend()
         assert legend is not None
-        legend_box = legend.get_window_extent(renderer)
-        assert not _intersects(xlabel_box, legend_box)
-        lower_top = max(m1.map_ax.get_window_extent(renderer).y1, m2.map_ax.get_window_extent(renderer).y1)
-        assert legend_box.y0 > lower_top
-        b1, b2 = m1.map_ax.get_position().bounds, m2.map_ax.get_position().bounds
-        assert b1[2] == pytest.approx(b2[2], abs=1e-12)
-        assert b1[3] == pytest.approx(b2[3], abs=1e-12)
-        assert b1[1] == pytest.approx(b2[1], abs=1e-12)
-        assert m1.map_ax.get_xlim() == m2.map_ax.get_xlim()
-        assert m1.map_ax.get_ylim() == m2.map_ax.get_ylim()
-        assert style.circular_mean_month_display.legend_title in legend.get_title().get_text()
-    finally:
-        plt.close(grid.figure)
+        assert fig._suptitle is None
+        observed_titles.append(plot.get_title())
+        assert len(plot.lines) == len({line.get_marker() for line in plot.lines}) == 5
+        for code, line in zip(("CZ", "FZ", "GS", "SS", "TZ"), plot.lines, strict=True):
+            expected = frame.loc[frame["parent_code"].eq(code)].sort_values("month")
+            np.testing.assert_array_equal(line.get_xdata(), expected["month"])
+            np.testing.assert_array_equal(line.get_ydata(), expected["value"])
+        assert all("μ=" in item.get_text() and "R=" in item.get_text() for item in legend.get_texts())
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        assert legend.get_window_extent(renderer).y1 < plot.xaxis.label.get_window_extent(renderer).y0
+        _assert_visible_text_inside_canvas(fig)
+        return export_figure(fig, render_style)
+
+    monkeypatch.setattr(figures, "export_figure", inspect)
+    publication._render(spec, frame, authorities=auth, style=style)
+    presentation_spec = get_presentation_export_spec("rq1_acz_seasonality", bundle.figure)
+    context = SimpleNamespace(registry=bundle.figure.presentation_export, style=style)
+    render_rq1_acz_seasonality(frame, spec=presentation_spec, context=context)
+    assert observed_titles == ["", presentation_spec.label]
 
 
-def test_f4_five_year_labels_shared_ylabel_clearance_and_key_semantics(context) -> None:
+def test_f4_bottom_year_labels_shared_scales_ylabel_clearance_and_key_semantics(context) -> None:
     _bundle, style, _auth, _geo, specs = context
     spec = specs["F4"]
     opts = spec.renderer_options
@@ -168,13 +221,16 @@ def test_f4_five_year_labels_shared_ylabel_clearance_and_key_semantics(context) 
     apply_grid_spacing(grid.figure, layout, style=style)
     groups = list(opts["panel_order"])
     trajectory_styles = opts["trajectory_styles"]
+    common_limits = common_trajectory_y_limits(
+        frame, group=opts["group"], x=opts["x"], y=opts["y"], slope=opts["slope"],
+    )
     for idx, (ax, key) in enumerate(zip(grid.data_axes, groups, strict=True)):
         panel = frame.loc[frame[str(opts["group"])].astype(str).eq(str(key))]
         draw_trajectory_panel(
             ax, panel, x=str(opts["x"]), y=str(opts["y"]), slope=str(opts["slope"]),
             annotation_fields=tuple(str(x) for x in opts["annotation_fields"]),
             group_label=str(key), xlabel=str(spec.panel_xlabels[idx]), ylabel="", style=style,
-            trajectory_styles=trajectory_styles,
+            trajectory_styles=trajectory_styles, common_y_limits=common_limits,
         )
     aux = grid.auxiliary_axes[str(opts["auxiliary_key"]["cell_id"])]
     draw_shared_trajectory_key(aux, entries=opts["auxiliary_key"]["entries"], style=style, trajectory_styles=trajectory_styles)
@@ -185,12 +241,15 @@ def test_f4_five_year_labels_shared_ylabel_clearance_and_key_semantics(context) 
         grid.figure.canvas.draw()
         renderer = grid.figure.canvas.get_renderer()
         assert len(grid.data_axes) == 5
-        assert all(ax.get_xlabel() == "Year" for ax in grid.data_axes)
+        assert [ax.get_xlabel() for ax in grid.data_axes] == ["", "", "", "Year", "Year"]
+        assert all(ax.get_ylim() == common_limits for ax in grid.data_axes)
+        assert all(ax.get_xlim() == grid.data_axes[0].get_xlim() for ax in grid.data_axes)
         assert not any(t.get_text() == "(f)" for ax in grid.figure.axes for t in ax.texts)
         canvas = grid.figure.get_window_extent(renderer)
         for ax in grid.data_axes:
-            xb = ax.xaxis.label.get_window_extent(renderer)
-            assert canvas.contains(xb.x0, xb.y0) and canvas.contains(xb.x1, xb.y1)
+            if ax.get_xlabel():
+                xb = ax.xaxis.label.get_window_extent(renderer)
+                assert canvas.contains(xb.x0, xb.y0) and canvas.contains(xb.x1, xb.y1)
         tick_boxes = [tick.label1.get_window_extent(renderer) for ax in (grid.data_axes[0], grid.data_axes[2], grid.data_axes[4]) for tick in ax.yaxis.get_major_ticks() if tick.label1.get_text()]
         shared_box = shared.get_window_extent(renderer)
         assert all(not _intersects(shared_box, box) for box in tick_boxes)
@@ -215,11 +274,19 @@ def test_f5_state_legend_and_effect_gutter_are_contained(context) -> None:
     grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
     apply_grid_spacing(grid.figure, layout, style=style)
     p0 = frame.loc[frame["panel"].eq("mismatch_geography")]
-    map_panel = draw_choropleth_axis(grid.figure, grid.data_axes[0], geo, p0, value="value", colorbar_label=str(opts["panel_colorbar_labels"][0]), style=style, cmap=str(opts["panel_colormaps"][0]))
+    map_panel = draw_choropleth_axis(
+        grid.figure, grid.data_axes[0], geo, p0, value="value", colorbar_label=str(opts["panel_colorbar_labels"][0]),
+        style=style, cmap=str(opts["panel_colormaps"][0]), show_percent=True,
+    )
     p1 = frame.loc[frame["panel"].eq("four_state_correspondence")]
     state_band = build_vertical_band_axes(grid.figure, grid.data_axes[1], band_fraction=float(opts["state_legend_band_fraction"]), gap_fraction=float(opts["state_legend_gap_fraction"]), gid_prefix="f5-four-state")
     state_order = list(dict.fromkeys(p1["state"].astype(str).tolist()))
-    draw_stacked_proportions(state_band.plot_ax, p1, category="parent_code", state="state", proportion="proportion", state_order=state_order, ylabel=str(spec.panel_ylabels[1]), style=style, legend_ax=state_band.band_ax, display_aliases=dict(opts["state_display_aliases"]), legend_ncol=int(opts["state_legend_ncol"]))
+    draw_stacked_proportions(
+        state_band.plot_ax, p1, category="parent_code", state="state", proportion="proportion", state_order=state_order,
+        ylabel=str(spec.panel_ylabels[1]), style=style, legend_ax=state_band.band_ax,
+        display_aliases=dict(opts["state_display_aliases"]), legend_ncol=int(opts["state_legend_ncol"]),
+        state_styles=opts["state_styles"], show_percent=True,
+    )
     p2 = frame.loc[frame["panel"].eq("focal_adjusted_associations")]
     gutter = build_horizontal_gutter_axes(grid.figure, grid.data_axes[2], label_fraction=float(opts["effect_label_gutter_fraction"]), gap_fraction=float(opts["effect_label_gap_fraction"]), gid_prefix="f5-focal-effects")
     draw_coefficient_or_plot(
@@ -234,6 +301,7 @@ def test_f5_state_legend_and_effect_gutter_are_contained(context) -> None:
         label_ax=gutter.label_ax,
         display_aliases=dict(opts["effect_display_aliases"]),
         vertical_padding_rows=style.geometry.effect_vertical_padding_rows,
+        decimal_ticks=opts["effect_decimal_ticks"],
     )
     try:
         grid.figure.canvas.draw()
@@ -245,6 +313,10 @@ def test_f5_state_legend_and_effect_gutter_are_contained(context) -> None:
         lb = legend.get_window_extent(renderer)
         assert lb.x0 >= b_left - 1 and lb.x1 <= b_right + 1
         assert {t.get_text() for t in legend.get_texts()} == {"Both zero", "MCD64A1 only", "VIIRS only", "Both positive"}
+        hatches = {handle.get_hatch() for handle in legend.legend_handles if handle.get_hatch()}
+        assert hatches == {"//", ".."}
+        assert state_band.plot_ax.get_yticklabels()[-1].get_text() == "100%"
+        assert map_panel.colorbar_or_categorical_key_ax.get_xticklabels()[-1].get_text() == "100%"
         original_c = gutter.original_cell_bounds
         c_left = original_c[0] * grid.figure.bbox.width
         c_right = (original_c[0] + original_c[2]) * grid.figure.bbox.width
@@ -262,7 +334,7 @@ def test_f5_state_legend_and_effect_gutter_are_contained(context) -> None:
 
 def test_s1_heatmap_xlabel_and_colourbar_have_positive_clearance(context) -> None:
     _bundle, style, _auth, _geo, specs = context
-    spec = specs["S1"]
+    spec = specs["FS2"]
     frame = _source("district_seasonal_diagnostics_source.csv")
     pivot, summary = district_seasonal_components(frame)
     layout = style.grid_for(spec.layout_role)
@@ -294,6 +366,35 @@ def test_s1_heatmap_xlabel_and_colourbar_have_positive_clearance(context) -> Non
         plt.close(grid.figure)
 
 
+def test_f5_composed_colourbar_caption_keeps_print_clearance(context, monkeypatch) -> None:
+    from rp1_analysis_v1 import publication
+
+    _bundle, style, auth, _geo, specs = context
+    spec = specs["F5"]
+    frame = _source("cross_product_observability_presentation_source.csv")
+    original_export = publication.export_figure
+
+    def inspect_export(fig, render_style):
+        rendered = original_export(fig, render_style)
+        canvas = FigureCanvasAgg(fig)
+        canvas.draw()
+        renderer = canvas.get_renderer()
+        bar = next(ax for ax in fig.axes if ax.get_gid() == "map-colorbar-grid")
+        caption = bar.xaxis.label.get_window_extent(renderer)
+        ticks = bar.get_xticklabels()
+        assert [tick.get_text() for tick in ticks] == ["0%", "20%", "40%", "60%", "80%", "100%"]
+        tick_gap = min(tick.get_window_extent(renderer).y0 - caption.y1 for tick in ticks)
+        page_gap = caption.y0 - fig.bbox.y0
+        for print_width_mm in (140, 160, 200):
+            mm_per_px = 25.4 * (print_width_mm / 200) / fig.dpi
+            assert tick_gap * mm_per_px > 1
+            assert page_gap * mm_per_px > 1
+        return rendered
+
+    monkeypatch.setattr(publication, "export_figure", inspect_export)
+    publication._render(spec, frame, authorities=auth, style=style)
+
+
 def test_target_figures_keep_symmetric_canvas_geometry_and_clear_export_border(context) -> None:
     bundle, style, auth, _geo, specs = context
     source_map = {
@@ -301,7 +402,7 @@ def test_target_figures_keep_symmetric_canvas_geometry_and_clear_export_border(c
         "F3": "seasonality_spatial_organisation_presentation_source.csv",
         "F4": "annual_trend_source.csv",
         "F5": "cross_product_observability_presentation_source.csv",
-        "S1": "district_seasonal_diagnostics_source.csv",
+        "FS2": "district_seasonal_diagnostics_source.csv",
     }
     from rp1_analysis_v1.publication import _render
     assert style.geometry.outer_left_fraction == style.geometry.outer_right_fraction
@@ -325,7 +426,7 @@ def test_final_target_renders_keep_exact_png_and_pdf_canvas(context) -> None:
         "F3": "seasonality_spatial_organisation_presentation_source.csv",
         "F4": "annual_trend_source.csv",
         "F5": "cross_product_observability_presentation_source.csv",
-        "S1": "district_seasonal_diagnostics_source.csv",
+        "FS2": "district_seasonal_diagnostics_source.csv",
     }
     from rp1_analysis_v1.publication import _render
 
@@ -340,47 +441,45 @@ def test_final_target_renders_keep_exact_png_and_pdf_canvas(context) -> None:
         assert float(page.mediabox.height) == pytest.approx(425.1968503937, abs=1e-6)
 
 
-def test_governed_map_colourbar_band_height_is_realised_in_f2_and_f5(context) -> None:
+def test_governed_map_colourbar_band_height_is_realised_in_f5(context) -> None:
     _bundle, style, _auth, geo, specs = context
-    cases = (
-        ("F2", "long_run_spatial_rate_presentation_source.csv", "direct_acz_long_run_rate", True),
-        ("F5", "cross_product_observability_presentation_source.csv", "mismatch_geography", False),
+    spec = specs["F5"]
+    frame = _source("cross_product_observability_presentation_source.csv")
+    layout = style.grid_for(spec.layout_role)
+    grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
+    apply_grid_spacing(grid.figure, layout, style=style)
+    panel = draw_choropleth_axis(
+        grid.figure, grid.data_axes[0], geo, frame.loc[frame["panel"].eq("mismatch_geography")],
+        value="value", colorbar_label=str(spec.renderer_options["panel_colorbar_labels"][0]), style=style,
+        cmap=str(spec.renderer_options["panel_colormaps"][0]), show_percent=True,
     )
-    for fid, filename, panel_name, is_acz in cases:
-        spec = specs[fid]
-        frame = _source(filename)
-        p = frame.loc[frame["panel"].eq(panel_name)]
-        layout = style.grid_for(spec.layout_role)
-        grid = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
-        apply_grid_spacing(grid.figure, layout, style=style)
-        draw = draw_acz_choropleth_axis if is_acz else draw_choropleth_axis
-        panel = draw(
-            grid.figure,
-            grid.data_axes[0],
-            geo,
-            p,
-            value="value",
-            colorbar_label=str(spec.renderer_options["panel_colorbar_labels"][0]),
-            style=style,
-            **({} if is_acz else {"cmap": str(spec.renderer_options["panel_colormaps"][0])}),
+    try:
+        cell_x, cell_y, cell_width, cell_height = panel.original_cell_bounds
+        total = (
+            style.geometry.map_height_ratio
+            + style.geometry.map_legend_band_height
+            + style.geometry.map_colourbar_band_height
+            + 2 * style.geometry.map_inter_band_spacing
         )
-        try:
-            original_h = panel.original_cell_bounds[3]
-            total = (
-                style.geometry.map_height_ratio
-                + style.geometry.map_legend_band_height
-                + style.geometry.map_colourbar_band_height
-                + 2 * style.geometry.map_inter_band_spacing
-            )
-            expected = original_h * style.geometry.map_colourbar_band_height / total
-            assert panel.colorbar_or_categorical_key_ax.get_position().height == pytest.approx(expected, abs=1e-12)
-            assert panel.map_ax.get_position().height > panel.colorbar_or_categorical_key_ax.get_position().height * 10
-            for ax in (panel.map_ax, panel.support_or_status_legend_ax, panel.colorbar_or_categorical_key_ax):
-                x0, y0, w, h = ax.get_position().bounds
-                assert 0 <= x0 <= 1 and 0 <= y0 <= 1
-                assert x0 + w <= 1 and y0 + h <= 1
-        finally:
-            plt.close(grid.figure)
+        unit = cell_height / total
+        expected_band_height = unit * style.geometry.map_colourbar_band_height
+        bar = panel.colorbar_or_categorical_key_ax.get_position()
+        legend = panel.support_or_status_legend_ax.get_position()
+        # The percentage bar leaves room for its ticks and caption inside the reserved band.
+        assert bar.y1 == pytest.approx(cell_y + expected_band_height, abs=1e-12)
+        assert bar.x0 == pytest.approx(cell_x, abs=1e-12)
+        assert bar.width == pytest.approx(cell_width, abs=1e-12)
+        assert bar.y0 >= cell_y - 1e-12
+        assert 0 < bar.height <= expected_band_height + 1e-12
+        expected_gap = unit * style.geometry.map_inter_band_spacing
+        assert legend.y0 - bar.y1 == pytest.approx(expected_gap, abs=1e-12)
+        assert panel.map_ax.get_position().height > expected_band_height * 10
+        for ax in (panel.map_ax, panel.support_or_status_legend_ax, panel.colorbar_or_categorical_key_ax):
+            x0, y0, w, h = ax.get_position().bounds
+            assert 0 <= x0 <= 1 and 0 <= y0 <= 1
+            assert x0 + w <= 1 and y0 + h <= 1
+    finally:
+        plt.close(grid.figure)
 
 
 def test_f5_effect_labels_are_fully_contained_and_scientific_x_data_are_unchanged(context) -> None:
@@ -412,6 +511,7 @@ def test_f5_effect_labels_are_fully_contained_and_scientific_x_data_are_unchange
         label_ax=gutter.label_ax,
         display_aliases=dict(opts["effect_display_aliases"]),
         vertical_padding_rows=style.geometry.effect_vertical_padding_rows,
+        decimal_ticks=opts["effect_decimal_ticks"],
     )
     try:
         grid.figure.canvas.draw()
@@ -422,9 +522,10 @@ def test_f5_effect_labels_are_fully_contained_and_scientific_x_data_are_unchange
             key=lambda t: str(t.get_gid()),
         )
         assert [t.get_text() for t in labels] == [
-            "VIIRS detection count\n(per doubling)",
-            "Mean VIIRS FRP\n(per doubling)",
+            "VIIRS count",
+            "Mean daily\nmaximum FRP",
         ]
+        assert [tick.get_text() for tick in gutter.plot_ax.get_xticklabels()] == ["0.4", "0.6", "0.8", "1.0"]
         for text in labels:
             box = text.get_window_extent(renderer)
             assert box.x0 >= label_box.x0 - 1 and box.x1 <= label_box.x1 + 1
@@ -441,9 +542,9 @@ def test_f5_effect_labels_are_fully_contained_and_scientific_x_data_are_unchange
         plt.close(grid.figure)
 
 
-def test_s1_heatmap_plotting_area_increases_against_pre_refinement_geometry(context) -> None:
+def test_fs2_heatmap_plotting_area_increases_against_larger_legend_band(context) -> None:
     _bundle, style, _auth, _geo, specs = context
-    spec = specs["S1"]
+    spec = specs["FS2"]
     layout = style.grid_for(spec.layout_role)
 
     governed = build_grid_figure(layout, figure_size=style.dimensions_for(spec.layout_role))
@@ -475,7 +576,7 @@ def test_s1_heatmap_plotting_area_increases_against_pre_refinement_geometry(cont
 
 
 def test_target_publication_source_bytes_match_governed_manifest() -> None:
-    manifest = json.loads((PUB / "SOURCE_MANIFEST.json").read_text(encoding="utf-8"))
+    manifest = json.loads((publication_source_root(ROOT) / "SOURCE_MANIFEST.json").read_text(encoding="utf-8"))
     names = {
         "long_run_spatial_rate_presentation_source",
         "seasonality_spatial_organisation_presentation_source",
@@ -501,11 +602,17 @@ def test_actual_target_figures_keep_all_visible_text_inside_canvas(context, monk
         "F3": "seasonality_spatial_organisation_presentation_source.csv",
         "F4": "annual_trend_source.csv",
         "F5": "cross_product_observability_presentation_source.csv",
-        "S1": "district_seasonal_diagnostics_source.csv",
+        "FS2": "district_seasonal_diagnostics_source.csv",
     }
     inspected: list[str] = []
 
     def _inspecting_export(fig, render_style):
+        assert fig._suptitle is None
+        assert not any(
+            ax.get_title(loc=position)
+            for ax in fig.axes
+            for position in ("left", "center", "right")
+        )
         ensure_axis_labels_inside_canvas(fig, tuple(fig.axes))
         fig.canvas.draw()
         renderer = fig.canvas.get_renderer()

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .atomic_io import publish_file_no_replace
 from .config import OutputContract
 
 
@@ -93,10 +94,10 @@ def _atomic_write_bytes(destination: Path, payload: bytes, *, overwrite: bool) -
             os.replace(tmp, destination)
         else:
             try:
-                os.link(tmp, destination)
+                publish_file_no_replace(tmp, destination)
             except FileExistsError:
                 raise FileExistsError(destination) from None
-            tmp.unlink()
+            tmp.unlink(missing_ok=True)
     finally:
         if tmp.exists():
             tmp.unlink()

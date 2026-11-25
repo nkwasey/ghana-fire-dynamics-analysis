@@ -1,4 +1,5 @@
 from __future__ import annotations
+from source_hygiene_reference import archive_input_literals
 
 import ast
 import importlib.util
@@ -15,6 +16,7 @@ import pytest
 
 from rp1_analysis_v1.config import load_qualification_contract
 from rp1_analysis_v1.source_projection import (
+    _filesystem_path,
     QualificationProjectionError,
     inventory_governed_source,
     probe_projected_imports,
@@ -52,7 +54,7 @@ def _copy_release_tree(source: Path, destination: Path) -> None:
             or name.endswith(file_suffixes)
         }
 
-    shutil.copytree(source, destination, ignore=ignore)
+    shutil.copytree(_filesystem_path(source), _filesystem_path(destination), ignore=ignore)
 
 
 def _minimal_repository(tmp_path: Path) -> Path:
@@ -85,6 +87,12 @@ def _minimal_repository(tmp_path: Path) -> Path:
             f"[project]\nname={package.distribution!r}\nversion='0.0.0'\n",
             encoding="utf-8",
         )
+    for project, member, assignment in CONTRACT.repository.embedded_source_allowlists:
+        path = root / project / member
+        path.parent.mkdir(parents=True, exist_ok=True)
+        source = next(p for p in CONTRACT.packages if p.project_root == project)
+        module = Path(source.source_root).relative_to(project) / source.module / "__init__.py"
+        path.write_text(f"{assignment} = {('pyproject.toml', module.as_posix(), member)!r}\n", encoding="utf-8")
     return root
 
 
@@ -92,39 +100,41 @@ def _projection_path(tmp_path: Path, parent: str = "external") -> Path:
     return tmp_path / parent / CONTRACT.projection.clean_projection_subdirectory
 
 
-def test_stale_root_evidence_is_cleared_without_touching_unrelated_files(tmp_path: Path) -> None:
+def test_public_qualifier_preserves_existing_evidence_and_unrelated_files(tmp_path: Path) -> None:
     qualifier = _load_qualifier_module()
     evidence = tmp_path / "evidence"
     evidence.mkdir()
-    for name in qualifier.ROOT_EVIDENCE_FILES:
-        (evidence / name).write_text("stale\n", encoding="utf-8")
-    unrelated = evidence / "retain_me.txt"
-    unrelated.write_text("authority outside qualifier runtime\n", encoding="utf-8")
+    (evidence / "logs").mkdir()
+    protected = {
+        "qualification_report.json": b"prior proof\n",
+        "projection_evidence.json": b"prior projection proof\n",
+        "logs/retain_me.txt": b"unrelated file in a reserved name\n",
+    }
+    for name, data in protected.items():
+        (evidence / name).write_bytes(data)
+    with pytest.raises(ValueError, match="evidence directory must be a fresh path"):
+        qualifier.qualify(repository_root=REPOSITORY, evidence_dir=evidence,
+                          pytest_base_temp=tmp_path / "pytest", source_only=True)
+    assert {name: (evidence / name).read_bytes() for name in protected} == protected
+    assert sorted(path.name for path in evidence.iterdir()) == [
+        "logs", "projection_evidence.json", "qualification_report.json",
+    ]
 
-    removed = qualifier._clear_stale_root_evidence(REPOSITORY, evidence)
 
-    assert set(removed) == set(qualifier.ROOT_EVIDENCE_FILES)
-    assert all(not (evidence / name).exists() for name in qualifier.ROOT_EVIDENCE_FILES)
-    assert unrelated.read_text(encoding="utf-8") == "authority outside qualifier runtime\n"
-
-
-def test_stale_root_evidence_symlink_is_unlinked_without_following_target(tmp_path: Path) -> None:
+def test_public_evidence_directory_must_not_be_a_symlink(tmp_path: Path) -> None:
     qualifier = _load_qualifier_module()
-    evidence = tmp_path / "evidence"
-    evidence.mkdir()
-    target = tmp_path / "outside-authority.txt"
-    target.write_text("must survive\n", encoding="utf-8")
-    link = evidence / qualifier.ROOT_EVIDENCE_FILES[0]
+    target = tmp_path / "uncreated-target"
+    link = tmp_path / "evidence"
     try:
-        link.symlink_to(target)
+        link.symlink_to(target, target_is_directory=True)
     except (OSError, NotImplementedError):
         pytest.skip("symlink creation unavailable")
 
-    removed = qualifier._clear_stale_root_evidence(REPOSITORY, evidence)
-
-    assert link.name in removed
-    assert not link.exists()
-    assert target.read_text(encoding="utf-8") == "must survive\n"
+    with pytest.raises(ValueError, match="symbolic link or junction"):
+        qualifier.qualify(repository_root=REPOSITORY, evidence_dir=link,
+                          pytest_base_temp=tmp_path / "pytest", source_only=True)
+    assert link.is_symlink()
+    assert not target.exists()
 
 
 def test_runtime_symlink_poisoning_fails_closed(tmp_path: Path) -> None:
@@ -139,9 +149,38 @@ def test_runtime_symlink_poisoning_fails_closed(tmp_path: Path) -> None:
     except (OSError, NotImplementedError):
         pytest.skip("symlink creation unavailable")
 
-    with pytest.raises(ValueError, match="may not be a symlink"):
+    with pytest.raises(ValueError, match="must be fresh"):
         qualifier._prepare_external_workspace(REPOSITORY, evidence, CONTRACT)
     assert outside.is_dir()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Exercises native Windows MAX_PATH behavior")
+def test_external_workspace_preserves_deep_stale_tree_and_creates_fresh_workspace(tmp_path: Path) -> None:
+    qualifier = _load_qualifier_module()
+    repository = _minimal_repository(tmp_path)
+    source_authority = repository / "README.md"
+    before = source_authority.read_bytes()
+    evidence = tmp_path / "external evidence with spaces"
+    stale = (evidence / "clean_projection"
+             / ("long_stale_projection_" + "x" * 45)
+             / ("preserved_scope_" + "x" * 45) / "authority.json")
+    assert len(str(stale)) > 260
+    # Independently create a real deep stale tree; the qualifier must handle it.
+    native_stale = Path("\\\\?\\" + str(stale.absolute()))
+    native_stale.parent.mkdir(parents=True)
+    native_stale.write_text("prior qualifier authority", encoding="utf-8")
+    with pytest.raises(ValueError, match="must be fresh"):
+        qualifier._prepare_external_workspace(repository, evidence, CONTRACT)
+    assert native_stale.read_text(encoding="utf-8") == "prior qualifier authority"
+    fresh = tmp_path / ("long_parent_" * 13) / ("long_child_" * 12) / "fresh"
+    assert len(str(fresh)) > 260
+    qualifier._claim_fresh_evidence_directory(fresh)
+    roots = qualifier._prepare_external_workspace(repository, fresh, CONTRACT)
+
+    assert all(qualifier._native_path(path).is_dir() and list(qualifier._native_path(path).iterdir()) == []
+               for path in roots.values())
+    assert source_authority.read_bytes() == before
+    assert all(not str(path).startswith("\\\\?\\") for path in roots.values())
 
 
 def test_repeated_projection_same_destination_recreates_stale_state_idempotently(tmp_path: Path) -> None:
@@ -273,13 +312,8 @@ def test_product_tests_do_not_require_packaged_archive_inputs() -> None:
     violations: list[tuple[str, str]] = []
     for root in test_roots:
         for path in sorted(root.rglob("*.py")):
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            for node in ast.walk(tree):
-                if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
-                    continue
-                value = node.value.strip()
-                if len(value) > 4 and value.casefold().endswith(".zip"):
-                    violations.append((path.relative_to(REPOSITORY).as_posix(), value))
+            for value in archive_input_literals(path.read_text(encoding="utf-8")):
+                violations.append((path.relative_to(REPOSITORY).as_posix(), value))
     assert violations == []
 
 
@@ -294,6 +328,7 @@ def test_production_qualification_code_has_no_user_specific_absolute_paths() -> 
         REPOSITORY / "geo_data_prep/src",
         REPOSITORY / "RP1_Project/rp1_mv_firms_panels/src",
         REPOSITORY / "RP1_Project/rp1_analysis/src",
+        REPOSITORY / "RP1_Project/rp1_firms_archive/src",
         REPOSITORY / "RP1_Project/rp1_analysis/scripts",
     )
     violations: list[tuple[str, str]] = []
@@ -307,13 +342,13 @@ def test_production_qualification_code_has_no_user_specific_absolute_paths() -> 
     assert violations == []
 
 
-def test_repeated_qualifier_lifecycle_recreates_state_and_emits_current_evidence(
+def test_repeated_qualifier_lifecycle_requires_fresh_path_and_preserves_previous_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Exercise the canonical orchestration twice without duplicating its heavy subprocess estate."""
 
     qualifier = _load_qualifier_module()
-    evidence = tmp_path / "same-external-evidence-parent"
+    evidence = tmp_path / "first-external-evidence"
     generation = {"value": "first"}
 
     def fake_run_step(
@@ -355,7 +390,8 @@ def test_repeated_qualifier_lifecycle_recreates_state_and_emits_current_evidence
         evidence_dir=evidence,
         defer_native_environment=True,
     )
-    assert first_code == 0
+    assert first_code == 0, {'hard_failures': first.get('hard_failures'),
+                             'projection_checks': first.get('projection_checks')}
     assert first["status"] == "PASS"
     first_inventory = first["projection_checks"]["source_inventory_sha256"]
     first_run_id = first["qualification_run_id"]
@@ -371,34 +407,41 @@ def test_repeated_qualifier_lifecycle_recreates_state_and_emits_current_evidence
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("poison\n", encoding="utf-8")
     (evidence / "wheels/stale-from-prior-run.whl").write_text("poison\n", encoding="utf-8")
-    (evidence / "projection_evidence.json").write_text('{"stale": true}\n', encoding="utf-8")
-    (evidence / "qualification_report.json").write_text('{"stale": true}\n', encoding="utf-8")
+    previous_report = (evidence / "qualification_report.json").read_bytes()
+    previous_projection = (evidence / "projection_evidence.json").read_bytes()
     unrelated = evidence / "retain_unrelated.txt"
     unrelated.write_text("retain\n", encoding="utf-8")
 
     generation["value"] = "second"
+    with pytest.raises(ValueError, match="evidence directory must be a fresh path"):
+        qualifier.qualify(repository_root=REPOSITORY, evidence_dir=evidence,
+                          defer_native_environment=True)
+    assert (evidence / "qualification_report.json").read_bytes() == previous_report
+    assert (evidence / "projection_evidence.json").read_bytes() == previous_projection
+    fresh_evidence = tmp_path / "second-external-evidence"
     second, second_code = qualifier.qualify(
         repository_root=REPOSITORY,
-        evidence_dir=evidence,
+        evidence_dir=fresh_evidence,
         defer_native_environment=True,
     )
 
-    assert second_code == 0
+    assert second_code == 0, {'hard_failures': second.get('hard_failures'),
+                              'projection_checks': second.get('projection_checks')}
     assert second["status"] == "PASS"
     assert second["qualification_run_id"] != first_run_id
     assert second["projection_checks"]["source_inventory_sha256"] == first_inventory
-    assert set(second["stale_root_evidence_removed"]) == set(qualifier.ROOT_EVIDENCE_FILES)
+    assert second["stale_root_evidence_removed"] == []
     assert unrelated.read_text(encoding="utf-8") == "retain\n"
-    assert not (evidence / "wheels/stale-from-prior-run.whl").exists()
-    assert {path.read_text(encoding="utf-8") for path in (evidence / "wheels").glob("*.whl")} == {"second"}
-    assert not any((evidence / relative).exists() for relative in (
+    assert (evidence / "wheels/stale-from-prior-run.whl").read_text(encoding="utf-8") == "poison\n"
+    assert {path.read_text(encoding="utf-8") for path in (fresh_evidence / "wheels").glob("*.whl")} == {"second"}
+    assert not any((fresh_evidence / relative).exists() for relative in (
         "clean_projection/stale.txt",
         "isolated_install/stale.txt",
         "logs/stale.log",
         "runtime/stale.txt",
     ))
-    current_report = json.loads((evidence / "qualification_report.json").read_text(encoding="utf-8"))
-    current_projection = json.loads((evidence / "projection_evidence.json").read_text(encoding="utf-8"))
+    current_report = json.loads((fresh_evidence / "qualification_report.json").read_text(encoding="utf-8"))
+    current_projection = json.loads((fresh_evidence / "projection_evidence.json").read_text(encoding="utf-8"))
     assert current_report["qualification_run_id"] == second["qualification_run_id"]
     assert current_projection["source_inventory"]["inventory_sha256"] == first_inventory
 
@@ -417,3 +460,20 @@ def test_pytest_summary_parser_records_actual_counts(tmp_path: Path) -> None:
         "skipped": 1,
         "warnings": 2,
     }
+
+
+@pytest.mark.parametrize('node_available,offline_status', [(False, 'PASS'), (True, 'FAIL')])
+def test_c3_prerequisite_or_offline_failure_is_a_hard_source_gate(tmp_path, monkeypatch, node_available, offline_status):
+    qualifier = _load_qualifier_module()
+    called = []
+    def fake_step(name, command, logs_dir, *, cwd, env):
+        called.append((name, cwd))
+        return {'status': offline_status if name == 'c3_offline' else 'PASS'}
+    monkeypatch.setattr(qualifier, 'run_step', fake_step)
+    monkeypatch.setattr(qualifier.shutil, 'which', lambda *args, **kwargs: '/test/node' if node_available else None)
+    states = qualifier._c3_source_checks(tmp_path / 'clean_projection', tmp_path / 'logs', {'PATH': ''})
+    assert states['c3_offline']['status'] == 'FAIL'
+    assert any(state['status'] != 'PASS' for state in states.values())
+    assert ('c3_offline' in [name for name, _ in called]) is node_available
+    if node_available:
+        assert called[-1][1] == tmp_path / 'clean_projection/RP1_Project/rp1_gee_ba_scripts/c3'

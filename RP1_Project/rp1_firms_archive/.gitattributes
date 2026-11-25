@@ -1,0 +1,6 @@
+# Use consistent source text across Windows, WSL and Linux checkouts.
+* text=auto eol=lf
+
+# Preserve checksum-governed reference inputs and Windows launcher bytes.
+data/reference/geography/** -text
+*.cmd -text

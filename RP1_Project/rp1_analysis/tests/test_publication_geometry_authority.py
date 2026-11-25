@@ -127,11 +127,11 @@ def test_invalid_publication_geometry_fails_closed(tmp_path: Path, mutate, messa
         load_figure_contract(_mutated(tmp_path, mutate))
 
 
-def test_s1_heatmap_band_and_gap_are_generic_publication_geometry_not_figure_magic() -> None:
+def test_fs2_heatmap_band_and_gap_are_generic_publication_geometry_not_figure_magic() -> None:
     contract = load_figure_contract(CONFIG)
-    s1 = next(item for item in contract.figures if item.figure_id == "S1")
-    assert "heatmap_colorbar_band_fraction" not in s1.renderer_options
-    assert "heatmap_colorbar_gap_fraction" not in s1.renderer_options
+    fs2 = next(item for item in contract.figures if item.figure_id == "FS2")
+    assert "heatmap_colorbar_band_fraction" not in fs2.renderer_options
+    assert "heatmap_colorbar_gap_fraction" not in fs2.renderer_options
     source = inspect.getsource(_district_seasonal_grid_render)
     assert "style.geometry.heatmap_colorbar_band_fraction" in source
     assert "style.geometry.heatmap_colorbar_gap_fraction" in source

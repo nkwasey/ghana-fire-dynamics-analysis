@@ -5,4 +5,4 @@ The version is read by packaging via `pyproject.toml` (setuptools dynamic versio
 and should be updated here for releases.
 """
 
-__version__ = "0.2.1"
+__version__ = "1.3.0"

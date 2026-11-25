@@ -18,15 +18,18 @@ CONFIG = SUBPROJECT / "config"
 def test_publication_architecture_validates_without_import_time_snapshot() -> None:
     bundle = load_configuration_bundle(CONFIG)
     validate_publication_specs(bundle.output, bundle.figure)
-    assert len(bundle.output.tables) == 9
-    assert len(load_figure_specs(bundle.figure)) == 6
+    assert len(bundle.output.tables) == 32
+    assert sum(item.role == "internal_authority" for item in bundle.output.tables) == 4
+    assert tuple(spec.figure_id for spec in load_figure_specs(bundle.figure)) == (
+        "F2", "F3", "F4", "F5", "F6", "FS1", "FS2", "FS3", "FS4",
+    )
 
 
 def test_publication_architecture_accepts_qualified_rq2_method() -> None:
     bundle = load_configuration_bundle(CONFIG)
     assert_execution_ready(bundle.analysis.to_dict(), bundle.methods, "rq2")
-    rq2_outputs = [item for item in bundle.output.tables if item.rq in {"RQ2", "INTEGRATED_RQ1_RQ2"}]
-    assert {item.output_id for item in rq2_outputs} == {"T1", "S4"}
+    rq2_outputs = [item for item in bundle.output.tables if item.rq in {"RQ2", "INTEGRATED_RQ1_RQ2"} and item.role != "internal_authority"]
+    assert {item.output_id for item in rq2_outputs} == {"T1", "S4", "S13", "S14", "S15", "S16", "S17"}
     s4 = next(item for item in rq2_outputs if item.output_id == "S4")
     assert "realised_bandwidth" in s4.required_columns
     assert "raw_p" in s4.required_columns

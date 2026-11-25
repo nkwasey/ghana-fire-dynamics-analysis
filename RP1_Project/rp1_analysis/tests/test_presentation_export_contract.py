@@ -27,12 +27,14 @@ EXPECTED_IDS = (
     "rq1_district_seasonal_heatmap",
     "rq1_district_circular_mean_timing",
     "rq1_district_resultant_length_by_acz",
+    "rq1_burnable_support_sensitivity",
     "rq2_coastal_trend",
     "rq2_forest_trend",
     "rq2_guinea_trend",
     "rq2_sudan_trend",
     "rq2_transition_trend",
     "rq2_five_acz_comparison",
+    "rq2_trend_uncertainty",
     "rq3_four_state_correspondence",
     "rq3_district_mismatch",
     "rq3_focal_effects",
@@ -68,8 +70,8 @@ def test_registry_loads_complete_frozen_export_estate() -> None:
     assert registry.schema == "rp1-presentation-export-v1"
     assert registry.groups == ("study", "rq1", "rq2", "rq3", "rq4")
     assert registry.export_ids == EXPECTED_IDS
-    assert len(set(registry.export_ids)) == 24
-    assert tuple(item.export_id for item in get_presentation_exports_for_group("rq1", bundle.figure)) == EXPECTED_IDS[2:10]
+    assert len(set(registry.export_ids)) == 26
+    assert tuple(item.export_id for item in get_presentation_exports_for_group("rq1", bundle.figure)) == EXPECTED_IDS[2:11]
     assert get_presentation_export_spec("rq3_standardised_probabilities", bundle.figure).source_identity == "supplement_s5_rq3"
 
 
@@ -97,27 +99,31 @@ def test_rq4_exports_require_validated_results_and_governed_scenarios() -> None:
 
 
 def test_semantic_palettes_are_explicit_config_authority() -> None:
-    registry = load_presentation_export_registry(load_figure_contract(CONFIG / "figure_contract.yml"))
+    figure = load_figure_contract(CONFIG / "figure_contract.yml")
+    registry = load_presentation_export_registry(figure)
     assert dict(registry.semantic_styles["acz_categories"]) == {
-        "CZ": "#1f77b4", "FZ": "#ff7f0e", "GS": "#2ca02c", "SS": "#d62728", "TZ": "#9467bd"
+        "CZ": "#88CCEE", "FZ": "#117733", "GS": "#DDCC77", "SS": "#CC6677", "TZ": "#332288"
     }
-    assert dict(registry.semantic_styles["four_state_categories"]) == {
-        "both_zero": "#1f77b4",
-        "mcd64a1_positive_viirs_zero": "#ff7f0e",
-        "viirs_positive_mcd64a1_zero": "#2ca02c",
-        "both_positive": "#d62728",
+    states = next(spec for spec in figure.figures if spec.figure_id == "F5").renderer_options["state_styles"]
+    assert {state: style["color"] for state, style in states.items()} == {
+        "both_zero": "#D9D9D9",
+        "mcd64a1_positive_viirs_zero": "#E69F00",
+        "viirs_positive_mcd64a1_zero": "#0072B2",
+        "both_positive": "#AD80BD",
     }
+    assert states["mcd64a1_positive_viirs_zero"]["hatch"] == "//"
+    assert states["both_positive"]["hatch"] == ".."
 
 
 def test_configuration_mutations_reach_typed_accessors(tmp_path: Path) -> None:
     config = _copy_config(tmp_path)
     def mutate(raw):
         _export(raw, "rq2_coastal_trend")["selector"]["equals"] = "FZ"
-        raw["presentation_export"]["semantic_styles"]["four_state_categories"]["both_zero"] = "#123456"
+        raw["presentation_export"]["semantic_styles"]["acz_categories"]["CZ"] = "#123456"
     _mutate_figure(config, mutate)
     figure = load_figure_contract(config / "figure_contract.yml")
     assert get_presentation_export_spec("rq2_coastal_trend", figure).selector["equals"] == "FZ"
-    assert load_presentation_export_registry(figure).semantic_styles["four_state_categories"]["both_zero"] == "#123456"
+    assert load_presentation_export_registry(figure).semantic_styles["acz_categories"]["CZ"] == "#123456"
 
 
 def test_backward_compatible_figure_contract_without_presentation_registry(tmp_path: Path) -> None:
@@ -125,7 +131,7 @@ def test_backward_compatible_figure_contract_without_presentation_registry(tmp_p
     _mutate_figure(config, lambda raw: raw.pop("presentation_export"))
     figure = load_figure_contract(config / "figure_contract.yml")
     assert figure.presentation_export is None
-    assert tuple(item.figure_id for item in figure.figures) == ("F2", "F3", "F4", "F5", "F6", "S1")
+    assert tuple(item.figure_id for item in figure.figures) == ("F2", "F3", "F4", "F5", "F6", "FS1", "FS2", "FS3", "FS4")
     with pytest.raises(KeyError, match="No presentation-export registry"):
         load_presentation_export_registry(figure)
 

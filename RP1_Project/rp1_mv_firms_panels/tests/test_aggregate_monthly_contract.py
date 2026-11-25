@@ -126,6 +126,7 @@ def test_aggregate_and_combine_contracts():
         sensor="viirs",
         run_id="test_run",
         fires_canonical_df=viirs_fires,
+        fires_frp_canonical_df=viirs_fires.loc[viirs_fires.conf_cat.isin(["n", "h"])],
         write_outputs=False,
     )
     modis_res = aggregate_monthly(

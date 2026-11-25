@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "To cite this software, use the metadata in this file."
+title: "Ghana Fire Dynamics Analysis"
+type: software
+authors:
+  - family-names: Sey
+    given-names: Nana Ekow Nkwa
+repository-code: "https://github.com/nkwasey/ghana-fire-dynamics-analysis"
+license: BSD-3-Clause

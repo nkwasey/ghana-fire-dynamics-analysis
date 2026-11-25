@@ -38,10 +38,10 @@ def test_data_contract_config_projection_is_deterministic() -> None:
     result = subprocess.run(
         [sys.executable, "scripts/render_data_contract_roles.py", "--check"],
         cwd=ROOT,
-        check=True,
         capture_output=True,
         text=True,
     )
+    assert result.returncode == 0, result.stderr
     assert "RP1_DATA_CONTRACT_ROLE_PROJECTION=PASS" in result.stdout
 
 
@@ -95,7 +95,7 @@ def test_rq3_role_classes_match_configured_design() -> None:
     assert rq3["covariance"] == "morel_bokossa_neerchal"
     assert rq3["reference_distribution"] == "standard_normal_wald"
     assert rq3["excluded_predictor_roles"] == ["rq3.active_days", "rq3.modis_af_presence"]
-    assert "31 columns" in projection
+    assert "derived from the admitted model population during execution" in projection
 
 
 def test_rq3_reference_categories_are_config_owned_and_documented() -> None:
@@ -144,9 +144,12 @@ def test_secondary_and_publication_documentation_match_contracts() -> None:
     main_figures = [x["id"] for x in figures["figures"] if x["role"] == "manuscript"]
     supp_figures = [x["id"] for x in figures["figures"] if x["role"] == "supplementary"]
     assert main_tables == ["T1", "T2", "T3"]
-    assert supp_tables == ["S1", "S2", "S3", "S4", "S5", "S6"]
+    assert supp_tables == [f"S{number}" for number in range(1, 26)]
     assert main_figures == ["F2", "F3", "F4", "F5", "F6"]
-    assert supp_figures == ["S1"]
+    assert supp_figures == ["FS1", "FS2", "FS3", "FS4"]
+    restricted = [item for item in tables if item["builder_options"].get("requires_restricted_scan")]
+    assert [item["id"] for item in restricted] == ["S21", "S22", "S23", "S24"]
+    assert all(item["requires_results_validated"] for item in restricted)
 
 
 def test_public_scientific_docs_are_cross_consistent_on_high_risk_roles() -> None:

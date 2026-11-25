@@ -276,7 +276,7 @@ def test_projected_source_context_accepts_actual_projected_origin_despite_stale_
         origin=project_root / "src/rp1_analysis_v1/__init__.py",
         distribution_root=prefix / "lib/python3.13/site-packages",
         editable=stale_checkout,
-        version="1.2.1",
+        version="9.9.9",
     )
     monkeypatch.setenv(module.PROJECTED_IMPORT_MODE_ENV, module.PROJECTED_IMPORT_MODE)
     monkeypatch.setenv(module.PROJECTED_PROJECT_ROOT_ENV, str(project_root))
@@ -291,7 +291,7 @@ def test_projected_source_context_accepts_actual_projected_origin_despite_stale_
     assert diagnostics["status"] == "PASS"
     assert diagnostics["projected_source_context"] is True
     assert diagnostics["editable_project_location"] == str(stale_checkout.resolve())
-    assert diagnostics["package_version"] == "1.2.1"
+    assert diagnostics["package_version"] == "9.9.9"
     assert Path(str(diagnostics["package_origin"])).is_relative_to(project_root / "src")
 
 

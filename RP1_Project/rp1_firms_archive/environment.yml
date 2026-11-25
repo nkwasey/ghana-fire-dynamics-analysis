@@ -1,0 +1,9 @@
+name: ghana-fire-archive
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -e .

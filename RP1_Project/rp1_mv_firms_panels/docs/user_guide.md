@@ -1,7 +1,9 @@
 # User guide
 
-This guide describes how to run the repository safely and how to interpret the
-principal outputs for the dual-sensor RP1 active-fire export workflow.
+This guide describes component commands and outputs for the dual-sensor
+RP1 active-fire workflow. For a clean checkout, follow the
+[repository-root workflow](../../../README.md) to generate the required
+geography, admitted fire inputs and run configuration.
 
 ---
 
@@ -24,34 +26,42 @@ The principal combine-stage outputs are:
 
 ## 2. Typical workflow
 
-### 2.1 Full pipeline
+Run the following commands from `RP1_Project/rp1_mv_firms_panels` with the
+shared environment active. They assume the root workflow has generated
+`configs/generated/ghana_fire_study.yaml` with staged inputs. Substitute the
+same run identifier in the filename and `--run-id` if you chose another ID.
+Use `--repo-root .` because the generated YAML is one level deeper than the
+standalone templates. The root workflow ordinarily executes these stages
+itself and records the handoff for the merger.
+
+### 2.1 Preview the pipeline
 
 ```bash
-python -m mv_firms_panels.cli.main --config configs/ghana_full.yaml --run-id ghana_combined_v2 pipeline --years-modis 2001-2024 --years-viirs 2012-2024
-````
+python -m mv_firms_panels.cli.main --repo-root . --config configs/generated/ghana_fire_study.yaml --run-id ghana_fire_study pipeline --years-modis 2001-2024 --years-viirs 2012-2024 --dry-run
+```
 
 ### 2.2 One `prepare-year` run
 
 ```bash
-python -m mv_firms_panels.cli.main --config configs/ghana_full.yaml --run-id ghana_combined_v2 prepare-year --sensor viirs --year 2024
+python -m mv_firms_panels.cli.main --repo-root . --config configs/generated/ghana_fire_study.yaml --run-id ghana_fire_study --skip-existing prepare-year --sensor viirs --year 2024
 ```
 
 ### 2.3 One `aggregate` run
 
 ```bash
-python -m mv_firms_panels.cli.main --config configs/ghana_full.yaml --run-id ghana_combined_v2 aggregate --sensor modis --start-yyyymm 200101 --end-yyyymm 202412
+python -m mv_firms_panels.cli.main --repo-root . --config configs/generated/ghana_fire_study.yaml --run-id ghana_fire_study --skip-existing aggregate --sensor modis --start-yyyymm 200101 --end-yyyymm 202412
 ```
 
 ### 2.4 One `combine` run
 
 ```bash
-python -m mv_firms_panels.cli.main --config configs/ghana_full.yaml --run-id ghana_combined_v2 combine --start-yyyymm 200101 --end-yyyymm 202412
+python -m mv_firms_panels.cli.main --repo-root . --config configs/generated/ghana_fire_study.yaml --run-id ghana_fire_study --skip-existing combine --start-yyyymm 200101 --end-yyyymm 202412
 ```
 
 ### 2.5 One `visualise` run
 
 ```bash
-python -m mv_firms_panels.cli.main --config configs/ghana_full.yaml --run-id ghana_combined_v2 visualise
+python -m mv_firms_panels.cli.main --repo-root . --config configs/generated/ghana_fire_study.yaml --run-id ghana_fire_study --skip-existing visualise
 ```
 
 ---
@@ -82,8 +92,9 @@ More specifically, `combine --skip-existing` requires:
 * every referenced RP1 AF CSV file to validate against the correct
   sensor-specific schema
 
-If any of those checks fail, `combine` reruns instead of accepting an
-incomplete additive-output state.
+If an AF export check fails after the main panel passes, `combine` attempts
+to regenerate the incomplete outputs. If stage outputs already exist without
+a receipt, the CLI stops unless the caller explicitly uses `--force`.
 
 ### `--force`
 
@@ -91,7 +102,7 @@ Force rerun even when outputs and manifests already exist.
 
 ### Provenance fail-fast rule
 
-If outputs exist but the sentinel or manifest is missing, the CLI raises.
+Existing outputs without a receipt cause an error unless `--force` is set.
 
 ---
 

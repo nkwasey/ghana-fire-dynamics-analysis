@@ -6,18 +6,25 @@ repository:
     - .editorconfig
     - .gitattributes
     - .gitignore
+    - CITATION.cff
     - CONTRIBUTING.md
     - LICENSE
     - README.md
     - environment.yml
     - pyproject.toml
+    - configs
     - docs
     - geo_data_prep
     - RP1_Project
     - tools
+    - tests
   paths_must_be_repository_relative: true
   forbid_parent_traversal: true
   forbid_symlinks: true
+  embedded_source_allowlists:
+    - project_root: RP1_Project/rp1_firms_archive
+      path: tools/package_source.py
+      assignment: SOURCE_FILES
 
 packages:
   - module: rp1_analysis_v1
@@ -32,6 +39,10 @@ packages:
     distribution: geo_data_prep_stage1
     project_root: geo_data_prep
     source_root: geo_data_prep/src
+  - module: ghana_fire_archive
+    distribution: ghana-fire-archive
+    project_root: RP1_Project/rp1_firms_archive
+    source_root: RP1_Project/rp1_firms_archive/src
 
 generated_artifacts:
   directory_names:
@@ -43,19 +54,60 @@ generated_artifacts:
     - build
     - dist
     - out
+    - downloads
+    - RP1_Project_MODIS_BA_c3_2001
+    - RP1_Project_MODIS_BA_c3_2012
     - htmlcov
     - .git
     - .tox
     - .nox
     - .venv
+    - venv
+    - merge_runs
   directory_suffixes:
     - .egg-info
   file_suffixes:
     - .pyc
     - .pyo
+    - .zip
+    - .log
+    - .tmp
+    - .bak
+    - .executed.ipynb
+    - .nbconvert.ipynb
+    - '~'
   file_names:
+    - ba_source_lock_c3.json
     - .coverage
     - .DS_Store
+    - coverage.xml
+    - Thumbs.db
+    - desktop.ini
+  relative_paths:
+    - configs/workflow_local.json
+    - configs/release_identity.json
+    - RP1_Project/rp1_analysis/data
+    - RP1_Project/rp1_analysis/presentation_all
+    - RP1_Project/rp1_analysis/presentation_one
+    - RP1_Project/rp1_analysis/presentation_rq3
+    - RP1_Project/rp1_mv_firms_panels/data/metadata
+    - RP1_Project/rp1_mv_firms_panels/data/raw
+    - RP1_Project/rp1_mv_firms_panels/configs/generated
+    - RP1_Project/geo_handoff_manifest.json
+    - RP1_Project/configs/ba_source_lock_c1.json
+    - RP1_Project/configs/ba_source_lock_c2.json
+    - docs/C3_EXISTING_SCRIPT_INVENTORY.json
+    - docs/C3_IMPLEMENTATION_STATUS.md
+    - docs/C3_MIGRATION_AUDIT_AND_ACTION_PLAN.md
+    - docs/C3_SCRIPT_CHANGE_REGISTER_AND_EXECUTION_PLAN.md
+    - RP1_Project/rp1_gee_ba_scripts/c3/tests/fixtures/asutifi_north_ba2012_202401.csv
+    - RP1_Project/rp1_gee_ba_scripts/c3/tests/fixtures/PROVENANCE.json
+    - RP1_Project/rp1_gee_ba_scripts/c3/tests/reference/ee_core_previous.txt
+    - RP1_Project/rp1_gee_ba_scripts/c3/tests/reference/HEADER_MAP.csv
+    - RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001
+    - RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012
+    - RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c2_2001
+    - RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c2_2012
   policy: exclude_from_projection_record_every_exclusion_never_delete_governed_source
 
 projection:

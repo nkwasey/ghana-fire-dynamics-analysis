@@ -54,7 +54,7 @@ def _temp_run(tmp_path: Path):
 def test_valid_configuration_bundle_loads() -> None:
     bundle = load_configuration_bundle(CONFIG)
     assert bundle.analysis.schema_version == "rp1-analysis-v1.1"
-    assert bundle.data_schema.data_schema_version == "rp1-data-schema-v1.1"
+    assert bundle.data_schema.data_schema_version == "rp1-data-schema-v1.2"
     assert len(bundle.file_hashes) == 5
     assert len(bundle.configuration_sha256) == 64
 
@@ -322,9 +322,11 @@ def test_scientific_csv_bytes_do_not_depend_on_provenance_timestamps(tmp_path: P
 
 
 def test_all_hashed_inputs_are_exposed_and_stay_within_root() -> None:
+    from _generated_input_contract import configured_input_paths
     paths = ProjectPaths(SUBPROJECT.resolve())
     governed = paths.all_hashed_inputs
-    assert len(governed) == 15
+    assert {path.relative_to(SUBPROJECT.resolve()).as_posix() for path in governed} == configured_input_paths(SUBPROJECT)
+    assert len(governed) == len(set(governed))
     assert all(path.is_file() for path in governed)
     assert all(path.is_relative_to(SUBPROJECT.resolve()) for path in governed)
 

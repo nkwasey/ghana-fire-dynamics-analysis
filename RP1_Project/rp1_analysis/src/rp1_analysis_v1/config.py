@@ -10,12 +10,13 @@ import re
 import tempfile
 import tomllib
 from collections.abc import Mapping
-from pathlib import Path, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from types import MappingProxyType
 from typing import Any, cast
 
 import yaml
 
+from .atomic_io import publish_file_no_replace
 from .contracts import (
     AnalysisContract,
     ConfigurationBundle,
@@ -68,7 +69,7 @@ from .design import DesignValidationError, validate_analysis_design, validate_co
 from .variables import resolve_field_role
 
 SCHEMA_VERSION = "rp1-analysis-v1.1"
-DATA_SCHEMA_VERSION = "rp1-data-schema-v1.1"
+DATA_SCHEMA_VERSION = "rp1-data-schema-v1.2"
 EXECUTION_CONTRACT_FILENAME = "execution_contract.yml"
 QUALIFICATION_CONTRACT_FILENAME = "qualification_contract.yml"
 
@@ -94,6 +95,22 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(loaded, dict):
         raise ConfigurationError(f"Configuration must be a YAML mapping: {path}")
     return cast(dict[str, Any], loaded)
+
+
+def governed_input_paths(schema: DataSchemaContract) -> tuple[str, ...]:
+    """Exact staged inventory, including every mandatory evidence/geometry member."""
+    paths = [str(panel.path) for panel in schema.panels.values()]
+    paths.extend(str(item["path"]) for item in schema.auxiliary_inputs.values())
+    for geometry in schema.geometries.values():
+        paths.extend(str(path) for path in geometry.required_members)
+    if len(paths) != len(set(paths)):
+        raise ConfigurationError("Governed input roles alias a staged file")
+    if len(paths) != int(schema.provenance["expected_governed_files"]):
+        raise ConfigurationError("Configured governed-file count disagrees with exact staged input set")
+    for path in paths:
+        if "\\" in path or PureWindowsPath(path).drive or PurePosixPath(path).is_absolute() or ".." in PurePosixPath(path).parts:
+            raise ConfigurationError(f"Invalid governed staged input path: {path}")
+    return tuple(sorted(paths))
 
 
 def _validate_schema(raw: Mapping[str, Any], source: Path) -> None:
@@ -222,7 +239,7 @@ def _require_unique_strings(value: Any, context: str, *, non_empty: bool = True)
 def _qualification_relative_path(value: Any, context: str) -> str:
     if not isinstance(value, str) or not value:
         raise ConfigurationError(f"{context} must be a non-empty repository-relative path")
-    path = Path(value)
+    path = PurePosixPath(value)
     windows_path = PureWindowsPath(value)
     if path.is_absolute() or windows_path.is_absolute() or windows_path.drive or ".." in path.parts or ".." in windows_path.parts:
         raise ConfigurationError(f"{context} must be repository-relative without parent traversal")
@@ -262,6 +279,7 @@ def load_qualification_contract(path: str | Path) -> QualificationContract:
             "forbid_parent_traversal", "forbid_symlinks",
         },
         "qualification.repository",
+        optional={"embedded_source_allowlists"},
     )
     include_roots = tuple(
         _qualification_relative_path(item, f"qualification.repository.include_roots[{idx}]")
@@ -270,6 +288,23 @@ def load_qualification_contract(path: str | Path) -> QualificationContract:
     for flag in ("paths_must_be_repository_relative", "forbid_parent_traversal", "forbid_symlinks"):
         if repository[flag] is not True:
             raise ConfigurationError(f"qualification.repository.{flag} must be true")
+    allowlists_raw = repository.get("embedded_source_allowlists", [])
+    if not isinstance(allowlists_raw, list):
+        raise ConfigurationError("qualification.repository.embedded_source_allowlists must be a list")
+    embedded_source_allowlists = []
+    for idx, item in enumerate(allowlists_raw):
+        context = f"qualification.repository.embedded_source_allowlists[{idx}]"
+        if not isinstance(item, Mapping):
+            raise ConfigurationError(context + " must be a mapping")
+        _require_keys(item, {"project_root", "path", "assignment"}, context)
+        project = _qualification_relative_path(item["project_root"], context + ".project_root")
+        member = _qualification_relative_path(item["path"], context + ".path")
+        assignment = item["assignment"]
+        if not isinstance(assignment, str) or not assignment.isidentifier():
+            raise ConfigurationError(context + ".assignment must be a Python identifier")
+        if any(existing[0] == project for existing in embedded_source_allowlists):
+            raise ConfigurationError("Repeated embedded source project")
+        embedded_source_allowlists.append((project, member, assignment))
 
     packages_raw = raw["packages"]
     if not isinstance(packages_raw, list) or not packages_raw:
@@ -306,13 +341,15 @@ def load_qualification_contract(path: str | Path) -> QualificationContract:
         raise ConfigurationError("qualification.generated_artifacts must be a mapping")
     _require_keys(
         generated,
-        {"directory_names", "directory_suffixes", "file_suffixes", "file_names", "policy"},
+        {"directory_names", "directory_suffixes", "file_suffixes", "file_names", "relative_paths", "policy"},
         "qualification.generated_artifacts",
     )
     directory_names = _require_unique_strings(generated["directory_names"], "qualification.generated_artifacts.directory_names")
     directory_suffixes = _require_unique_strings(generated["directory_suffixes"], "qualification.generated_artifacts.directory_suffixes")
     file_suffixes = _require_unique_strings(generated["file_suffixes"], "qualification.generated_artifacts.file_suffixes")
     file_names = _require_unique_strings(generated["file_names"], "qualification.generated_artifacts.file_names")
+    relative_paths = tuple(_qualification_relative_path(value, "qualification.generated_artifacts.relative_paths")
+        for value in _require_unique_strings(generated["relative_paths"], "qualification.generated_artifacts.relative_paths"))
     policy = generated["policy"]
     if not isinstance(policy, str) or not policy:
         raise ConfigurationError("qualification.generated_artifacts.policy must be a non-empty string")
@@ -406,6 +443,7 @@ def load_qualification_contract(path: str | Path) -> QualificationContract:
             paths_must_be_repository_relative=True,
             forbid_parent_traversal=True,
             forbid_symlinks=True,
+            embedded_source_allowlists=tuple(embedded_source_allowlists),
         ),
         packages=tuple(packages),
         generated_artifacts=GeneratedArtifactContract(
@@ -413,6 +451,7 @@ def load_qualification_contract(path: str | Path) -> QualificationContract:
             directory_suffixes=directory_suffixes,
             file_suffixes=file_suffixes,
             file_names=file_names,
+            relative_paths=relative_paths,
             policy=policy,
         ),
         projection=QualificationProjectionContract(
@@ -842,6 +881,14 @@ def load_data_schema_contract(path: str | Path) -> DataSchemaContract:
     for section in ("auxiliary_inputs", "additive_reconciliation", "provenance", "validation_rules"):
         if not isinstance(raw[section], Mapping):
             raise ConfigurationError(f"data_schema.{section} must be a mapping")
+    for rule_kind, references in (('normalizations', ('field','numerator','denominator')),
+                                   ('binary_products', ('field','left','right'))):
+        rules = raw['validation_rules'].get(rule_kind, [])
+        if not isinstance(rules, list):
+            raise ConfigurationError(f'data_schema.validation_rules.{rule_kind} must be a list')
+        for rule in rules:
+            if not isinstance(rule, Mapping) or any(rule.get(key) not in names for key in references):
+                raise ConfigurationError(f'Unknown field in data_schema.validation_rules.{rule_kind}')
     return DataSchemaContract(
         schema_version=str(raw["schema_version"]), data_schema_version=str(raw["data_schema_version"]),
         panel_schema_version=str(raw["panel_schema_version"]), field_count=int(raw["field_count"]),
@@ -1689,7 +1736,7 @@ def _load_presentation_export(
         if not isinstance(legend_policy["show"], bool):
             raise ConfigurationError(f"{export_id}.legend_policy.show must be boolean")
         position = str(legend_policy["position"])
-        if position not in {"none", "below", "renderer_default"}:
+        if position not in {"none", "below", "right", "renderer_default"}:
             raise ConfigurationError(f"{export_id}.legend_policy.position is unsupported")
         if not legend_policy["show"] and position != "none":
             raise ConfigurationError(f"{export_id} hidden legend must use position='none'")
@@ -1738,6 +1785,54 @@ def _load_presentation_export(
         semantic_styles=cast(Mapping[str, Any], freeze(styles_raw)),
         exports=tuple(exports),
     )
+
+
+def _validate_map_scale_options(figure_id: str, options: Mapping[str, Any]) -> None:
+    """Validate the shared map scales before any renderer consumes the contract."""
+    limit_keys = {
+        "F2": ("rate_scale_max", "rate_scale_ticks"),
+        "F3": ("departure_scale_limit", "departure_scale_ticks"),
+        "F6": ("recurrence_scale_max", "recurrence_scale_ticks"),
+    }
+    if figure_id not in limit_keys and figure_id != "F5":
+        return
+    context = f"{figure_id}.renderer_options"
+    if figure_id == "F6":
+        cmap = options.get("cmap")
+        if not isinstance(cmap, str) or not cmap.strip():
+            raise ConfigurationError(f"{context}.cmap must be a named colour map")
+    else:
+        cmaps = options.get("panel_colormaps")
+        expected = 3 if figure_id == "F5" else 2
+        if not isinstance(cmaps, list) or len(cmaps) != expected or not all(
+            isinstance(cmap, str) and cmap.strip() for cmap in cmaps
+        ):
+            raise ConfigurationError(f"{context}.panel_colormaps must provide {expected} named colour maps")
+        if figure_id == "F2" and cmaps[0] != cmaps[1]:
+            raise ConfigurationError("F2 panels must use the same colour map on their shared scale")
+    if figure_id == "F5":
+        if options.get("mismatch_percent_scale") is not True:
+            raise ConfigurationError("F5 conditional absence must use a percentage scale")
+        return
+    if figure_id == "F3" and options.get("symmetric_departure_scale") is not True:
+        raise ConfigurationError("F3 departure must use a symmetric zero-centred scale")
+    maximum_key, ticks_key = limit_keys[figure_id]
+    maximum = _number(options.get(maximum_key), f"{context}.{maximum_key}")
+    if maximum <= 0:
+        raise ConfigurationError(f"{context}.{maximum_key} must be positive")
+    raw_ticks = options.get(ticks_key)
+    if not isinstance(raw_ticks, list) or len(raw_ticks) < 2:
+        raise ConfigurationError(f"{context}.{ticks_key} must be a list of at least two ticks")
+    ticks = tuple(_number(tick, f"{context}.{ticks_key}") for tick in raw_ticks)
+    minimum = -maximum if figure_id == "F3" else 0.0
+    if ticks[0] != minimum or ticks[-1] != maximum or any(
+        left >= right for left, right in zip(ticks[:-1], ticks[1:], strict=True)
+    ):
+        raise ConfigurationError(f"{context}.{ticks_key} must increase from {minimum:g} to {maximum:g}")
+    if figure_id == "F3" and 0.0 not in ticks:
+        raise ConfigurationError(f"{context}.{ticks_key} must mark zero explicitly")
+    if figure_id == "F6" and not all(tick.is_integer() for tick in ticks):
+        raise ConfigurationError(f"{context}.{ticks_key} must count whole clusters")
 
 
 def load_figure_contract(path: str | Path) -> FigureContract:
@@ -1906,6 +2001,7 @@ def load_figure_contract(path: str | Path) -> FigureContract:
         for option_name in ("data_builder_options", "renderer_options"):
             if not isinstance(item[option_name], Mapping):
                 raise ConfigurationError(f"{figure_id}.{option_name} must be a mapping")
+        _validate_map_scale_options(figure_id, item["renderer_options"])
         figures.append(
             FigureSpecificationContract(
                 figure_id=figure_id,
@@ -2327,10 +2423,10 @@ def _atomic_create_text(path: Path, text: str) -> None:
             handle.flush()
             os.fsync(handle.fileno())
         try:
-            os.link(tmp, path)
+            publish_file_no_replace(tmp, path)
         except FileExistsError:
             raise FileExistsError(path) from None
-        tmp.unlink()
+        tmp.unlink(missing_ok=True)
     finally:
         if tmp.exists():
             tmp.unlink()
@@ -2345,6 +2441,61 @@ def export_realised_configuration(bundle: ConfigurationBundle, run_dir: str | Pa
     ) + "\n"
     _atomic_create_text(destination, payload)
     return destination
+
+
+def validate_secondary_configuration(
+    bundle: ConfigurationBundle, snapshot: Mapping[str, Any], recorded_digest: str
+) -> dict[str, Any]:
+    """Bind an existing scan to its original and current governing contracts."""
+    current = bundle.realised_dict()
+    try:
+        hashes = snapshot["config_file_sha256"]
+        operational_hashes = snapshot["operational_config_file_sha256"]
+        original_digest = snapshot["configuration_sha256"]
+        if not all(
+            isinstance(digest, str) and re.fullmatch(r"[a-f0-9]{64}", digest)
+            for digest in (*hashes.values(), *operational_hashes.values())
+        ):
+            raise ConfigurationError("Secondary configuration file digests are invalid")
+        if original_digest != recorded_digest or original_digest != aggregate_configuration_sha256(hashes):
+            raise ConfigurationError("Secondary configuration identity differs from its realised snapshot")
+        if snapshot["operational_configuration_sha256"] != aggregate_operational_configuration_sha256(operational_hashes):
+            raise ConfigurationError("Secondary operational configuration identity is invalid")
+        changed = sorted(name for name in bundle.file_hashes if hashes[name] != bundle.file_hashes[name])
+        if set(changed) - {"figure_contract.yml", "output_contract.yml"}:
+            raise ConfigurationError("Secondary run was prepared under different scientific contracts")
+
+        def scan_contract(record: Mapping[str, Any]) -> dict[str, Any]:
+            # Rendering and publication-table projections are downstream of the scan.
+            comparable = dict(record)
+            comparable.pop("configuration_sha256")
+            comparable.pop("config_file_sha256")
+            contracts = dict(comparable["contracts"])
+            contracts.pop("figure_contract.yml")
+            output = dict(contracts["output_contract.yml"])
+            output.pop("publication_outputs")
+            contracts["output_contract.yml"] = output
+            comparable["contracts"] = contracts
+            return comparable
+
+        compatible_snapshot = scan_contract(snapshot) if changed else snapshot
+        compatible_current = scan_contract(current) if changed else current
+        if sha256_realised_configuration(compatible_snapshot) != sha256_realised_configuration(compatible_current):
+            raise ConfigurationError("Secondary realised configuration differs in scan-governing content")
+        for name in {"figure_contract.yml", "output_contract.yml"} - set(changed):
+            if sha256_realised_configuration(snapshot["contracts"][name]) != sha256_realised_configuration(current["contracts"][name]):
+                raise ConfigurationError(f"Secondary snapshot differs from its declared unchanged {name}")
+    except (AttributeError, KeyError, TypeError, ValueError) as exc:
+        if isinstance(exc, ConfigurationError):
+            raise
+        raise ConfigurationError("Secondary realised configuration snapshot is malformed") from exc
+
+    return {
+        "decision": "COMPATIBLE_PUBLICATION_ONLY" if changed else "EXACT",
+        "prepared_configuration_sha256": original_digest,
+        "current_configuration_sha256": bundle.configuration_sha256,
+        "changed_contract_files": changed,
+    }
 
 
 __all__ = [
@@ -2366,6 +2517,7 @@ __all__ = [
     "load_output_contract",
     "load_figure_contract",
     "load_configuration_bundle",
+    "governed_input_paths",
     "load_execution_contract",
     "load_qualification_contract",
     "configuration_file_hashes",

@@ -11,7 +11,9 @@ import csv
 import json
 import os
 import shutil
+import sys
 import tempfile
+import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -31,6 +33,7 @@ from .presentation_rq1 import RQ1_PRESENTATION_RENDERERS
 from .presentation_rq2 import RQ2_PRESENTATION_RENDERERS
 from .presentation_rq3 import RQ3_PRESENTATION_RENDERERS
 from .presentation_rq4 import RQ4_PRESENTATION_RENDERERS
+from .reviewer_figures import REVIEWER_PRESENTATION_RENDERERS
 from .satscan_integration import OptionalSaTScanIntegrationError, inspect_satscan_results
 from .style import PublicationStyle, cm_to_inches
 
@@ -53,6 +56,30 @@ class RendererUnavailableError(PresentationExportError):
 
 class PresentationOutputError(PresentationExportError):
     """Raised when derived output violates the presentation-output policy."""
+
+
+def _publish_export_directory(staging: Path, destination: Path) -> None:
+    """Commit the completed estate, retrying briefly on transient Windows file locks."""
+    windows = sys.platform == "win32"
+    move = os.rename if windows else os.replace
+    for delay in (0.0, 0.1, 0.25, 0.5, 1.0):
+        if delay:
+            time.sleep(delay)
+        if destination.exists() or destination.is_symlink():
+            raise PresentationOutputError(
+                f"Presentation output destination appeared during export: {destination}"
+            )
+        try:
+            move(staging, destination)
+        except FileExistsError as exc:
+            raise PresentationOutputError(
+                f"Presentation output destination appeared during export: {destination}"
+            ) from exc
+        except OSError as exc:
+            if not windows or getattr(exc, "winerror", None) not in (32, 33) or delay == 1.0:
+                raise
+        else:
+            return
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,6 +217,7 @@ def _presentation_style(bundle: ConfigurationBundle, spec: PresentationExportSpe
     # Existing generic single-panel renderers consume one of these size slots.
     return replace(
         style,
+        title_inside_figure=True,
         dpi=spec.raster_dpi,
         single_panel=(width_in, height_in),
         wide_single_panel=(width_in, height_in),
@@ -204,7 +232,13 @@ def build_core_renderer_registry() -> RendererRegistry:
     closed until their scientific family is implemented and qualified.
     """
 
-    return RendererRegistry({**RQ1_PRESENTATION_RENDERERS, **RQ2_PRESENTATION_RENDERERS, **RQ3_PRESENTATION_RENDERERS, **RQ4_PRESENTATION_RENDERERS})
+    return RendererRegistry({
+        **RQ1_PRESENTATION_RENDERERS,
+        **RQ2_PRESENTATION_RENDERERS,
+        **RQ3_PRESENTATION_RENDERERS,
+        **RQ4_PRESENTATION_RENDERERS,
+        **REVIEWER_PRESENTATION_RENDERERS,
+    })
 
 
 def _require_under(path: Path, parent: Path, *, context: str) -> None:
@@ -333,11 +367,9 @@ def validate_run_configuration_compatibility(
     if not isinstance(contracts, Mapping) or not isinstance(contracts.get("figure_contract.yml"), Mapping):
         raise RunAuthorityError("Completed run does not contain a realised figure contract")
     # ``presentation_export`` is an operational rendering registry rather than
-    # a scientific/publication figure authority.  Older completed runs may not
-    # record it, while newer completed runs may.  Remove it symmetrically from
-    # both realised and current contracts before compatibility comparison so
-    # the result cannot depend on which side of the extension boundary created
-    # the run.  All remaining figure-contract content must still match exactly.
+    # a scientific/publication figure authority. Exclude it symmetrically from
+    # realised and configured contracts when comparing scientific compatibility.
+    # All remaining figure-contract content must match exactly.
     recorded_figure = dict(contracts["figure_contract.yml"])
     recorded_figure.pop("presentation_export", None)
     current_figure = current.figure.to_dict()
@@ -728,8 +760,9 @@ class PresentationOutputWriter:
                 handle.write(bytes(payload))
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.link(tmp, destination)
-            tmp.unlink()
+            from .atomic_io import publish_file_no_replace
+            publish_file_no_replace(tmp, destination)
+            tmp.unlink(missing_ok=True)
         finally:
             if tmp.exists():
                 tmp.unlink()
@@ -952,9 +985,7 @@ def export_one_presentation_figure(
         )
         after = snapshot_run_tree(run, project_root=governed.root)
         assert_run_tree_unchanged(before, after)
-        if destination.exists():
-            raise PresentationOutputError(f"Presentation output destination appeared during export: {destination}")
-        os.replace(staging, destination)
+        _publish_export_directory(staging, destination)
         staging = None
     except Exception:
         if staging is not None and staging.exists():
@@ -1397,11 +1428,7 @@ def export_presentation_figure_estate(
         _validate_aggregate_estate(
             staging=staging, selected=selected, records=records, overall_status=overall_status
         )
-        if destination.exists():
-            raise PresentationOutputError(
-                f"Presentation output destination appeared during export: {destination}"
-            )
-        os.replace(staging, destination)
+        _publish_export_directory(staging, destination)
         staging = None
     except Exception:
         if staging is not None and staging.exists():

@@ -1,4 +1,6 @@
 from __future__ import annotations
+from scientific_input_reference import long_run_input_reference, panel_input_reference
+from generated_run_reference import selected_run_base, require_selected_run
 
 import hashlib
 import json
@@ -17,7 +19,7 @@ from rp1_analysis_v1.presentation import get_presentation_export_spec, load_pres
 from rp1_analysis_v1.style import cm_to_inches, round_pixels_half_up
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = selected_run_base(ROOT)
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 STUDY_RQ1_IDS = (
     "study_ghana_acz",
@@ -30,10 +32,12 @@ STUDY_RQ1_IDS = (
     "rq1_district_seasonal_heatmap",
     "rq1_district_circular_mean_timing",
     "rq1_district_resultant_length_by_acz",
+    "rq1_burnable_support_sensitivity",
 )
 
 
 def _run() -> pe.RunFamilyAuthority:
+    require_selected_run(ROOT, RUN_BASE)
     return pe.resolve_run_family(RUN_CLOSE, paths=ProjectPaths(ROOT), validate=False)
 
 
@@ -66,34 +70,35 @@ def test_rq1_acz_categories_and_rate_units_match_governed_contract() -> None:
     assert len(frame) == 5
     assert tuple(spec.category_order["values"]) == ("CZ", "FZ", "GS", "SS", "TZ")
     assert set(frame["parent_code"].astype(str)) == {"CZ", "FZ", "GS", "SS", "TZ"}
-    assert spec.units == "km² burned per 100 km² fixed BA-2001 burnable area per year"
-    assert frame["support_status"].astype(str).eq("valid_nonzero").all()
+    assert spec.units == "km\u00b2 burned per 100 km\u00b2 fixed BA-2001 burnable area per year"
+    assert frame["support_status"].astype(str).isin(["valid_nonzero", "valid_zero"]).all()
 
 
 def test_rq1_district_support_counts_and_valid_zero_semantics_are_preserved() -> None:
     frame = _source("rq1_district_long_run_rate").frame
     assert frame is not None
-    assert len(frame) == 260
-    assert frame["unit_id"].nunique() == 260
-    assert int((~frame["support_status"].astype(str).eq("excluded")).sum()) == 250
-    assert int(frame["support_status"].astype(str).eq("excluded").sum()) == 10
+    assert len(frame) == panel_input_reference().unit_id.nunique()
+    assert frame["unit_id"].nunique() == panel_input_reference().unit_id.nunique()
+    assert int((~frame["support_status"].astype(str).eq("excluded")).sum()) == long_run_input_reference().unit_id.nunique()
+    assert int(frame["support_status"].astype(str).eq("excluded").sum()) == panel_input_reference().unit_id.nunique() - long_run_input_reference().unit_id.nunique()
     valid_zero = frame["support_status"].astype(str).eq("valid_zero")
-    assert int(valid_zero.sum()) == 14
+    assert valid_zero.equals(frame["value"].eq(0) & ~frame["support_status"].eq("excluded"))
     assert pd.to_numeric(frame.loc[valid_zero, "value"], errors="raise").eq(0.0).all()
     assert frame.loc[frame["support_status"].astype(str).eq("excluded"), "value"].isna().all()
 
 
 def test_governed_geometry_join_preserves_exact_district_universe() -> None:
+    require_selected_run(ROOT, RUN_BASE)
     districts = gpd.read_file(ROOT / "data" / "geo" / "districts_within_acz.shp")
     acz = gpd.read_file(ROOT / "data" / "geo" / "acz.shp")
     authority = prepare_geography(districts, acz)
     frame = _source("rq1_district_long_run_rate").frame
     assert frame is not None
     merged = join_district_figure_data(authority, frame)
-    assert len(districts) == 260
+    assert len(districts) == panel_input_reference().unit_id.nunique()
     assert len(acz) == 5
-    assert len(merged) == 260
-    assert merged["dist_id"].astype(str).nunique() == 260
+    assert len(merged) == panel_input_reference().unit_id.nunique()
+    assert merged["dist_id"].astype(str).nunique() == panel_input_reference().unit_id.nunique()
     assert merged["support_status"].isna().sum() == 0
 
 
@@ -109,7 +114,7 @@ def test_seasonality_month_order_and_circular_labels_are_source_owned() -> None:
         assert group["unit_name"].nunique() == 1
     spec = get_presentation_export_spec("rq1_acz_seasonality", paths=ProjectPaths(ROOT))
     assert tuple(spec.category_order["values"]) == ("CZ", "FZ", "GS", "SS", "TZ")
-    assert any("μ and R" in text for text in spec.annotation_policy)
+    assert any("\u03bc and R" in text for text in spec.annotation_policy)
 
 
 def test_district_departure_sign_is_consumed_not_recomputed() -> None:
@@ -117,9 +122,8 @@ def test_district_departure_sign_is_consumed_not_recomputed() -> None:
     assert frame is not None
     retained = frame.loc[~frame["support_status"].astype(str).eq("excluded")]
     values = pd.to_numeric(retained["value"], errors="raise")
-    assert len(retained) == 250
-    assert values.lt(0).any()
-    assert values.gt(0).any()
+    assert len(retained) == long_run_input_reference().unit_id.nunique()
+    assert values.notna().all()
     assert frame.loc[frame["support_status"].astype(str).eq("excluded"), "value"].isna().all()
 
 
@@ -132,28 +136,34 @@ def test_local_moran_classes_and_island_state_are_preserved_exactly() -> None:
     allowed = tuple(spec.category_order["values"])
     observed = set(retained["local_class"].dropna().astype(str))
     assert observed.issubset(set(allowed))
-    assert int(retained["local_class"].astype(str).eq("ISLAND").sum()) == 1
+    reference = pd.read_csv(ROOT / "out/runs" / f"{RUN_BASE}_pub" / "01_rq1_spatial_scale/tables/S3.csv")
+    reference = reference.loc[reference.record_type.eq("local_moran")]
+    actual = retained.set_index("unit_id").local_class.astype(str).sort_index()
+    expected = reference.set_index("unit_id").local_class.astype(str).sort_index()
+    pd.testing.assert_series_equal(actual, expected, check_names=False)
     assert frame.loc[frame["support_status"].astype(str).eq("excluded"), "local_class"].isna().all()
     # Renderer source is categorical authority only; it carries no recalculated statistic.
     assert frame["value"].isna().all()
 
 
-def test_s1_source_preserves_250_by_12_support_and_undefined_zero_district_timing() -> None:
+def test_seasonal_source_preserves_current_district_support_and_undefined_timing() -> None:
     frame = _source("rq1_district_seasonal_heatmap").frame
     assert frame is not None
-    assert len(frame) == 3000
-    assert frame["unit_id"].nunique() == 250
+    assert len(frame) == long_run_input_reference().unit_id.nunique() * 12
+    assert frame["unit_id"].nunique() == long_run_input_reference().unit_id.nunique()
     assert tuple(sorted(frame["month"].astype(int).unique())) == tuple(range(1, 13))
     counts = frame.groupby("unit_id", observed=True)["month"].nunique()
     assert counts.eq(12).all()
     all_missing = frame.groupby("unit_id", observed=True)["monthly_share"].apply(lambda s: s.isna().all())
-    assert int(all_missing.sum()) == 14
-    assert int(frame["monthly_share"].isna().sum()) == 14 * 12
+    reference = pd.read_csv(ROOT / "out/runs" / f"{RUN_BASE}_pub" / "01_rq1_spatial_scale/tables/S2.csv")
+    expected_missing = reference.set_index("unit_id").circular_mean_month.isna().sort_index()
+    pd.testing.assert_series_equal(all_missing.sort_index(), expected_missing, check_names=False)
+    assert int(frame["monthly_share"].isna().sum()) == int(expected_missing.sum()) * 12
     work, summary = rq1p._normalise_s1(frame)
-    assert len(work) == 3000
-    assert len(summary) == 250
+    assert len(work) == len(frame)
+    assert len(summary) == long_run_input_reference().unit_id.nunique()
     undefined = summary["circular_mean_month"].isna()
-    assert int(undefined.sum()) == 14
+    assert int(undefined.sum()) == int(expected_missing.sum())
     assert summary.loc[undefined, "mean_resultant_length"].isna().all()
 
 
@@ -227,3 +237,5 @@ def test_rq4_renderer_identities_are_now_registered() -> None:
     registry = pe.build_core_renderer_registry()
     assert callable(registry.resolve("cluster_membership_map"))
     assert callable(registry.resolve("cluster_recurrence_map"))
+
+

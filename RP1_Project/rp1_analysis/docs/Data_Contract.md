@@ -1,23 +1,6 @@
-# Data Contract
+# Data contract
 
-## Runtime data authority
-
-RP1 Analysis v1.2.3 separates **runtime scientific admissibility** from **canonical release identity**. `data/input_sha256.json` is the immutable inventory of the exact files supplied with the release. Each entry records:
-
-- `origin_path`: provenance describing the upstream source location or source-relative identity;
-- `staged_path`: the release-relative runtime location used by the analysis;
-- canonical SHA-256;
-- canonical byte size.
-
-Runtime resolution uses only `staged_path`. `origin_path` is provenance and is never a required runtime dependency. Both paths must be relative, traversal-free and valid under their documented bases.
-
-`validate_governed_inputs()` always calculates the current SHA-256 and size of every governed staged file and compares them with the immutable release inventory. It reports `canonical_input_identity=MATCH` only when every current byte identity matches; otherwise it reports `DIFFERENT`. A byte difference does **not** by itself reject ordinary analysis.
-
-Runtime analysis requires `input_validation_status=PASS`. The current panels, metadata and geometries must load successfully and pass the complete governed contract: exact panel schema and column order, types/domains, key uniqueness, temporal support and monthly spines, structural-missingness rules, fixed denominators, geometry/CRS and panel relationships, district-to-ACZ reconciliation and the configured analytical populations. Missing or unreadable required inputs and malformed canonical-inventory structure still fail closed.
-
-The canonical files shipped in this repository must satisfy both `input_validation_status=PASS` and `canonical_input_identity=MATCH`. Scientifically valid reconstructed/replacement files may satisfy `PASS + DIFFERENT`. The canonical inventory must not be rebased to regenerated candidates merely to turn `DIFFERENT` into `MATCH`.
-
-The governed release inputs are the consolidated ACZ and district monthly panels, key/merge metadata, ACZ geometry and district geometry. Scientific execution does not download or regenerate them.
+The analysis consumes the selected workflow handoff: merged district and zone panels, merger manifest and QA/support companion, matching projected geography and district-to-zone crosswalk. The workflow creates those inputs from the selected run. The validator checks the actual files, schemas, keys, temporal support, denominators, geometry, reconciliation and realised analytical populations. A hash identifies bytes; it is not scientific acceptance or independent lineage evidence. Missing dependencies fail closed.
 
 ## Product semantics
 
@@ -28,6 +11,12 @@ The governed release inputs are the consolidated ACZ and district monthly panels
 - BA-2012 is the paired-overlap burned-area authority.
 - None of these products is treated as ground truth for another product.
 
+The c3 source already applies its documented zero-contribution evidence scenario. Analytical values and guarded nulls are preserved exactly; the pipeline does not apply an additional zero-fill policy. The mandatory lossless companion retains source status, coverage/evidence, domain, source/grid and file/row provenance. Missing sources and withheld results cannot become numerical zeros.
+
+The annual-denominator burned-area field is a ratio of a union-masked numerator
+to year-specific burnable area; it is not an annual-mask fraction and can
+exceed one. The union-denominator fraction remains bounded between zero and one.
+
 ## Temporal support
 
 The canonical panel spine is January 2001 through December 2024.
@@ -36,23 +25,18 @@ The canonical panel spine is January 2001 through December 2024.
 - Paired VIIRS/MCD64A1 analysis: 2012-02 to 2024-12.
 - Complete-year overlap summaries: 2013-2024.
 
-A numerical zero is valid only when the relevant product is supported for that unit-month. Unsupported periods remain structurally missing.
+A numerical zero is present only when the relevant product family is within
+its governed temporal support. A zero may still be assumption-derived when
+observation support is absent or partial; consult the sidecar before treating
+it as observed. Periods outside product support remain structurally missing.
 
-## Governed populations
+## Analytical populations
 
-| Population | Candidate units | Retained units | Rows | Eligibility |
-|---|---:|---:|---:|---|
-| ACZ monthly | 5 | 5 | 1,440 | complete balanced monthly spine |
-| District monthly | 260 | 260 | 74,880 | complete balanced monthly spine |
-| Long-run district | 260 | 250 | 72,000 | positive fixed BA-2001 burnable-union denominator for all 288 months |
-| Paired overlap | 260 | 249 | 38,595 | positive fixed BA-2012 burnable-union denominator and complete paired support for 155 months |
-| RQ3 PGEE | 249 paired districts | 249 | 22,939 | paired population restricted to VIIRS-positive district-months |
-
-Eligibility is resolved from governed fields and configuration. Excluded districts remain documented in S1 with explicit reasons.
+Population eligibility is calculated from input support and configured rules. Report realised unit and row counts for the balanced panel, positive long-run union support, paired product support and VIIRS-positive modelling population. Do not require a precomputed result table to determine eligibility. Excluded units remain documented with explicit reasons.
 
 ## Panel schema and keys
 
-Both consolidated panels contain the 111 fields declared in `config/data_schema_contract.yml` and rendered in `docs/Data_Schema_Contract.md`.
+Both consolidated panels contain the fields declared in `config/data_schema_contract.yml` and rendered in `docs/Data_Schema_Contract.md`.
 
 Primary keys are configuration-owned. The loader validates:
 
@@ -67,7 +51,7 @@ Primary keys are configuration-owned. The loader validates:
 
 ## Geometry
 
-The release contains governed ACZ and district geometries. Spatial analysis uses EPSG:32630. District-to-ACZ relationships are validated against the panel authority before analysis.
+The geography handoff supplies ACZ and district geometries. Spatial analysis uses EPSG:32630. District-to-ACZ relationships are validated against the panel authority before analysis.
 
 ## Additive reconciliation
 
@@ -82,7 +66,7 @@ Primary long-run fields are resolved from `field_roles.rq1`:
 - burned area: `modis_ba_km2_ba2001`;
 - fixed burnable area: `modis_burnable_km2_union_ba2001`.
 
-RQ1 uses the 250-district long-run population.
+RQ1 uses the eligible long-run district population.
 
 ## RQ2 fields
 
@@ -153,7 +137,7 @@ Population construction and regression design are distinct. A field used to esta
 | Year reference | `2013` |
 | ACZ reference | `Coastal Zone` (`CZ`) |
 | Excluded predictor roles | `rq3.active_days`, `rq3.modis_af_presence` |
-| Realised design | `31 columns` |
+| Realised design | `derived from the admitted model population during execution` |
 
 ### Secondary SaTScan executable authority
 
@@ -175,8 +159,8 @@ Population construction and regression design are distinct. A field used to esta
 - Main tables: **3** — `T1`, `T2`, `T3`.
 - External manuscript Figure 1: author supplied; no runtime asset or generated-output requirement.
 - Generated main figures: **5** — `F2`, `F3`, `F4`, `F5`, `F6`.
-- Supplementary tables: **6** — `S1`, `S2`, `S3`, `S4`, `S5`, `S6`.
-- Supplementary figures: **1** — `S1`.
+- Supplementary tables: **25** — `S1`, `S2`, `S3`, `S4`, `S5`, `S6`, `S7`, `S8`, `S9`, `S10`, `S11`, `S12`, `S13`, `S14`, `S15`, `S16`, `S17`, `S18`, `S19`, `S20`, `S21`, `S22`, `S23`, `S24`, `S25`.
+- Supplementary figures: **4** — `FS1`, `FS2`, `FS3`, `FS4`.
 <!-- END CONFIG-DERIVED SCIENTIFIC ROLE PROJECTION -->
 ## Secondary SaTScan fields
 
@@ -186,6 +170,31 @@ Exactly two current secondary field authorities are used:
 - MCD64A1 exposure: `modis_burnable_km2_union_ba2001`;
 - VIIRS cases: `viirs_det_primary`.
 
-The MCD64A1 model uses the 250-district long-run support. The VIIRS STP model uses the 249-district paired support over February 2012-December 2024 and has no population/exposure file.
+The MCD64A1 model uses eligible long-run support. The VIIRS STP model uses eligible paired support within its configured interval and has no population/exposure file.
 
 Stable numeric SaTScan location IDs map one-to-one to governed district IDs. Coordinates are generated in EPSG:32630 by a generic geometry-safe rule: use the polygon centroid when the district geometry covers it; otherwise use a guaranteed interior point-on-surface. The emitted location authority records `polygon_centroid` or `point_on_surface` per district and verifies that every point is covered by its governed district geometry. Source-unsupported periods never enter the scan support.
+
+The RQ3 monthly support audit distinguishes temporal product availability from
+observation quality. It reports complete, partial, no-valid, no-union and
+QA-unavailable counts, including counts of analytical zeroes in each state and
+zeroes for which the unknown-area assumption was applied. A zero with partial
+or no valid support is not an observed zero over the entire union; an empty
+union has no area over which a burned fraction can be estimated. Inputs without observation-quality evidence are reported as QA unavailable.
+The audit does not exclude or recode rows: models use the analytical BA
+presence flag, including zeroes that incorporate the unknown-area assumption.
+Sensitivity to this assumption requires separate analysis.
+
+Within-unit fixed and within-unit-year annual burnable areas are checked with
+an absolute tolerance of 1e-9 km² (0.001 m²) to accommodate decimal and
+floating-point round trips. Differences above this tolerance still fail.
+
+## c3 input and evidence contract
+
+Only the admitted c3 workflow handoff enters this analysis. The 111 analytical roles retain separate BA2001 and BA2012 suffixes; panel schema is rp1_fire_panel_consolidated_v3 and data schema is rp1-data-schema-v1.2. Both retrospective unions keep their full reference windows. Annual CSV selection does not redefine a union.
+
+The mandatory ba_observation_support.csv preserves all 69 source fields plus family, source_path, source_sha256 and source_row (1-based data-record index). Its schema is rp1-ba-c3-evidence-v1, policy c3_preserve_admission_v1, method c3_methods_v1_schema_v2. Original source run IDs stay separate from workflow/merge run identity. Its bytes belong to the exact 18-file staged input inventory.
+
+Calendar availability, primary-result usability and visible evidence are distinct. An admitted no-supported-evidence scenario zero remains zero; it does not prove physical absence. An anomaly, unresolved domain or other guard can withhold primary values. Withheld values stay null, independently guarded annual fields stay as exported, and diagnostics never replace withheld primary fields. Five exclusive evidence states partition the known union; reason areas overlap. ba_supported_fraction is a restricted evidence ratio, not union coverage.
+
+Full-window primary products require complete usable inputs and positive fixed union support. An incomplete pilot cannot configure complete scientific inputs. The declared study and source support remain bound to the admitted evidence. Complete-constituent reconciliation reports withheld comparisons rather than silently summing the remaining districts. Generate research and publication outputs from the selected inputs, and validate external results before integrating them.
+

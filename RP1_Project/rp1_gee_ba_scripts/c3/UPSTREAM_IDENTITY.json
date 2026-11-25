@@ -1,0 +1,255 @@
+{
+  "schema": "rp1-c3-vendored-source-v1",
+  "upstream_project": "RP1_C3_Ghana_Viewer_and_Exporter",
+  "upstream_manifest_sha256": "675fcf6d0edb345108fecad114ef972c9a8fb8ad652a138bf19fc7f9067d5d44",
+  "method": "c3_methods_v1_schema_v2",
+  "csv_schema": "rp1_ba_c3_extended_v2",
+  "files": {
+    "METHOD_AND_OUTPUT_NOTES.md": {
+      "sha256": "cd91caa058829845e9beaac061b02d88e6c132bb74a3961cd0a4dc4b9a494678",
+      "bytes": 8722
+    },
+    "README_FIRST.md": {
+      "sha256": "7996d57e4a18fbe07a362856e3b37c6b027898f5f50f414c72b24b86299afc24",
+      "bytes": 10535
+    },
+    "VERIFICATION.md": {
+      "sha256": "0ff28cbbd04636d7fa788566ddb0f2f5e62f564f2a03c95881e5e54952ac56ca",
+      "bytes": 14293
+    },
+    "build.py": {
+      "sha256": "4f4de87a0f285abe52a5cf1cf9bf2b5b6ebd9ecec026e09b190734def9df83b3",
+      "bytes": 1104
+    },
+    "docs/CSV_DICTIONARY.md": {
+      "sha256": "d0f6aed2102b14dc094b1a86f59b892b81769da365e72c652e13f11add0daa9d",
+      "bytes": 14873
+    },
+    "docs/EXPORT_LAYOUT.md": {
+      "sha256": "2b31c5893a4382936533fbf45145601acc00ccf0e39beec3a9d38fa10d868eac",
+      "bytes": 8175
+    },
+    "docs/HEADER_CROSSWALK.md": {
+      "sha256": "9f452f0802ae3f47c45d3f083338d67826221ee5ec2a3c83f3d9ff6bc6f92054",
+      "bytes": 4333
+    },
+    "docs/HEADER_MAP_ALL.csv": {
+      "sha256": "907970828bdc61fbd8c7e0d4f5b95170a0a00f31fe147fc7d93f66b2711423ba",
+      "bytes": 2782
+    },
+    "docs/SOURCE_REPRESENTATION_AND_SENSITIVITY.md": {
+      "sha256": "b9d7495932ea60687e86180d705e4464c17af3907014a09475a8375e38e399a6",
+      "bytes": 8897
+    },
+    "scripts/01_ghana_viewer_c3.js": {
+      "sha256": "778c61f77e04fe1e1af31e3dc75677dc1311dabb6c18f467c097c1e2d84d32ad",
+      "bytes": 69639
+    },
+    "scripts/02_monthly_csv_exporter_c3.js": {
+      "sha256": "00b0fd959b324a60b9a22765124a5480899c713b63c4d04ff5819d21a015a914",
+      "bytes": 57621
+    },
+    "src/ee_core.js": {
+      "sha256": "49afacc5b1775e4b25fe62bb3bc7bea96c878bfe70a738935217581590d659ce",
+      "bytes": 27084
+    },
+    "src/exporter.js": {
+      "sha256": "176585f5de7d3feda12e4f75a037b084814a448b774ac1564efc37f3e9b8e506",
+      "bytes": 24128
+    },
+    "src/exporter_intro.js": {
+      "sha256": "305dfb9b5865c676608a9c2364a670a9a4532c057eb7723bcf7a96239cacb54d",
+      "bytes": 3682
+    },
+    "src/gee_synthetic.js": {
+      "sha256": "d4f928ac359fe4d4537ce48ddf31524cd6935e6463f2143b2a0978ae236f402b",
+      "bytes": 14958
+    },
+    "src/scientific_logic.js": {
+      "sha256": "23e379d84174201c1c628422aa77079eee42171cbb68c6fdfddbafb0a8f8f428",
+      "bytes": 2724
+    },
+    "src/viewer_app.js": {
+      "sha256": "2722dc6f9e1489468be5d5c4c92df49bbf3b49b8491dc3d259f8bdec5c246df9",
+      "bytes": 20802
+    },
+    "src/viewer_footer.js": {
+      "sha256": "2e9c3b6aa06874f93edcbd0ed94e8debc6c6ca153ae2401017deb7d53dc09bee",
+      "bytes": 7681
+    },
+    "src/viewer_intro.js": {
+      "sha256": "36090a850d6b1cf682e7fbf75e32ac621146eb2b5fb55a3f3ea5642fc429ebd2",
+      "bytes": 3364
+    },
+    "src/viewer_lst.js": {
+      "sha256": "2691a4e288541eff2bb2dccb5cab7f05739ab7da051867e8e6041551dc471a02",
+      "bytes": 7979
+    },
+    "tests/gee_synthetic_c3.js": {
+      "sha256": "779ceb4e0e6bb610e482f30bf033ec380ce60419bbc8bbc68a6c6a7404da7b7e",
+      "bytes": 44818
+    },
+    "tests/offline/test_build_guard.py": {
+      "sha256": "c414b1c5074c000b9b61d601439e4fd3e5776788b8eb3500066084a8e983ad2c",
+      "bytes": 1767
+    },
+    "tests/offline/test_compact_names.cjs": {
+      "sha256": "55bcdc6b0c98346e4b5528e7969d2e41a49a5c43cb9b30e5102a714e60daebf0",
+      "bytes": 12812
+    },
+    "tests/offline/test_exporter_behavior.cjs": {
+      "sha256": "141115a55de9605a061bfbbbef8f96f179ad822a8c8ece19ebcac8aac3a2a895",
+      "bytes": 12599
+    },
+    "tests/offline/test_extended_checker.py": {
+      "sha256": "93561f13c8b70a1434d3efc7e24734baa3151f6a309898262c05de97cc3caefb",
+      "bytes": 12747
+    },
+    "tests/offline/test_logic.cjs": {
+      "sha256": "59b23e70e253234200420cedd2adf38208304d6c2d97368ae5f354dcd65db3da",
+      "bytes": 3857
+    },
+    "tests/offline/test_mock_ee.cjs": {
+      "sha256": "a9ccd868465652fc0c8b304f66e3cd57ed0697cad0e153c7332cfd107eed3ef8",
+      "bytes": 14103
+    },
+    "tests/offline/test_policy_independent.cjs": {
+      "sha256": "7695d03a86b51b93b31e5a13ecd070f7a3998e093c4b20982299271ad99a136a",
+      "bytes": 5387
+    },
+    "tests/offline/test_schema_equivalence.cjs": {
+      "sha256": "ca302654c026aaf7d5d927a11dba394e39e87eea8357043e127e4ef03a2f490b",
+      "bytes": 3344
+    },
+    "tests/offline/test_viewer_behavior.cjs": {
+      "sha256": "7368dc0997c7a7604a4d268936ac8fc1c668cf95a7c9e738a19f151704917047",
+      "bytes": 7438
+    },
+    "tests/run_offline.py": {
+      "sha256": "f2d67e61947c46ba8a276b3c7d07eebf0b92cfdadd7ea86a0c81913b51fac291",
+      "bytes": 4294
+    },
+    "tools/check_extended_csv.py": {
+      "sha256": "34df0a9768cf8d6172ac012c46002b7b3ea45d1835a7a0b6d0f51c799f22ee7e",
+      "bytes": 20447
+    }
+  },
+  "adaptations": [
+    {
+      "path": "tests/offline/test_extended_checker.py",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "9d516b6379fa19bd5f3b25e9cc81cfe907520b07dbe2f9fd94dcacacda2bfcf5"
+    },
+    {
+      "path": "METHOD_AND_OUTPUT_NOTES.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence; document the adopted burned-evidence-or-zero design and deferred independent validation scope. Describe check scope independently of packaging.",
+      "vendored_sha256": "cf78c551469dd194489f6b5e935b782138e3a95ece27ee20bc241af0a9f3c70b"
+    },
+    {
+      "path": "README_FIRST.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "170d36808a634fc20b6b4f5e8e60852dd40ade7484171f10f541004f12741804"
+    },
+    {
+      "path": "VERIFICATION.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence; distinguish implemented checks from deferred independent validation campaigns.",
+      "vendored_sha256": "e965bf675d0451eb467a0bf542963ab91b7b24a2c743fbac2b99081b18f9c59c"
+    },
+    {
+      "path": "docs/EXPORT_LAYOUT.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "e5bdb0658e8b0d3db7d97dd9ed27b6037eba0cc4c1626309474a4e30f7ab7755"
+    },
+    {
+      "path": "docs/SOURCE_REPRESENTATION_AND_SENSITIVITY.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence; document the adopted zero policy and defer additional native-raster and sensitivity campaigns.",
+      "vendored_sha256": "2e1858ccc220a62356710a9f927d0d3797810bb1439fd9a90f662d4f1ab106cf"
+    },
+    {
+      "path": "tests/offline/test_schema_equivalence.cjs",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "b08c0aa3c05ed405a64147180d30a8ec48bdd837b57fbd69d0ee3cc53f772fa1"
+    },
+    {
+      "path": "docs/CSV_DICTIONARY.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence; clarify measured burned area and zero under the adopted primary rule. Describe check scope independently of packaging.",
+      "vendored_sha256": "9788d73d2c6e33ccc59ba0e00bfe6ac0b28b81b5d767d9241716c4d8c1a6c04c"
+    },
+    {
+      "path": "docs/HEADER_CROSSWALK.md",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "45f887b0d16c91ff4ccee0aac6a1d467c2d7ad962ebe20e065c3ecb3ce87fc4d"
+    },
+    {
+      "path": "docs/HEADER_MAP_ALL.csv",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "19b4503f31d38722729f93a74c8440f57cd3170b722dd466ed304099ddb34561"
+    },
+    {
+      "path": "scripts/01_ghana_viewer_c3.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "ba11267f8f6910a84d82df8c21e39da10c23733bcbbe0ed08f0e2a0ef96a8d5e"
+    },
+    {
+      "path": "scripts/02_monthly_csv_exporter_c3.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "323a2f4a9690b6a3448410b32f8dbb5c5775c52357a3f1a4f5e64945d874627f"
+    },
+    {
+      "path": "src/ee_core.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "dfcca56271ca7833119c9ab3aec5b617e1029780deff43960e749673e66650b6"
+    },
+    {
+      "path": "tests/gee_synthetic_c3.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "43324db785955725a1d05f8f3d5d66c7d57be0028f1ab47484611b46767a9e9c"
+    },
+    {
+      "path": "tests/run_offline.py",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "17dee7e87cd5a2151c45014c1a40c5c711cc532dcedbcf7be0b3842cbbf308b4"
+    },
+    {
+      "path": "tools/check_extended_csv.py",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "430b558a4723939b79b3ede0fe8375eec34ea73482c51e01cc42d9fc54677403"
+    },
+    {
+      "path": "src/exporter.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "90209676051e6b0dfe455ae3366d649a8b53bc5db47db135b633f2c3dababe82"
+    },
+    {
+      "path": "src/viewer_app.js",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "70c404d615bf80b95e3c1f4c09dca5686d5a78ddb81bafd82e7b1609852105b4"
+    },
+    {
+      "path": "tests/offline/test_exporter_behavior.cjs",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "da65e4153b68ab6e32150636c3517a0d5ee9aacabe4b73c05e30461bf980d931"
+    },
+    {
+      "path": "tests/offline/test_viewer_behavior.cjs",
+      "reason": "Configure observation years independently of fixed support and verify complete source evidence.",
+      "vendored_sha256": "4551ed690af05a3d850eb87babb3fce0093718d6ec38e52dfe957d0df3dd4487"
+    }
+  ],
+  "test_fixture_policy": "Checker tests use synthetic records; research outputs are excluded from the source distribution.",
+  "omitted_upstream_fixture_policy": "Retain current synthetic cases and the ordered analytical schema inventory.",
+  "local_files": {
+    "README.md": {
+      "sha256": "5c120e4f702ca7b1f2a05617acb48dd32f7d07d2f98f3c246daca365a51b4c50",
+      "bytes": 1703
+    },
+    "docs/OBSERVATION_PERIOD.md": {
+      "sha256": "20b4be0f0fa0528b6475101b0271cf2b56abf9a5c354d1e5625c7af1c15d01d5",
+      "bytes": 3654
+    },
+    "tests/offline/test_observation_period.cjs": {
+      "sha256": "3c325a75be8a24fec6714ff850985df7d743c2ef509ad120882edfc192aab51e",
+      "bytes": 2845
+    }
+  }
+}

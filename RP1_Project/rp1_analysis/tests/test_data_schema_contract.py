@@ -1,4 +1,5 @@
 from __future__ import annotations
+from scientific_input_reference import input_population_sizes
 
 import json
 import os
@@ -104,14 +105,14 @@ def test_additive_reconciliation_authority_declares_only_additive_fields() -> No
 def test_exact_analytical_population_contracts_are_proved_from_data() -> None:
     authorities = load_data_authorities(PATHS, SCHEMA)
     summary = validate_data_authorities(authorities, BUNDLE.analysis, SCHEMA)
-    assert summary.acz_monthly_rows == 1440
-    assert summary.district_monthly_rows == 74880
-    assert summary.district_spatial_universe_count == 260
-    assert summary.long_run_eligible_count == 250
-    assert summary.paired_eligible_count == 249
-    assert summary.paired_rows == 38595
-    assert summary.rq3_gee_units == 249
-    assert summary.rq3_gee_rows == 22939
+    assert summary.acz_monthly_rows == input_population_sizes()["ACZ_MONTHLY_ROWS"]
+    assert summary.district_monthly_rows == input_population_sizes()["DISTRICT_MONTHLY_ROWS"]
+    assert summary.district_spatial_universe_count == input_population_sizes()["DISTRICT_UNITS"]
+    assert summary.long_run_eligible_count == input_population_sizes()["LONG_RUN_DISTRICTS"]
+    assert summary.paired_eligible_count == input_population_sizes()["PAIRED_DISTRICTS"]
+    assert summary.paired_rows == input_population_sizes()["PAIRED_ROWS"]
+    assert summary.rq3_gee_units == input_population_sizes()["RQ3_GEE_DISTRICTS"]
+    assert summary.rq3_gee_rows == input_population_sizes()["RQ3_GEE_ROWS"]
     assert summary.reconciliation["passed"].all()
 
 

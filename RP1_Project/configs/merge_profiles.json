@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "default_profile": "c3",
+  "paths": {
+    "unit_universe": "geo_data_prep/out/example_acz/unit_universe.csv",
+    "af_root": "RP1_Project/rp1_mv_firms_panels/out/runs/ghana_full/rp1_af_exports",
+    "output_root": "RP1_Project/merge_runs"
+  },
+  "profiles": {
+    "c3": {
+      "source_label": "c3",
+      "source_schema_version": "rp1_ba_c3_extended_v2",
+      "quality_policy": "c3_preserve_admission_v1",
+      "method_version": "c3_methods_v1_schema_v2",
+      "bundle_handoff": null
+    }
+  }
+}

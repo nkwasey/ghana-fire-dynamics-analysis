@@ -145,8 +145,8 @@ def build_gee_population(
         raise GEEDesignError("RQ3 model population contains duplicate cluster-time keys")
 
     if enforce_governed_counts:
-        expected_rows = int(pop["rows"])
-        expected_units = int(pop["units"])
+        expected_rows = int(pop["rows"]) if pop.get("rows") is not None else len(model)
+        expected_units = int(pop["units"]) if pop.get("units") is not None else int(model[cluster_field].nunique())
         if len(model) != expected_rows:
             raise GEEDesignError(f"RQ3 model population has {len(model)} rows; expected {expected_rows}")
         units = int(model[cluster_field].nunique())

@@ -13,14 +13,10 @@ from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.execution_contract import validate_secondary_completion_state
 
 from rp1_analysis_v1 import integration, presentation_export
+from _synthetic_run_fixtures import secondary_status
 
 SUBPROJECT = Path(__file__).resolve().parents[1]
 NOTEBOOK = SUBPROJECT / "RP1_Analysis_v1.ipynb"
-VALIDATED_FIXTURE_STATUS = (
-    SUBPROJECT
-    / "tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec"
-    / "04_secondary_concentration/secondary_external_execution_status.json"
-)
 
 
 def _cell_source(cell_id: str) -> str:
@@ -31,10 +27,11 @@ def _cell_source(cell_id: str) -> str:
     raise AssertionError(f"Notebook cell not found: {cell_id}")
 
 
-def test_repository_fixture_proves_results_validated_is_a_legitimate_secondary_state() -> None:
-    import json
-
-    payload = json.loads(VALIDATED_FIXTURE_STATUS.read_text(encoding="utf-8"))
+def test_synthetic_state_fixture_exercises_results_validated_completion_contract() -> None:
+    payload = secondary_status()
+    contract = load_configuration_bundle(SUBPROJECT / "config").execution
+    validate_secondary_completion_state(contract, payload["external_execution_state"])
+    assert payload["fixture_kind"] == "SYNTHETIC_TEST_ONLY"
     assert payload["external_execution_state"] == "RESULTS_VALIDATED"
     assert payload["validated_model_count"] == 2
     assert payload["live_satscan_execution"] == "VALIDATED_EXTERNAL_RESULTS_INGESTED"
