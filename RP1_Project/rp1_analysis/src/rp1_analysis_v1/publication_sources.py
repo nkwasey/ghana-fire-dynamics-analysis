@@ -1,4 +1,4 @@
-"""Materialised publication-source authority for RP1 v1.1.0.
+"""Materialised publication-source authorities for the configured analysis.
 
 Scientific calculations are performed by the already-qualified RQ1/RQ2/RQ3
 analysis modules during explicit source materialisation.  Publication rendering
@@ -11,20 +11,23 @@ from dataclasses import dataclass
 from hashlib import sha256
 import json
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Protocol
+import re
 
 import numpy as np
 import pandas as pd
 
 from .config import ConfigurationBundle, load_configuration_bundle
 from .data_io import DataAuthorities, load_data_authorities
+from .ba_support import c3_evidence_summary
 from .observability import build_rq3_tables
 from .paths import ProjectPaths
 from .spatial_scale import build_rq1_tables
 from .trend_robustness import build_rq2_tables
+from .supplementary_analysis import build_supplementary_sources
 from .secondary_clusters import ScanScenario, build_cluster_membership_source, build_cluster_summary_source
 from .satscan_io import ParsedSaTScanResults
-from .validation import DataContractSummary, validate_data_authorities
+from .validation import AnalyticalMask, DataContractSummary, validate_data_authorities
 
 
 class PublicationSourceError(RuntimeError):
@@ -33,6 +36,35 @@ class PublicationSourceError(RuntimeError):
 
 PUBLICATION_AUTHORITY_DIR = Path("data/authorities/publication")
 MANIFEST_NAME = "SOURCE_MANIFEST.json"
+SATSCAN_PUBLICATION_SOURCE_NAMES = frozenset({
+    "table3_satscan_clusters", "supplement_s6_satscan",
+    "cluster_membership_source", "cluster_recurrence_source",
+})
+
+
+def _require_primary_source_inventory(bundle: ConfigurationBundle, sources: object) -> None:
+    """Check publication dependencies independently of secondary execution state."""
+    if not isinstance(sources, dict) or not sources:
+        raise PublicationSourceError("Publication source inventory is empty or malformed")
+    restricted = {
+        spec.source_attribute for spec in bundle.output.tables
+        if spec.builder_options.get("requires_restricted_scan")
+    }
+    secondary = SATSCAN_PUBLICATION_SOURCE_NAMES | restricted
+    required = {
+        spec.source_attribute for spec in bundle.output.tables
+        if not spec.builder_options.get("genuine_external_results_required")
+        and not spec.builder_options.get("requires_restricted_scan")
+    } | {
+        spec.source_attribute for spec in bundle.figure.figures
+        if not spec.data_builder_options.get("genuine_external_results_required")
+    }
+    missing = required.difference(sources)
+    if missing:
+        raise PublicationSourceError(f"Required primary publication sources missing: {', '.join(sorted(missing))}")
+    unexpected = secondary.intersection(sources)
+    if unexpected:
+        raise PublicationSourceError(f"Primary publication inventory contains secondary sources: {', '.join(sorted(unexpected))}")
 
 
 def _digest(path: Path) -> str:
@@ -59,15 +91,22 @@ def _normalise_status(value: object) -> str:
     raise PublicationSourceError(f"Unknown support status {value!r}")
 
 
-def _population_table(bundle: ConfigurationBundle) -> pd.DataFrame:
+def _population_table(bundle: ConfigurationBundle, summary: DataContractSummary) -> pd.DataFrame:
+    realised = {
+        "acz_monthly": (summary.acz_count, summary.acz_monthly_rows),
+        "district_monthly": (summary.district_spatial_universe_count, summary.district_monthly_rows),
+        "long_run_district": (summary.long_run_eligible_count, summary.long_run_rows),
+        "paired_overlap": (summary.paired_eligible_count, summary.paired_rows),
+        "rq3_model": (summary.rq3_gee_units, summary.rq3_gee_rows),
+    }
     rows: list[dict[str, object]] = []
     for population_id, pop in bundle.analysis.study["populations"].items():
         source = pop.get("source_panel", pop.get("source_population", ""))
         rows.append({
             "population_id": str(population_id),
             "source_population": str(source),
-            "units": int(pop["units"]),
-            "rows": int(pop["rows"]),
+            "units": int(realised[population_id][0]),
+            "rows": int(realised[population_id][1]),
             "start": str(pop["start"]),
             "end": str(pop["end"]),
             "eligibility_rule": str(pop["eligibility"]),
@@ -196,8 +235,9 @@ def _supplement_s5(rq3) -> pd.DataFrame:
 
 _SATSCAN_S6_COLUMNS = [
     "record_type", "model_id", "product", "model", "cluster_rank", "unit_id", "unit_name",
-    "start_month", "end_month", "observed", "expected", "relative_risk", "likelihood_ratio",
-    "p_value", "parameter_name", "parameter_value", "anchor_method", "x", "y", "file_role",
+    "start_month", "end_month", "observed", "expected", "conditional_expected",
+    "observed_expected_ratio", "relative_risk", "log_likelihood_ratio", "test_statistic",
+    "test_statistic_type", "p_value", "p_value_report", "parameter_name", "parameter_value", "anchor_method", "x", "y", "file_role",
     "file_path", "sha256",
 ]
 
@@ -224,9 +264,19 @@ _CLUSTER_PRODUCT_MASK = {
 }
 
 
+class ClusterRecurrenceMasks(Protocol):
+    """District eligibility authorities needed by the scan publication builders."""
+
+    @property
+    def long_run_mask(self) -> AnalyticalMask: ...
+
+    @property
+    def paired_mask(self) -> AnalyticalMask: ...
+
+
 def build_cluster_recurrence_source(
     cluster_membership_source: pd.DataFrame,
-    data_contract: DataContractSummary,
+    data_contract: ClusterRecurrenceMasks,
     *,
     products: tuple[str, ...] | list[str] = ("mcd64a1", "viirs"),
     significance_alpha: float = 0.05,
@@ -365,7 +415,7 @@ def build_satscan_publication_sources(
     parsed_by_model: Mapping[str, ParsedSaTScanResults],
     scenarios: tuple[ScanScenario, ...] | list[ScanScenario],
     location_authority: pd.DataFrame,
-    data_contract: DataContractSummary,
+    data_contract: ClusterRecurrenceMasks,
     run_registry: pd.DataFrame | None = None,
     run_dir: str | Path | None = None,
 ) -> dict[str, pd.DataFrame]:
@@ -389,11 +439,11 @@ def build_satscan_publication_sources(
     ) if not cluster_membership.empty else pd.DataFrame(columns=["model_id", "cluster_id", "district_membership"])
     table3 = cluster_summary.merge(names, on=["model_id", "cluster_id"], how="left", validate="one_to_one")
     table3["district_membership"] = table3["district_membership"].fillna("")
-    table3 = table3.rename(columns={
-        "case_count": "observed", "likelihood_ratio": "likelihood_ratio",
-    })[[
+    table3 = table3.rename(columns={"case_count": "observed"})[[
         "product", "model", "cluster_rank", "district_membership", "start_month", "end_month",
-        "observed", "expected_count", "relative_risk", "likelihood_ratio", "p_value",
+        "observed", "expected_count", "conditional_expected", "observed_expected_ratio",
+        "relative_risk", "log_likelihood_ratio", "test_statistic", "test_statistic_type",
+        "p_value", "p_value_report",
     ]].rename(columns={"expected_count": "expected"})
 
     cluster_membership_source = cluster_membership[["product", "unit_id", "cluster_id"]].copy()
@@ -409,8 +459,11 @@ def build_satscan_publication_sources(
             "record_type": "cluster", "model_id": row.model_id, "product": row.product,
             "model": row.model, "cluster_rank": row.cluster_rank, "start_month": row.start_month,
             "end_month": row.end_month, "observed": row.case_count, "expected": row.expected_count,
-            "relative_risk": row.relative_risk, "likelihood_ratio": row.likelihood_ratio,
-            "p_value": row.p_value,
+            "conditional_expected": row.conditional_expected,
+            "observed_expected_ratio": row.observed_expected_ratio,
+            "relative_risk": row.relative_risk, "log_likelihood_ratio": row.log_likelihood_ratio,
+            "test_statistic": row.test_statistic, "test_statistic_type": row.test_statistic_type,
+            "p_value": row.p_value, "p_value_report": row.p_value_report,
         })
         s6_rows.append(item)
     for row in cluster_membership.itertuples(index=False):
@@ -419,7 +472,7 @@ def build_satscan_publication_sources(
             "record_type": "membership", "model_id": row.model_id, "product": row.product,
             "model": row.model, "cluster_rank": row.cluster_rank, "unit_id": row.unit_id,
             "unit_name": row.unit_name, "start_month": row.start_month, "end_month": row.end_month,
-            "p_value": row.p_value,
+            "p_value": row.p_value, "p_value_report": row.p_value_report,
         })
         s6_rows.append(item)
     for row in location_authority.sort_values("location_id", kind="mergesort").itertuples(index=False):
@@ -492,7 +545,7 @@ def materialise_satscan_publication_sources(
     paths: ProjectPaths | None = None,
     data_contract: DataContractSummary | None = None,
 ) -> dict[str, object]:
-    """Reject legacy repository-authority materialisation.
+    """Reject mutation of repository publication authorities.
 
     Genuine external SaTScan results are integrated only by the package-owned
     optional-integration state machine into the current run directory. Static
@@ -503,11 +556,136 @@ def materialise_satscan_publication_sources(
         "use validate_and_integrate_satscan_results_if_available() for run-local sources"
     )
 
+def _run_source_root(governed: ProjectPaths, run_id: str) -> Path:
+    if not isinstance(run_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", run_id):
+        raise PublicationSourceError("Invalid publication run identity")
+    return governed.resolve_inside(f"out/publication_sources/{run_id}")
+
+
+def _notebook_payload_digest(notebook: object) -> str:
+    """Hash ordered notebook content and execution tags, excluding saved results.
+
+    The canonical JSON representation is versioned independently of nbformat's
+    file serialization. Cell tags are included because they may control execution.
+    """
+    try:
+        if not isinstance(notebook, dict):
+            raise ValueError("notebook must be an object")
+        cells = notebook["cells"]
+        if not isinstance(cells, list) or not cells:
+            raise ValueError("cells must be a nonempty list")
+        selected = []
+        for cell in cells:
+            kind = cell["cell_type"]
+            source = cell["source"]
+            if kind not in {"code", "markdown", "raw"}:
+                raise ValueError("invalid cell type")
+            if isinstance(source, list) and all(isinstance(item, str) for item in source):
+                source = "".join(source)
+            if not isinstance(source, str):
+                raise ValueError("invalid cell source")
+            metadata = cell.get("metadata", {})
+            if not isinstance(metadata, dict):
+                raise ValueError("invalid cell metadata")
+            tags = metadata.get("tags", [])
+            if not isinstance(tags, list) or not all(isinstance(tag, str) for tag in tags):
+                raise ValueError("invalid cell tags")
+            selected.append({"cell_type": kind, "source": source, "tags": tags})
+        canonical = {"schema": "rp1-notebook-source-v1", "cells": selected}
+        encoded = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PublicationSourceError(f"Cannot identify notebook source: {exc}") from exc
+    return sha256(encoded).hexdigest()
+
+
+def _notebook_source_digest(path: Path) -> str:
+    try:
+        notebook = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise PublicationSourceError(f"Cannot read notebook source {path}: {exc}") from exc
+    return _notebook_payload_digest(notebook)
+
+
+def _source_input_identity(governed: ProjectPaths, *, legacy: bool = False) -> dict[str, object]:
+    # Identify actual files, not just the declared inventory; reject duplicates and escapes.
+    paths = governed.all_hashed_inputs
+    if not paths or len(set(paths)) != len(paths):
+        raise PublicationSourceError("Invalid or duplicate governed inputs")
+    files = {p.relative_to(governed.root.resolve()).as_posix(): _digest(p) for p in paths}
+    code_root = governed.root / "src/rp1_analysis_v1"
+    code = {p.relative_to(governed.root).as_posix(): _digest(p) for p in sorted(code_root.glob("*.py"))}
+    notebook = governed.root / "RP1_Analysis_v1.ipynb"
+    if not notebook.is_file():
+        raise PublicationSourceError("Canonical notebook is missing")
+    code["RP1_Analysis_v1.ipynb"] = _digest(notebook) if legacy else _notebook_source_digest(notebook)
+    identity = {"files": files, "inventory_sha256": _digest(governed.input_hash_inventory), "code": code}
+    if not legacy:
+        identity["notebook_identity_schema"] = "rp1-notebook-source-v1"
+    return identity
+
+
+def _identity_changes(before: dict[str, object], after: dict[str, object]) -> list[str]:
+    changes = []
+    for group in ("files", "code"):
+        old, new = before.get(group, {}), after.get(group, {})
+        if not isinstance(old, dict) or not isinstance(new, dict):
+            changes.append(group)
+            continue
+        changes.extend(f"{group}:{name}" for name in sorted(old.keys() | new.keys()) if old.get(name) != new.get(name))
+    for key in ("inventory_sha256", "notebook_identity_schema"):
+        if before.get(key) != after.get(key):
+            changes.append(key)
+    return changes
+
+
+def _require_same_identity(before: dict[str, object], after: dict[str, object], context: str) -> None:
+    changes = _identity_changes(before, after)
+    if changes:
+        raise PublicationSourceError(f"{context}: {', '.join(changes)}")
+
+
+def _require_same_configuration(governed: ProjectPaths, bundle: ConfigurationBundle, context: str) -> None:
+    current = load_configuration_bundle(governed.root / "config")
+    if current.configuration_sha256 != bundle.configuration_sha256:
+        before, after = bundle.file_hashes, current.file_hashes
+        changed = [f"config/{name}" for name in sorted(before.keys() | after.keys()) if before.get(name) != after.get(name)]
+        raise PublicationSourceError(f"{context}: {', '.join(changed) if changed else 'aggregate configuration identity'}")
+
+
+def verify_primary_publication_sources(governed: ProjectPaths, run_id: str) -> dict[str, object]:
+    root = _run_source_root(governed, run_id)
+    manifest_path = root / MANIFEST_NAME
+    if not manifest_path.is_file():
+        raise PublicationSourceError("Current run publication source manifest missing")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    bundle = load_configuration_bundle(governed.root / "config")
+    config_hash = bundle.configuration_sha256
+    schema = manifest.get("schema")
+    if manifest.get("run_id") != run_id or schema not in {"rp1-publication-sources-run-v1", "rp1-publication-sources-run-v2"} or manifest.get("configuration_sha256") != config_hash:
+        raise PublicationSourceError("Publication source run or configuration identity mismatch")
+    expected_identity = manifest.get("input_identity")
+    if not isinstance(expected_identity, dict):
+        raise PublicationSourceError("Publication source input identity is malformed")
+    _require_same_identity(expected_identity, _source_input_identity(governed, legacy=schema.endswith("-v1")), "Publication source inputs or code changed")
+    entries = manifest.get("sources")
+    _require_primary_source_inventory(bundle, entries)
+    for name, entry in entries.items():
+        path = governed.resolve_inside(entry["path"])
+        if not path.is_relative_to(root.resolve()) or not path.is_file() or _digest(path) != entry.get("sha256"):
+            raise PublicationSourceError(f"Publication source missing, unsafe or modified: {name}")
+    return manifest
+
+
 def materialise_publication_authorities(
     *, paths: ProjectPaths | None=None, bundle: ConfigurationBundle | None=None,
     authorities: DataAuthorities | None=None, data_contract: DataContractSummary | None=None,
+    run_id: str,
 ) -> dict[str, object]:
     governed=paths or ProjectPaths.discover(); bundle=bundle or load_configuration_bundle(governed.root/"config")
+    root=_run_source_root(governed, run_id)
+    if root.exists(): raise PublicationSourceError("Publication source run already exists")
+    input_identity=_source_input_identity(governed)
+    _require_same_configuration(governed, bundle, "Configuration changed before source computation")
     authorities=authorities or load_data_authorities(governed,bundle.data_schema)
     data_contract=data_contract or validate_data_authorities(authorities,bundle.analysis,bundle.data_schema)
     rq1=build_rq1_tables(authorities,data_contract,bundle.analysis)
@@ -516,7 +694,7 @@ def materialise_publication_authorities(
     sources: dict[str,pd.DataFrame]={
         "table1_acz_summary":_table1(rq1,rq2),
         "table2_rq3_model":rq3.continuous_model_summary_source.copy(),
-        "supplement_s1_populations":_population_table(bundle),
+        "supplement_s1_populations":_population_table(bundle,data_contract),
         "supplement_s2_district_rq1":rq1.district_metrics_source[["unit_id","unit_name","parent_code","parent_name","dominant_overlap_share","long_run_rate","district_departure","circular_mean_month","mean_resultant_length"]].copy(),
         "supplement_s3_spatial":rq1.spatial_statistics_authority.copy(),
         "supplement_s4_rq2":rq2.rq2_full_authority[["parent_code","parent_name","year","annual_rate","sen_slope","u_n","long_run_variance","t_n","realised_bandwidth","permutation_count","seed","raw_p","bh_q"]].copy(),
@@ -526,13 +704,28 @@ def materialise_publication_authorities(
         "annual_trend_source":rq2.annual_trend_source.copy(),
         "cross_product_observability_presentation_source":_cross_product_observability_presentation_source(rq3,data_contract,authorities),
         "district_seasonal_diagnostics_source":_district_seasonal_diagnostics_source(rq1),
+        "c3_evidence_summary": c3_evidence_summary(authorities.ba_observation_support),
+        "c3_population_exclusions": pd.concat([
+            data_contract.long_run_mask.units.assign(population="long_run_ba2001"),
+            data_contract.paired_mask.units.assign(population="paired_ba2012"),
+        ], ignore_index=True),
+        "c3_reconciliation_eligibility": data_contract.reconciliation.copy(),
+        "c3_diagnostic_reconciliation": data_contract.c3_reconciliation.copy(),
     }
-    root=governed.root/PUBLICATION_AUTHORITY_DIR; root.mkdir(parents=True,exist_ok=True)
+    sources.update(build_supplementary_sources(
+        rq1, rq2, rq3, authorities, data_contract, bundle.analysis, evidence_root=governed.root.parent.parent,
+    ))
+    _require_primary_source_inventory(bundle, sources)
+    _require_same_identity(input_identity, _source_input_identity(governed), "Inputs changed during source computation")
+    _require_same_configuration(governed, bundle, "Configuration changed during source computation")
+    root.mkdir(parents=True,exist_ok=False)
     manifest_entries={}
     for name,frame in sorted(sources.items()):
         path=root/f"{name}.csv"; _write_csv(path,frame)
         manifest_entries[name]={"path":path.relative_to(governed.root).as_posix(),"rows":int(len(frame)),"columns":list(frame.columns),"sha256":_digest(path),"size_bytes":path.stat().st_size}
-    manifest={"schema_version":bundle.analysis.schema_version,"authority":"qualified_analysis_results_for_publication","configuration_sha256":bundle.configuration_sha256,"sources":manifest_entries,"satscan_dependent_sources_materialised":False,"satscan_reason":"genuine_external_results_required"}
+    _require_same_identity(input_identity, _source_input_identity(governed), "Inputs changed during source materialisation")
+    _require_same_configuration(governed, bundle, "Configuration changed during source materialisation")
+    manifest={"schema": "rp1-publication-sources-run-v2", "run_id":run_id,"schema_version":bundle.analysis.schema_version,"configuration_sha256":bundle.configuration_sha256,"input_identity":input_identity,"sources":manifest_entries,"satscan_dependent_sources_materialised":False,"satscan_reason":"genuine_external_results_required"}
     (root/MANIFEST_NAME).write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     return manifest
 
@@ -541,17 +734,25 @@ def load_publication_authorities(
     *,
     paths: ProjectPaths | None = None,
     run_local_source_dir: str | Path | None = None,
+    primary_run_id: str | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Load immutable repository authorities plus optional validated run-local SaTScan sources."""
     governed = paths or ProjectPaths.discover()
-    root = governed.root / PUBLICATION_AUTHORITY_DIR
+    root = governed.root / PUBLICATION_AUTHORITY_DIR if primary_run_id is None else _run_source_root(governed, primary_run_id)
+    if primary_run_id is not None: verify_primary_publication_sources(governed, primary_run_id)
     mp = root / MANIFEST_NAME
     if not mp.is_file():
         raise PublicationSourceError(f"Publication source manifest missing: {mp}")
     manifest = json.loads(mp.read_text(encoding="utf-8"))
+    bundle = load_configuration_bundle(governed.root / "config")
+    if manifest.get("configuration_sha256") != bundle.configuration_sha256:
+        raise PublicationSourceError("Publication authorities do not match the current configuration; regenerate and validate source-bound authorities before use.")
+    _require_primary_source_inventory(bundle, manifest.get("sources"))
     out: dict[str, pd.DataFrame] = {}
     for name, entry in manifest["sources"].items():
-        path = governed.root / entry["path"]
+        path = governed.resolve_inside(entry["path"])
+        if not path.is_relative_to(root.resolve()):
+            raise PublicationSourceError(f"Publication source escapes source directory: {name}")
         if not path.is_file():
             raise PublicationSourceError(f"Publication source missing: {path}")
         if _digest(path) != entry["sha256"]:
@@ -572,11 +773,14 @@ def load_publication_authorities(
         if not extra_manifest_path.is_file():
             raise PublicationSourceError("Run-local SaTScan publication-source manifest is missing")
         extra = json.loads(extra_manifest_path.read_text(encoding="utf-8"))
-        if extra.get("schema") != "rp1-satscan-run-local-publication-sources-v1":
+        if extra.get("schema") != "rp1-satscan-run-local-publication-sources-v2":
             raise PublicationSourceError("Unsupported run-local SaTScan publication-source manifest")
         if extra.get("external_execution_state") != "RESULTS_VALIDATED":
             raise PublicationSourceError("Run-local SaTScan sources are not RESULTS_VALIDATED")
-        for name, entry in extra.get("sources", {}).items():
+        extra_sources = extra.get("sources")
+        if not isinstance(extra_sources, dict) or set(extra_sources) != SATSCAN_PUBLICATION_SOURCE_NAMES:
+            raise PublicationSourceError("Run-local SaTScan publication-source set is incomplete or unexpected")
+        for name, entry in extra_sources.items():
             path = (extra_root.parent.parent / entry["path"]).resolve()
             try:
                 path.relative_to(extra_root.parent.parent.resolve())

@@ -16,6 +16,7 @@ from rp1_analysis_v1.paths import ProjectPaths
 from rp1_analysis_v1.style import PublicationStyle
 from rp1_analysis_v1.publication_sources import build_satscan_publication_sources
 from rp1_analysis_v1.satscan_io import ParsedSaTScanResults, parse_cluster_file, parse_membership_file
+from rp1_analysis_v1.satscan_io import ExternalResultValidationError
 from rp1_analysis_v1.secondary_clusters import build_location_authority, load_scan_scenarios
 from rp1_analysis_v1.validation import validate_data_authorities
 
@@ -35,16 +36,18 @@ def _objects(tmp_path: Path):
         anchor_method=str(params.coordinate_anchor_method),
     )
     scenarios = list(load_scan_scenarios(bundle.analysis))
-    clusters = parse_cluster_file(FIXTURE / "known_good.col.txt", alpha=0.05)
+    poisson_clusters = parse_cluster_file(FIXTURE / "known_good.col.txt", alpha=0.05)
+    stp_clusters = parse_cluster_file(FIXTURE / "known_good_stp.col.txt", alpha=0.05)
     membership = parse_membership_file(FIXTURE / "known_good.gis.txt", alpha=0.05)
     # Remap the neutral publication fixture to two districts eligible in both governed populations.
-    clusters = clusters.copy(); clusters["centroid_location_id"] = "4"
+    poisson_clusters = poisson_clusters.copy(); poisson_clusters["centroid_location_id"] = "4"
+    stp_clusters = stp_clusters.copy(); stp_clusters["centroid_location_id"] = "4"
     membership = membership.copy(); membership["location_id"] = ["4", "5"]
     parsed = {
         scenario.scenario_id: ParsedSaTScanResults(
             scenario_id=scenario.scenario_id,
             model=scenario.model,
-            clusters=clusters.copy(),
+            clusters=(poisson_clusters if scenario.requires_population else stp_clusters).copy(),
             membership=membership.copy(),
             provenance={"fixture": True},
         )
@@ -95,10 +98,26 @@ def test_neutral_reference_fixture_builds_table3_s6_and_figure6_without_stp_rr(t
     poisson = t3.loc[t3["product"].eq("mcd64a1")].iloc[0]
     assert pd.isna(stp["relative_risk"]) or stp["relative_risk"] == ""
     assert float(poisson["relative_risk"]) == 2.5
+    assert float(poisson["observed_expected_ratio"]) == 2.0
+    assert float(poisson["expected"]) == 2.0
+    assert poisson["conditional_expected"] == ""
+    assert float(stp["conditional_expected"]) == 2.0
+    assert stp["expected"] == ""
+    assert float(stp["observed_expected_ratio"]) == 2.0
+    assert pd.isna(stp["log_likelihood_ratio"])
+    assert stp["test_statistic_type"] == "TEST_STAT"
+    assert poisson["test_statistic_type"] == "LLR"
+    assert float(stp["test_statistic"]) == 12.3
+    assert poisson["p_value_report"] == "0.01"
     assert set(s6["record_type"]) == {"cluster", "membership", "coordinate", "parameter", "file"}
     assert (s6.loc[s6["record_type"].eq("coordinate"), "anchor_method"].astype(str).isin({"polygon_centroid", "point_on_surface"})).all()
     stp_s6 = s6.loc[s6["record_type"].eq("cluster") & s6["product"].eq("viirs")]
     assert (stp_s6["relative_risk"].astype(str).eq("")).all()
+    poisson_s6 = s6.loc[s6["record_type"].eq("cluster") & s6["product"].eq("mcd64a1")].iloc[0]
+    assert float(poisson_s6["observed_expected_ratio"]) == 2.0
+    assert float(poisson_s6["relative_risk"]) == 2.5
+    assert float(stp_s6.iloc[0]["conditional_expected"]) == 2.0
+    assert pd.isna(stp_s6.iloc[0]["log_likelihood_ratio"])
     assert len(membership) == 4
     assert set(membership.columns) == {"product", "unit_id", "cluster_id"}
     assert len(f6) == 520
@@ -108,6 +127,25 @@ def test_neutral_reference_fixture_builds_table3_s6_and_figure6_without_stp_rr(t
     }
     assert set(f6.loc[f6["support_status"].eq("valid_nonzero"), "significant_cluster_count"].astype(int)) == {1}
     assert set(f6.loc[f6["support_status"].eq("valid_zero"), "significant_cluster_count"].astype(int)) == {0}
+
+
+@pytest.mark.parametrize("model,field,value", [
+    ("space_time_permutation", "relative_risk", 1.3),
+    ("space_time_permutation", "log_likelihood_ratio", 1.3),
+    ("space_time_permutation", "expected_count", 10),
+    ("space_time_permutation", "conditional_expected", float("nan")),
+    ("discrete_poisson", "conditional_expected", 10),
+    ("discrete_poisson", "relative_risk", float("nan")),
+])
+def test_model_specific_values_are_rejected_not_silently_erased(tmp_path, model, field, value):
+    _, _, summary, location, scenarios, parsed, registry = _objects(tmp_path)
+    scenario = next(s for s in scenarios if s.model == model)
+    parsed[scenario.scenario_id].clusters.loc[:, field] = value
+    with pytest.raises(ExternalResultValidationError, match="invalid model-specific"):
+        build_satscan_publication_sources(
+            parsed_by_model=parsed, scenarios=scenarios, location_authority=location,
+            data_contract=summary, run_registry=registry, run_dir=tmp_path,
+        )
 
 
 def test_neutral_reference_fixture_renders_two_panel_cluster_map(tmp_path: Path) -> None:
@@ -145,3 +183,20 @@ def test_neutral_reference_fixture_renders_two_panel_cluster_map(tmp_path: Path)
     assert float(page.mediabox.width) == pytest.approx(566.9291338583, abs=1e-6)
     assert float(page.mediabox.height) == pytest.approx(425.1968503937, abs=1e-6)
     assert (rendered.width_in, rendered.height_in) == pytest.approx((20 / 2.54, 15 / 2.54), abs=1e-12)
+
+
+def test_s6_retains_qualified_p_value_in_cluster_and_membership_rows(tmp_path: Path) -> None:
+    _, _, summary, location, scenarios, parsed, registry = _objects(tmp_path)
+    for item in parsed.values():
+        item.clusters["p_value_report"] = "<0.001"
+        item.clusters["p_value"] = 0.001
+        item.membership["p_value_report"] = "<0.001"
+        item.membership["p_value"] = 0.001
+    sources = build_satscan_publication_sources(
+        parsed_by_model=parsed, scenarios=scenarios, location_authority=location,
+        data_contract=summary, run_registry=registry, run_dir=tmp_path,
+    )
+    s6 = sources["supplement_s6_satscan"]
+    reported = s6.loc[s6["record_type"].isin(["cluster", "membership"]), "p_value_report"]
+    assert len(reported) == 6
+    assert reported.eq("<0.001").all()

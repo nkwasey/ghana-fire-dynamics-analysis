@@ -142,12 +142,37 @@ def _rq2_bandwidth(n: int, rule: str) -> int:
     return int(math.floor(float(n) ** (1.0 / 3.0)))
 
 
-def _empirical_cdf_at_observations(values: np.ndarray, convention: str) -> np.ndarray:
+def _empirical_cdf_counts(values: np.ndarray, convention: str) -> np.ndarray:
     if convention != "less_than_or_equal_ecdf":
         raise InferenceInputError(f"unsupported empirical-CDF convention: {convention!r}")
     ordered = np.sort(values)
-    # Right-continuous empirical CDF: F_n(x) = n^{-1} sum 1{X_i <= x}.
-    return np.searchsorted(ordered, values, side="right").astype(float) / float(values.size)
+    # Keep n * F_n(x) as an integer until studentisation, including tied ranks.
+    return np.searchsorted(ordered, values, side="right").astype(np.int64)
+
+
+def _studentized_global_mk_rank_components(
+    ranks: np.ndarray,
+    *,
+    bandwidth: int,
+    variance_floor: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Evaluate observed and reference rank rows using identical arithmetic."""
+    replications, n = ranks.shape
+    pair_i, pair_j = np.triu_indices(n, k=1)
+    score = np.sign(ranks[:, pair_j] - ranks[:, pair_i]).sum(axis=1)
+    g_numerator = n - 2 * ranks
+    covariance_numerator = np.zeros(replications, dtype=np.int64)
+    for lag in range(1, bandwidth + 1):
+        covariance_numerator += np.sum(g_numerator[:, :-lag] * g_numerator[:, lag:], axis=1)
+    variance_denominator = 9 * n**3
+    variance_numerator = 4 * n**3 + 24 * covariance_numerator
+    variance = variance_numerator / variance_denominator
+    effective_numerator = np.maximum(variance_numerator, variance_floor * variance_denominator)
+    # Within a fixed n, compare exact integer ratios before applying the common
+    # scale and square root. Equal unfloored scores therefore round identically.
+    ratio = np.square(score.astype(float)) / effective_numerator
+    t = np.sign(score) * np.sqrt((n * variance_denominator / pair_i.size**2) * ratio)
+    return score / pair_i.size, variance, t
 
 
 def _studentized_global_mk_components(
@@ -157,19 +182,11 @@ def _studentized_global_mk_components(
     variance_floor: float,
     empirical_cdf: str,
 ) -> tuple[float, float, float, bool]:
-    n = int(values.size)
-    i, j = np.triu_indices(n, k=1)
-    u_n = float(np.sign(values[j] - values[i]).sum() / float(i.size))
-    f = _empirical_cdf_at_observations(values, empirical_cdf)
-    g = 1.0 - 2.0 * f
-    covariance_sum = 0.0
-    for lag in range(1, bandwidth + 1):
-        covariance_sum += float(np.dot(g[:-lag], g[lag:]))
-    sigma2 = float(4.0 / 9.0 + (8.0 / (3.0 * n)) * covariance_sum)
-    floor_used = sigma2 < variance_floor
-    denominator = math.sqrt(max(sigma2, variance_floor))
-    t_n = float(math.sqrt(n) * u_n / denominator)
-    return u_n, sigma2, t_n, bool(floor_used)
+    ranks = _empirical_cdf_counts(values, empirical_cdf)
+    u, variance, t = _studentized_global_mk_rank_components(
+        ranks[None, :], bandwidth=bandwidth, variance_floor=variance_floor,
+    )
+    return float(u[0]), float(variance[0]), float(t[0]), bool(variance[0] < variance_floor)
 
 
 @dataclass(frozen=True, slots=True)
@@ -269,18 +286,10 @@ def studentized_global_mann_kendall_permutation(
     # semantics therefore reproduce the complete permutation sequence exactly.
     rng = np.random.default_rng(seed)
     order = np.argsort(rng.random((replications, n)), axis=1, kind="stable")
-    permuted = y[order]
-
-    pair_i, pair_j = np.triu_indices(n, k=1)
-    perm_u = np.sign(permuted[:, pair_j] - permuted[:, pair_i]).sum(axis=1) / float(pair_i.size)
-
-    ecdf_values = _empirical_cdf_at_observations(y, empirical_cdf)
-    perm_g = 1.0 - 2.0 * ecdf_values[order]
-    covariance_sum = np.zeros(replications, dtype=float)
-    for lag in range(1, bandwidth + 1):
-        covariance_sum += np.sum(perm_g[:, :-lag] * perm_g[:, lag:], axis=1)
-    perm_sigma2 = 4.0 / 9.0 + (8.0 / (3.0 * n)) * covariance_sum
-    perm_t = math.sqrt(n) * perm_u / np.sqrt(np.maximum(perm_sigma2, epsilon))
+    ranks = _empirical_cdf_counts(y, empirical_cdf)
+    _, _, perm_t = _studentized_global_mk_rank_components(
+        ranks[order], bandwidth=bandwidth, variance_floor=epsilon,
+    )
 
     extreme = int(np.count_nonzero(np.abs(perm_t) >= abs(observed_t)))
     raw_p = float((extreme + 1) / (replications + 1))
@@ -404,6 +413,18 @@ class FDRResult:
         return payload
 
 
+def _bh_adjusted_p_values(p: np.ndarray) -> np.ndarray:
+    """Calculate BH adjusted probabilities along the final axis."""
+    m = p.shape[-1]
+    order = np.argsort(p, axis=-1, kind="mergesort")
+    ordered = np.take_along_axis(p, order, axis=-1)
+    raw_adjusted = ordered * m / np.arange(1, m + 1, dtype=float)
+    monotone = np.minimum.accumulate(raw_adjusted[..., ::-1], axis=-1)[..., ::-1]
+    adjusted = np.empty_like(monotone)
+    np.put_along_axis(adjusted, order, np.clip(monotone, 0.0, 1.0), axis=-1)
+    return adjusted
+
+
 def benjamini_hochberg(
     p_values: Iterable[float],
     *,
@@ -418,18 +439,11 @@ def benjamini_hochberg(
     p = _finite_vector(p_values, min_n=1, name="p_values")
     if np.any((p < 0.0) | (p > 1.0)):
         raise InferenceInputError("p-values must lie in [0,1]")
-    m = p.size
-    order = np.argsort(p, kind="mergesort")
-    ordered = p[order]
-    raw_adjusted = ordered * m / np.arange(1, m + 1, dtype=float)
-    monotone = np.minimum.accumulate(raw_adjusted[::-1])[::-1]
-    monotone = np.clip(monotone, 0.0, 1.0)
-    adjusted = np.empty_like(monotone)
-    adjusted[order] = monotone
+    adjusted = _bh_adjusted_p_values(p)
     rejected = adjusted <= alpha
     return FDRResult(
         family_name=family_name.strip(),
-        n_tests=int(m),
+        n_tests=int(p.size),
         alpha=alpha,
         raw_p_values=tuple(float(x) for x in p),
         adjusted_p_values=tuple(float(x) for x in adjusted),

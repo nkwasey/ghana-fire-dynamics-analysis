@@ -33,7 +33,7 @@ def test_fires_canonical_schema_validation_passes_minimal_row() -> None:
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "source_file": "VIIRS_2014.shp",
                 "sensor": "viirs",
                 "level": "admin2",
@@ -73,7 +73,7 @@ def test_panel_monthly_schema_validation_passes_with_null_mean_when_no_days() ->
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "level": "admin2",
                 "unit_id": "001",
                 "unit_name": "Example",
@@ -114,7 +114,7 @@ def test_panel_monthly_schema_accepts_nulls_for_structural_missingness() -> None
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "level": "admin2",
                 "unit_id": "001",
                 "unit_name": "Example",
@@ -156,7 +156,7 @@ def test_rp1_af_monthly_base_viirs_schema_validation_passes() -> None:
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "schema_version": "rp1_af_monthly_v2",
                 "level": "district",
                 "unit_id": "D1",
@@ -202,7 +202,7 @@ def test_rp1_af_monthly_ext_viirs_schema_validation_passes_with_qc_and_provenanc
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "schema_version": "rp1_af_monthly_v2",
                 "level": "district",
                 "unit_id": "D1",
@@ -259,7 +259,7 @@ def test_rp1_af_monthly_base_modis_schema_validation_passes() -> None:
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "schema_version": "rp1_af_monthly_v2",
                 "level": "district",
                 "unit_id": "D1",
@@ -305,7 +305,7 @@ def test_rp1_af_monthly_ext_modis_schema_validation_passes_with_qc_and_provenanc
     df = pd.DataFrame(
         [
             {
-                "run_id": "ghana_v1.0",
+                "run_id": "synthetic_schema_case",
                 "schema_version": "rp1_af_monthly_v2",
                 "level": "district",
                 "unit_id": "D1",
@@ -360,7 +360,7 @@ def test_rp1_af_viirs_schema_rejects_forbidden_acz_specific_column() -> None:
     expected_cols = af_base_column_order()
 
     df = pd.DataFrame([{c: None for c in expected_cols}])
-    df["run_id"] = "ghana_v1.0"
+    df["run_id"] = "synthetic_schema_case"
     df["schema_version"] = "rp1_af_monthly_v2"
     df["level"] = "acz"
     df["unit_id"] = "zone_1"
@@ -385,7 +385,7 @@ def test_rp1_af_modis_schema_rejects_viirs_prefixed_column() -> None:
     expected_cols = _sensorise_columns(af_base_column_order(), sensor_mode="modis")
 
     df = pd.DataFrame([{c: None for c in expected_cols}])
-    df["run_id"] = "ghana_v1.0"
+    df["run_id"] = "synthetic_schema_case"
     df["schema_version"] = "rp1_af_monthly_v2"
     df["level"] = "acz"
     df["unit_id"] = "zone_1"

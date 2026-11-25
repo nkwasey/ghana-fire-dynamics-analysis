@@ -376,10 +376,12 @@ def local_moran_smaller_tail_plus_one(
         raise SpatialStatsError(f"Unsupported Local Moran upper-tail comparison: {upper_tail_comparison!r}")
     if tie_allocation == "upper_tail":
         below = int(values.size - above)
-    elif tie_allocation == "lower_tail":
+    elif tie_allocation in {"lower_tail", "both_tails"}:
         below = int(np.count_nonzero(values <= float(observed)))
     else:
         raise SpatialStatsError(f"Unsupported Local Moran tie allocation: {tie_allocation!r}")
+    if tie_allocation == "both_tails" and upper_tail_comparison != "greater_than_or_equal":
+        raise SpatialStatsError("both_tails requires inclusive upper-tail comparison")
     p_value = (min(above, below) + 1.0) / (values.size + 1.0)
     if multiply_smaller_tail_by_two:
         p_value = min(1.0, 2.0 * p_value)
@@ -393,12 +395,12 @@ def _conditional_without_replacement_means(
     draws: int,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """Return means of uniform ordered samples without replacement.
+    """Return means of uniform subsets, evaluated in pool order.
 
     IID integer samples are retained only when every sampled index is distinct.
     Conditional on distinctness every ordered tuple is equiprobable, so the retained
-    draws have the same sampling law as uniform sampling without replacement while
-    avoiding one Python-level RNG call per permutation.
+    draws yield uniform subsets. For dense draws, sample subsets directly to
+    avoid the low acceptance probability of duplicate rejection.
     """
 
     values = np.asarray(pool, dtype=float)
@@ -413,6 +415,16 @@ def _conditional_without_replacement_means(
     if sample_size == 1:
         idx = rng.integers(0, values.size, size=draws)
         return values[idx].astype(float, copy=False)
+    if sample_size == values.size:
+        return np.full(draws, values.mean())
+    acceptance_probability = math.prod(1.0 - offset / values.size for offset in range(sample_size))
+    if acceptance_probability < 0.125:
+        return np.fromiter(
+            (values[np.sort(rng.choice(values.size, sample_size, replace=False))].mean()
+             for _ in range(draws)),
+            dtype=float,
+            count=draws,
+        )
 
     out = np.empty(draws, dtype=float)
     filled = 0
@@ -423,7 +435,7 @@ def _conditional_without_replacement_means(
         idx = rng.integers(0, values.size, size=(batch, sample_size))
         ordered = np.sort(idx, axis=1)
         valid = np.all(np.diff(ordered, axis=1) != 0, axis=1)
-        accepted = idx[valid]
+        accepted = ordered[valid]
         if accepted.size == 0:
             continue
         take = min(remaining, accepted.shape[0])
@@ -459,8 +471,10 @@ def local_morans_i(
         raise SpatialStatsError("random_seed must be a non-negative integer")
     if upper_tail_comparison not in {"greater_than_or_equal", "greater_than"}:
         raise SpatialStatsError(f"Unsupported Local Moran upper-tail comparison: {upper_tail_comparison!r}")
-    if tie_allocation not in {"upper_tail", "lower_tail"}:
+    if tie_allocation not in {"upper_tail", "lower_tail", "both_tails"}:
         raise SpatialStatsError(f"Unsupported Local Moran tie allocation: {tie_allocation!r}")
+    if tie_allocation == "both_tails" and upper_tail_comparison != "greater_than_or_equal":
+        raise SpatialStatsError("both_tails requires inclusive upper-tail comparison")
     if not isinstance(multiply_smaller_tail_by_two, bool):
         raise SpatialStatsError("multiply_smaller_tail_by_two must be boolean")
     if alpha is not None:
@@ -489,7 +503,8 @@ def local_morans_i(
     if not np.isfinite(np.asarray([mapping[x] for x in weights.ids], dtype=float)).all():
         raise SpatialStatsError("Local Moran values must be finite")
 
-    active_ids = weights.active_ids
+    island_set = set(weights.islands)
+    active_ids = tuple(unit_id for unit_id in weights.ids if unit_id not in island_set)
     active_values = np.asarray([mapping[x] for x in active_ids], dtype=float)
     if len(active_ids) < 3:
         raise SpatialStatsError("Local Moran requires at least three non-island observations")
@@ -497,7 +512,6 @@ def local_morans_i(
     sd = float(np.std(active_values, ddof=0))
     if sd == 0.0:
         rows = []
-        island_set = set(weights.islands)
         for unit_id in weights.ids:
             rows.append(
                 {
@@ -523,7 +537,6 @@ def local_morans_i(
     rows: list[dict[str, object]] = []
     active_p: list[float] = []
     active_row_indices: list[int] = []
-    island_set = set(weights.islands)
 
     for unit_id in weights.ids:
         if unit_id in island_set:
@@ -545,7 +558,8 @@ def local_morans_i(
                 }
             )
             continue
-        neighbours = tuple(n for n in weights.neighbours[unit_id] if n in z)
+        neighbour_ids = set(weights.neighbours[unit_id])
+        neighbours = tuple(n for n in active_ids if n in neighbour_ids)
         if not neighbours:
             raise SpatialStatsError(
                 f"Non-island unit {unit_id!r} has no retained Queen neighbours"

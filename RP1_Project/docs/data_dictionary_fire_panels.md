@@ -4,26 +4,41 @@ This document defines the maintained data contract for the consolidated monthly
 fire panels written by `RP1_Project/merge_af_ba_panels.py` and consumed by the
 live `RP1_Project/rp1_analysis/RP1_Analysis_v1.ipynb` workflow.
 
-Source of truth:
-- `RP1_Project/merge_af_ba_panels.py`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv`
+Contract authorities are `RP1_Project/merge_af_ba_panels.py`, the configured study window and the selected geography unit universe. Each run writes `fire_panel_manifest.json`, `fire_panel_merge_summary.json` and `fire_panel_key_audit.csv` as evidence of its realised schema, population and source identities; these generated files are not supplied acceptance answers.
 
 ## Output inventory
 
-The merger writes the following maintained raw-panel artefacts under
-`RP1_Project/rp1_analysis/data/raw/`:
+The merger writes these artifacts in a fresh merge output directory. A verified
+full analysis handoff stages them under `RP1_Project/rp1_analysis/data/raw/`:
 
-| Path | Level | Rows | Columns | Locked month window |
+| Path | Level | Rows | Columns | Configured month window |
 | --- | --- | ---: | ---: | --- |
-| `fire_panel_acz_monthly_consolidated_2001_2024.csv` | `acz` | 1,440 | 111 | `200101` to `202412` |
-| `fire_panel_district_monthly_consolidated_2001_2024.csv` | `district` | 74,880 | 111 | `200101` to `202412` |
+| `fire_panel_acz_monthly_consolidated_2001_2024.csv` | `acz` | selected ACZ units × configured months | governed schema | configured study interval |
+| `fire_panel_district_monthly_consolidated_2001_2024.csv` | `district` | selected district units × configured months | governed schema | configured study interval |
 | `fire_panel_manifest.json` | metadata | n/a | n/a | exact ordered schema, upstream source inventory, schema hash |
 | `fire_panel_merge_summary.json` | metadata | n/a | n/a | row counts, unique-unit counts, structural-missing totals |
-| `fire_panel_key_audit.csv` | metadata | 2 | 9 | row-count and key-uniqueness audit by level |
+| `fire_panel_key_audit.csv` | metadata | one row per selected level | audit schema | row-count and key-uniqueness audit by level |
+| `ba_observation_support.csv` | both levels/families | one row per delivered source key | 69 source fields plus governed provenance | declared source-domain windows |
 
-The maintained schema version is `rp1_fire_panel_consolidated_v2`.
+The maintained schema version is `rp1_fire_panel_consolidated_v3`. Row counts are calculated from the selected unit universe and month spine, and column counts from the schema. The default file names describe the configured study interval; they do not prescribe a downstream population or numerical result.
+
+## Mandatory c3 evidence companion
+
+`ba_observation_support.csv` uses `rp1-ba-c3-evidence-v1` and remains separate
+from the 111 compact analytical columns. It preserves every original c3 field,
+including source run/schema/domain, result/coverage statuses, source indexes,
+grid/asset references, five evidence states, overlapping reasons, anomaly and
+shortened/full diagnostics, plus explicit file/hash/row provenance and family.
+Its key is `(level, unit_id, yyyymm, family)`; original source keys also retain
+`ba_domain`. The merge manifest and exact staged input inventory bind it.
+
+`ADMITTED` plus `NO_SUPPORTED_EVIDENCE` can retain numeric scenario BA zero;
+that is not observed physical absence. Guarded primary nulls remain null, even
+when independently evaluable annual fields/flags or known-union diagnostics
+exist. A zero union is an empty domain with an undefined fraction. Qualified
+shortened positives remain accepted. `ba_supported_fraction` is conditional
+accepted/(accepted+explicit-zero) evidence, not coverage. Calendar support flags
+and source-row-present flags do not certify primary usability or full evidence.
 
 ## Purpose and analytical role
 
@@ -33,7 +48,7 @@ canonical monthly unit spine:
 1. Stage 1 geography from `geo_data_prep`
 2. MODIS active-fire base exports from `rp1_mv_firms_panels`
 3. VIIRS active-fire base exports from `rp1_mv_firms_panels`
-4. MODIS burned-area base exports from the BA-2001 and BA-2012 GEE families
+4. Annual 69-field c3 extended exports from the BA-2001 and BA-2012 fixed domains
 
 `RP1_Analysis_v1.ipynb` uses these panels as its raw monthly fire inputs:
 - long-run burned-area analysis uses the BA-2001 family
@@ -82,7 +97,7 @@ than being coerced to zero:
 - BA-2012 is unsupported before `201201`
 
 The support and structural-missingness flags below are the maintained way to
-distinguish unsupported months from observed zero activity.
+distinguish calendar-unavailable months. Primary admission and visible evidence require the c3 companion; a within-calendar zero can be scenario-derived.
 
 ## Support-window semantics
 
@@ -148,29 +163,29 @@ The following 12 stems appear for both `modis_` and `viirs_` sensor prefixes:
 | `pct_high_conf` | Percent of detections that are high confidence |
 | `days_active_nh` | Number of days with at least one nominal-plus-high detection |
 | `streak_max_nh` | Longest run of active days using nominal-plus-high detections |
-| `frp_active_days` | Number of days with positive FRP support |
+| `frp_active_days` | Number of UTC days with at least one eligible nominal/high-confidence FRP value passing the configured minimum-FRP gate |
 | `frp_sum_daily_max_mw` | Sum of daily maximum FRP values in MW |
-| `frp_mean_mw` | Mean FRP in MW |
+| `frp_mean_mw` | Sum of eligible unit-day FRP maxima divided by the number of FRP-supported UTC days; null if none |
 | `frp_p95_daily_max_mw` | 95th percentile of daily maximum FRP in MW |
 
 These fields are the direct governed inputs from the AF merger-ready base
 exports.
 
-## Burned-area base fields
+## Burned-area analytical projection
 
 The following 10 stems appear twice, once with `_ba2001` and once with
 `_ba2012`:
 
 | Stem | Meaning |
 | --- | --- |
-| `modis_ba_km2_*` | Burned-area extent in square kilometers |
+| `modis_ba_km2_*` | Accepted positive area in the family's fixed union, with guarded primary nulls |
 | `modis_burned_pixel_count_*` | Burned-pixel count from the source export |
-| `modis_ba_any_*` | Binary burned-area presence indicator |
-| `modis_aoi_area_land_km2_*` | Land area in square kilometers for the unit |
+| `modis_ba_any_*` | Binary accepted-area presence indicator; null when primary BA is withheld |
+| `modis_aoi_area_land_km2_*` | Ghana-clipped vector unit area; not verified land-only area or raster-area sum |
 | `modis_burnable_km2_union_*` | Fixed burnable-union denominator for the family |
 | `modis_burnable_km2_annual_*` | Annual burnable denominator for the family |
 | `modis_burned_frac_union_*` | Burned fraction using the family union denominator |
-| `modis_burned_frac_annual_*` | Burned fraction using the family annual denominator |
+| `modis_burned_frac_annual_*` | Union numerator / exact-year eligible denominator; a mixed-domain ratio that can exceed one |
 | `modis_zero_union_den_flag_*` | Union denominator equals zero |
 | `modis_zero_annual_den_flag_*` | Annual denominator equals zero |
 
@@ -220,7 +235,7 @@ paired analysis.
 | `modis_frp_sum_daily_max_mw_per_primary_det` | MODIS summed daily-max FRP per primary detection |
 | `viirs_det_primary_per_active_day` | VIIRS primary detections per active day |
 | `viirs_frp_sum_daily_max_mw_per_active_day` | VIIRS summed daily-max FRP per active day |
-| `viirs_frp_sum_daily_max_mw_per_primary_det` | VIIRS summed daily-max FRP per primary detection |
+| `viirs_frp_sum_daily_max_mw_per_primary_det` | Cross-stream VIIRS summed daily-max FRP per count-stream primary detection; missing when the count is zero |
 
 ## Support flags
 
@@ -252,8 +267,8 @@ These fields are family-specific wherever burned-area participation is involved.
 | --- | --- |
 | `af_modis_source_present` | MODIS AF base source row was present for the merge key |
 | `af_viirs_source_present` | VIIRS AF base source row was present for the merge key |
-| `ba2001_source_present` | BA-2001 base source row was present for the merge key |
-| `ba2012_source_present` | BA-2012 base source row was present for the merge key |
+| `ba2001_source_present` | BA-2001 c3 source row was present for the merge key |
+| `ba2012_source_present` | BA-2012 c3 source row was present for the merge key |
 | `row_in_canonical_spine` | Row belongs to the governed balanced unit-month spine |
 | `merge_key_complete_flag` | Merge key fields are populated |
 | `merge_duplicate_resolved_flag` | Duplicate-key repair was applied before final output |

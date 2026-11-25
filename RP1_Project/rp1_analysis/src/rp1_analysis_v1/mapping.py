@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import io
+import math
 import textwrap
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 import geopandas as gpd
@@ -17,8 +18,11 @@ from matplotlib import colors as mcolors
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
+from matplotlib.patheffects import withStroke
+from matplotlib.ticker import PercentFormatter
 from pyproj import CRS
 
+from .contracts import AnalysisContract, GridLayoutContract
 from .figures import RenderedFigure, export_figure
 from .grid_rendering import (
     add_panel_labels,
@@ -26,12 +30,17 @@ from .grid_rendering import (
     apply_grid_spacing,
     build_grid_figure,
 )
-from .contracts import GridLayoutContract
+from .satscan_io import MODEL_DISCRETE_POISSON, MODEL_SPACE_TIME_PERMUTATION
+from .secondary_clusters import _window_bounds, load_scan_scenarios
 from .style import PublicationStyle
 
 
 class MappingError(ValueError):
     """Raised when governed map preparation or rendering cannot be satisfied."""
+
+
+CLUSTER_MEMBER_FACE = "#555555"
+CLUSTER_MEMBER_EDGE = "#B3B3B3"
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,6 +112,7 @@ def _draw_legend_band(
     *,
     style: PublicationStyle,
     gid: str = "map-categorical-legend",
+    max_columns: int = 4,
 ) -> None:
     ax.clear()
     ax.set_axis_off()
@@ -111,7 +121,7 @@ def _draw_legend_band(
     legend = ax.legend(
         handles=handles,
         loc="center",
-        ncol=max(1, min(len(handles), 4)),
+        ncol=min(len(handles), max_columns),
         frameon=False,
         fontsize=style.legend_font,
         handlelength=1.8,
@@ -131,6 +141,8 @@ def _draw_colorbar_band(
     style: PublicationStyle,
     gid: str,
     labelpad_pt: float | None = None,
+    show_percent: bool = False,
+    ticks: tuple[float, ...] | None = None,
 ) -> Axes:
     clean_label = "" if label is None else str(label).strip()
     if style.map.colorbar.position != "below" or style.map.colorbar.orientation != "horizontal":
@@ -144,13 +156,30 @@ def _draw_colorbar_band(
     ax.set_gid(gid)
     mappable = matplotlib.cm.ScalarMappable(norm=norm, cmap=plt.get_cmap(cmap))
     mappable.set_array([])
-    colorbar = fig.colorbar(mappable, cax=ax, orientation="horizontal")
+    colorbar = fig.colorbar(mappable, cax=ax, orientation="horizontal", ticks=ticks)
+    if show_percent:
+        colorbar.formatter = PercentFormatter(xmax=1, decimals=0)
+        colorbar.update_ticks()
     if clean_label:
         colorbar.set_label(
             textwrap.fill(clean_label, width=58),
             labelpad=(style.geometry.xlabel_padding_pt if labelpad_pt is None else float(labelpad_pt)),
         )
     colorbar.ax.tick_params(labelsize=style.tick_font)
+    if show_percent and clean_label:
+        # Reserve space for the caption beneath the ticks while keeping the band's upper edge fixed.
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        canvas = fig.get_window_extent(renderer)
+        caption = ax.xaxis.label
+        clearance = renderer.points_to_pixels(caption.get_fontsize() / 2)
+        needed = canvas.y0 + clearance - caption.get_window_extent(renderer).y0
+        if needed > 0:
+            bounds = ax.get_position()
+            inset = needed / canvas.height
+            if inset + clearance / canvas.height >= bounds.height:
+                raise MappingError("Map percentage colourbar band cannot fit its caption")
+            ax.set_position((bounds.x0, bounds.y0 + inset, bounds.width, bounds.height - inset))
     return colorbar.ax
 
 
@@ -238,6 +267,86 @@ def _map_axes(fig: Figure, *, style: PublicationStyle) -> Axes:
     )
 
 
+def arrange_presentation_map(
+    fig: Figure, panel: MapPanelAxes, *, title: str, style: PublicationStyle,
+) -> None:
+    """Place the existing map, scientific colourbar and applicable symbols on one canvas."""
+    map_ax = panel.map_ax
+    legend_ax = panel.support_or_status_legend_ax
+    key_ax = panel.colorbar_or_categorical_key_ax
+    geometry = style.geometry
+    left, right = geometry.outer_left_fraction, 1 - geometry.outer_right_fraction
+    bottom = geometry.outer_bottom_fraction
+    gap = geometry.map_inter_band_spacing
+
+    # Reuse the actual plot keys, including their fill and hatch. Local Moran
+    # classes and any support exclusions share one box in the standalone map.
+    handles, labels = [], []
+    for ax in (key_ax, legend_ax):
+        key = ax.get_legend()
+        if key is not None:
+            handles.extend(key.legend_handles)
+            labels.extend(textwrap.fill(text.get_text(), width=26) for text in key.get_texts())
+            key.remove()
+    legend = None
+    if handles:
+        legend = legend_ax.legend(
+            handles, labels, title="Legend", title_fontsize=style.legend_font,
+            fontsize=style.legend_font, loc="upper left", borderaxespad=0,
+            frameon=True, fancybox=False, framealpha=1, edgecolor="0.8",
+            facecolor="white", handlelength=1.8,
+        )
+        legend.set_gid("map-presentation-right-key")
+        legend.get_title().set_fontweight("bold")
+    else:
+        legend_ax.remove()
+
+    map_ax.set_title("")
+    title_artist = fig.suptitle(
+        title, y=1 - geometry.outer_top_fraction, fontsize="large",
+    )
+    title_artist.set_gid("map-presentation-title")
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    to_canvas = fig.transFigure.inverted()
+    top = title_artist.get_window_extent(renderer).transformed(to_canvas).y0 - gap / 2
+
+    if key_ax.axison:
+        # Measure the tick labels and caption below the band as well as its height.
+        bar_inset = gap / 2
+        bar_height = geometry.map_colourbar_band_height / 2
+        key_ax.set_position((left + bar_inset, bottom, right - left - 2 * bar_inset, bar_height))
+        bar_extent = key_ax.get_tightbbox(renderer).transformed(to_canvas)
+        shift = max(0.0, bottom / 2 - bar_extent.y0)
+        if shift:
+            key_ax.set_position(
+                (left + bar_inset, bottom + shift, right - left - 2 * bar_inset, bar_height)
+            )
+        bottom += bar_height + shift + gap / 2
+    else:
+        key_ax.remove()
+
+    reserved = 0.0
+    if legend is not None:
+        legend_box = legend.get_window_extent(renderer).transformed(to_canvas)
+        reserved = legend_box.width + gap
+        if reserved >= right - left or legend_box.height >= top - bottom:
+            raise MappingError("Presentation map key cannot fit alongside the map")
+
+    map_ax.set_position((left, bottom, right - left - reserved, top - bottom))
+    if legend is not None:
+        map_box = map_ax.get_position()
+        # Centre the map-and-key group using the map's fitted equal-aspect width.
+        map_left = (1 - map_box.width - reserved) / 2
+        map_ax.set_position((map_left, map_box.y0, map_box.width, map_box.height))
+        legend_ax.set_position((
+            map_left + map_box.width + gap,
+            map_box.y1 - legend_box.height,
+            legend_box.width,
+            legend_box.height,
+        ))
+
+
 def _add_scale_bar(ax: Axes, authority: GhanaMapAuthority, style: PublicationStyle) -> None:
     scale = style.map.scale_bar
     if not scale.enabled:
@@ -277,7 +386,7 @@ def _add_scale_bar(ax: Axes, authority: GhanaMapAuthority, style: PublicationSty
         scale.label,
         ha="center",
         va="bottom",
-        fontsize=7,
+        fontsize=style.tick_font,
         zorder=20,
     )
     label.set_gid("map-scale-bar-label")
@@ -331,6 +440,36 @@ def _continuous_norm(values: pd.Series) -> mcolors.Normalize:
     return mcolors.Normalize(vmin=vmin, vmax=vmax)
 
 
+def bounded_map_norm(maximum: float, *, symmetric: bool = False) -> mcolors.Normalize:
+    """Build a fixed nonnegative or zero-centred map scale."""
+    if not np.isfinite(maximum) or maximum <= 0.0:
+        raise MappingError("A fixed map scale requires a finite positive maximum")
+    if symmetric:
+        return mcolors.TwoSlopeNorm(vmin=-maximum, vcenter=0.0, vmax=maximum)
+    return mcolors.Normalize(vmin=0.0, vmax=maximum)
+
+
+def _check_scale_values(values: pd.Series, norm: mcolors.Normalize) -> None:
+    """Fail explicitly when supported values exceed the declared colour scale."""
+    numeric = pd.to_numeric(values, errors="raise")
+    if numeric.isna().any() or not np.isfinite(numeric).all() or not numeric.between(norm.vmin, norm.vmax).all():
+        raise MappingError(
+            f"Supported map values must be finite and within the declared scale "
+            f"[{norm.vmin:g}, {norm.vmax:g}]"
+        )
+
+
+def _add_acz_codes(ax: Axes, acz: gpd.GeoDataFrame, category: str, *, style: PublicationStyle) -> None:
+    """Identify each ACZ using an interior label with a light outline."""
+    for code, position in zip(acz[category].astype(str), acz.geometry.representative_point(), strict=True):
+        label = ax.text(
+            position.x, position.y, code, ha="center", va="center", zorder=5,
+            fontsize=style.tick_font, fontweight="bold", color="0.10",
+            path_effects=[withStroke(linewidth=1.5, foreground="white")],
+        )
+        label.set_gid("map-acz-code")
+
+
 def _finalise_map_axes(ax: Axes, authority: GhanaMapAuthority, *, title: str) -> None:
     xmin, ymin, xmax, ymax = authority.extent
     ax.set_xlim(xmin, xmax)
@@ -351,6 +490,9 @@ def _build_choropleth_figure(
     cmap: str = "viridis",
     zero_tolerance: float = 0.0,
     norm: mcolors.Normalize | None = None,
+    symmetric_about_zero: bool = False,
+    show_percent: bool = False,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> tuple[Figure, Axes]:
     """Build a continuous map figure while retaining Matplotlib objects for tests."""
 
@@ -379,9 +521,12 @@ def _build_choropleth_figure(
         style=style,
         cmap=cmap,
         norm=norm,
+        symmetric_about_zero=symmetric_about_zero,
+        show_percent=show_percent,
+        colorbar_ticks=colorbar_ticks,
     )
-    realised.map_ax.set_title(title)
     realised.colorbar_or_categorical_key_ax.set_gid("map-colorbar")
+    arrange_presentation_map(fig, realised, title=title, style=style)
     return fig, realised.map_ax
 
 
@@ -507,11 +652,12 @@ def acz_categorical_context_map(
                     label=category_labels.get(code, code),
                 )
             )
+        _add_acz_codes(map_ax, acz, category, style=style)
         _finalise_map_axes(map_ax, authority, title=title)
         _add_scale_bar(map_ax, authority, style)
         _add_north_arrow(map_ax, authority, style)
         _draw_legend_band(panel_axes.support_or_status_legend_ax, handles, style=style)
-        _draw_legend_band(panel_axes.colorbar_or_categorical_key_ax, [], style=style)
+        arrange_presentation_map(fig, panel_axes, title=title, style=style)
         return _export_map_figure(fig, style)
 
 
@@ -526,6 +672,9 @@ def choropleth(
     cmap: str = "viridis",
     zero_tolerance: float = 0.0,
     norm: mcolors.Normalize | None = None,
+    symmetric_about_zero: bool = False,
+    show_percent: bool = False,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> RenderedFigure:
     """Render a governed continuous district map with explicit support semantics."""
 
@@ -540,6 +689,9 @@ def choropleth(
             cmap=cmap,
             zero_tolerance=zero_tolerance,
             norm=norm,
+            symmetric_about_zero=symmetric_about_zero,
+            show_percent=show_percent,
+            colorbar_ticks=colorbar_ticks,
         )
         return _export_map_figure(fig, style)
 
@@ -579,7 +731,8 @@ def support_acz_map(
             category_colours=category_colours,
             category_labels=category_labels,
         )
-        realised.map_ax.set_title(title)
+        _add_acz_codes(realised.map_ax, authority.acz, "zone_code", style=style)
+        arrange_presentation_map(fig, realised, title=title, style=style)
         return _export_map_figure(fig, style)
 
 
@@ -592,6 +745,8 @@ def acz_choropleth(
     colorbar_label: str,
     style: PublicationStyle,
     cmap: str = "viridis",
+    norm: mcolors.Normalize | None = None,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> RenderedFigure:
     """Render a governed continuous ACZ-level map from qualified values."""
 
@@ -607,8 +762,10 @@ def acz_choropleth(
             colorbar_label=colorbar_label,
             style=style,
             cmap=cmap,
+            norm=norm,
+            colorbar_ticks=colorbar_ticks,
         )
-        realised.map_ax.set_title(title)
+        arrange_presentation_map(fig, realised, title=title, style=style)
         return _export_map_figure(fig, style)
 
 
@@ -635,7 +792,7 @@ def categorical_map(
             style=style,
             class_order=class_order,
         )
-        realised.map_ax.set_title(title)
+        arrange_presentation_map(fig, realised, title=title, style=style)
         return _export_map_figure(fig, style)
 
 
@@ -659,6 +816,9 @@ def draw_choropleth_axis(
     cmap: str = "viridis",
     norm: mcolors.Normalize | None = None,
     draw_colorbar: bool = True,
+    symmetric_about_zero: bool = False,
+    show_percent: bool = False,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> MapPanelAxes:
     """Draw one district continuous map without ancillary-driven viewport resizing."""
 
@@ -671,21 +831,63 @@ def draw_choropleth_axis(
     excluded = merged[merged["support_status"].eq("excluded")]
     zeros = merged[merged["support_status"].eq("valid_zero")]
     valid = merged[merged["support_status"].eq("valid_nonzero")]
+    if symmetric_about_zero and show_percent:
+        raise MappingError("A district map cannot use both signed differences and percentages")
+    if norm is not None and show_percent:
+        raise MappingError("A percentage map uses a fixed zero-to-one scale")
+    signed_values = pd.Series(dtype=float)
+    if symmetric_about_zero:
+        signed_values = pd.to_numeric(valid[value], errors="raise")
+        if not np.isfinite(signed_values).all() or signed_values.eq(0).any():
+            raise MappingError("Signed district maps require finite nonzero values on nonzero support")
+        if norm is None:
+            maximum = float(signed_values.abs().max()) if len(valid) else 0.0
+            limit = max(10.0, 10.0 * math.ceil(maximum / 10.0))
+            norm = bounded_map_norm(limit, symmetric=True)
+        if not isinstance(norm, mcolors.TwoSlopeNorm) or norm.vcenter != 0.0 or norm.vmin != -norm.vmax:
+            raise MappingError("A signed district map requires a symmetric zero-centred scale")
+    if show_percent:
+        proportion = pd.to_numeric(valid[value], errors="raise")
+        if not proportion.between(0, 1).all():
+            raise MappingError("A proportion map requires values between zero and one")
+        norm = bounded_map_norm(1.0)
+        if colorbar_ticks is None:
+            colorbar_ticks = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+    if norm is not None:
+        _check_scale_values(valid[value], norm)
     realised_norm = norm if norm is not None else _continuous_norm(valid[value])
-    if not valid.empty:
-        valid.plot(
+    zero_face = matplotlib.colormaps[cmap](0.5) if symmetric_about_zero else style.semantic.valid_zero.face
+    handles: list[Patch] = []
+    if symmetric_about_zero:
+        negative = signed_values.lt(0)
+        groups = (
+            (valid.loc[negative], "...", "Below ACZ", 0.23),
+            (valid.loc[~negative], None, "Above ACZ", 0.77),
+        )
+    else:
+        groups = ((valid, None, "", 0.0),)
+    for group, hatch, label, sample in groups:
+        if group.empty:
+            continue
+        group.plot(
             column=value,
             ax=map_ax,
             cmap=cmap,
             norm=realised_norm,
             linewidth=style.boundary_width,
             edgecolor=style.boundary_colour,
+            hatch=hatch,
             rasterized=False,
         )
+        if label:
+            handles.append(
+                Patch(facecolor=matplotlib.colormaps[cmap](sample), edgecolor=style.boundary_colour,
+                      hatch=hatch, label=label)
+            )
     if not zeros.empty:
         zeros.plot(
             ax=map_ax,
-            facecolor=style.semantic.valid_zero.face,
+            facecolor=zero_face,
             edgecolor=style.semantic.valid_zero.edge,
             linewidth=style.boundary_width,
             rasterized=False,
@@ -708,12 +910,11 @@ def draw_choropleth_axis(
     _add_scale_bar(map_ax, authority, style)
     _add_north_arrow(map_ax, authority, style)
 
-    handles: list[Patch] = []
     if style.map.distinguish_excluded_from_valid_zero:
         if not zeros.empty:
             handles.append(
                 Patch(
-                    facecolor=style.semantic.valid_zero.face,
+                    facecolor=zero_face,
                     edgecolor=style.semantic.valid_zero.edge,
                     label="Valid zero",
                 )
@@ -724,7 +925,7 @@ def draw_choropleth_axis(
                     facecolor=style.semantic.excluded.face,
                     edgecolor=style.semantic.excluded.edge,
                     hatch=style.semantic.excluded.hatch,
-                    label="Excluded / unsupported",
+                    label="Excluded" if symmetric_about_zero else "Excluded / unsupported",
                 )
             )
     _draw_legend_band(panel_axes.support_or_status_legend_ax, handles, style=style)
@@ -737,6 +938,8 @@ def draw_choropleth_axis(
             label=colorbar_label,
             style=style,
             gid="map-colorbar-grid",
+            show_percent=show_percent,
+            ticks=colorbar_ticks,
         )
     else:
         panel_axes.colorbar_or_categorical_key_ax.clear()
@@ -754,6 +957,9 @@ def draw_acz_choropleth_axis(
     colorbar_label: str,
     style: PublicationStyle,
     cmap: str = "viridis",
+    norm: mcolors.Normalize | None = None,
+    draw_colorbar: bool = True,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> MapPanelAxes:
     """Draw one continuous ACZ map with the same reserved bands as district maps."""
 
@@ -767,7 +973,10 @@ def draw_acz_choropleth_axis(
     map_ax = panel_axes.map_ax
     left = authority.acz.copy()
     left["_join_key"] = left["zone_id"].astype(str)
-    right = figure_data[["unit_id", value]].copy()
+    data_columns = ["unit_id", value]
+    if "support_status" in figure_data:
+        data_columns.append("support_status")
+    right = figure_data[data_columns].copy()
     right["_join_key"] = right["unit_id"].astype(str)
     merged = left.merge(
         right.drop(columns=["unit_id"]),
@@ -775,18 +984,40 @@ def draw_acz_choropleth_axis(
         how="left",
         validate="one_to_one",
     )
-    if merged[value].isna().any():
+    if "support_status" not in merged:
+        merged["support_status"] = "valid_nonzero"
+    _validate_support_status(merged)
+    excluded = merged.loc[merged["support_status"].eq("excluded")]
+    zeros = merged.loc[merged["support_status"].eq("valid_zero")]
+    valid = merged.loc[merged["support_status"].eq("valid_nonzero")]
+    if merged.loc[~merged["support_status"].eq("excluded"), value].isna().any():
         raise MappingError("ACZ choropleth is missing a governed value")
-    norm = _continuous_norm(merged[value])
-    merged.plot(
-        column=value,
-        ax=map_ax,
-        cmap=cmap,
-        norm=norm,
-        edgecolor=style.acz_boundary_colour,
-        linewidth=style.acz_boundary_width,
-        rasterized=False,
-    )
+    if norm is not None:
+        _check_scale_values(valid[value], norm)
+    realised_norm = norm if norm is not None else _continuous_norm(valid[value])
+    if not valid.empty:
+        valid.plot(
+            column=value,
+            ax=map_ax,
+            cmap=cmap,
+            norm=realised_norm,
+            edgecolor=style.acz_boundary_colour,
+            linewidth=style.acz_boundary_width,
+            rasterized=False,
+        )
+    handles = []
+    for group, state, label in (
+        (zeros, style.semantic.valid_zero, "Valid zero"),
+        (excluded, style.semantic.excluded, "Excluded / unsupported"),
+    ):
+        if group.empty:
+            continue
+        hatch = state.hatch or None
+        group.plot(
+            ax=map_ax, facecolor=state.face, edgecolor=state.edge, hatch=hatch,
+            linewidth=style.acz_boundary_width, rasterized=False,
+        )
+        handles.append(Patch(facecolor=state.face, edgecolor=state.edge, hatch=hatch, label=label))
     authority.districts.boundary.plot(
         ax=map_ax,
         color=style.boundary_colour,
@@ -796,17 +1027,58 @@ def draw_acz_choropleth_axis(
     _finalise_map_axes(map_ax, authority, title="")
     _add_scale_bar(map_ax, authority, style)
     _add_north_arrow(map_ax, authority, style)
-    _draw_legend_band(panel_axes.support_or_status_legend_ax, [], style=style)
-    _draw_colorbar_band(
-        fig,
-        panel_axes.colorbar_or_categorical_key_ax,
-        norm=norm,
-        cmap=cmap,
-        label=colorbar_label,
-        style=style,
-        gid="map-colorbar-grid",
-    )
+    _draw_legend_band(panel_axes.support_or_status_legend_ax, handles, style=style)
+    if draw_colorbar:
+        _draw_colorbar_band(
+            fig,
+            panel_axes.colorbar_or_categorical_key_ax,
+            norm=realised_norm,
+            cmap=cmap,
+            label=colorbar_label,
+            style=style,
+            gid="map-colorbar-grid",
+            ticks=colorbar_ticks,
+        )
     return panel_axes
+
+
+def draw_rate_comparison_maps(
+    fig: Figure,
+    axes: tuple[Axes, ...],
+    authority: GhanaMapAuthority,
+    acz_rates: pd.DataFrame,
+    district_rates: pd.DataFrame,
+    *,
+    colorbar_label: str,
+    cmap: str,
+    style: PublicationStyle,
+    norm: mcolors.Normalize | None = None,
+    colorbar_ticks: tuple[float, ...] | None = None,
+) -> tuple[MapPanelAxes, MapPanelAxes]:
+    """Use a common scale for district and directly aggregated ACZ rates."""
+    district_values = district_rates.loc[district_rates["support_status"].ne("excluded"), "value"]
+    acz_values = acz_rates["value"]
+    if "support_status" in acz_rates:
+        acz_values = acz_rates.loc[acz_rates["support_status"].ne("excluded"), "value"]
+    values = pd.to_numeric(pd.concat([acz_values, district_values]), errors="raise")
+    if values.empty or not np.isfinite(values).all() or (values < 0).any():
+        raise MappingError("Burned-area rate maps require finite nonnegative rates")
+    if norm is None:
+        vmax = max(10.0, math.ceil(float(values.max()) / 10.0) * 10.0)
+        norm = bounded_map_norm(vmax)
+    _check_scale_values(values, norm)
+    common = dict(value="value", colorbar_label=colorbar_label, cmap=cmap, norm=norm, draw_colorbar=False, style=style)
+    acz_panel = draw_acz_choropleth_axis(fig, axes[0], authority, acz_rates, **common)
+    district_panel = draw_choropleth_axis(fig, axes[1], authority, district_rates, **common)
+    left = acz_panel.colorbar_or_categorical_key_ax.get_position()
+    right = district_panel.colorbar_or_categorical_key_ax.get_position()
+    colorbar_ax = fig.add_axes((left.x0, left.y0, right.x1 - left.x0, left.height))
+    _draw_colorbar_band(
+        fig, colorbar_ax, norm=norm, cmap=cmap, label=colorbar_label, style=style,
+        gid="map-shared-burned-area-rate-colorbar",
+        ticks=colorbar_ticks,
+    )
+    return acz_panel, district_panel
 
 
 def draw_support_acz_axis(
@@ -969,6 +1241,7 @@ def draw_categorical_axis(
         class_handles,
         style=style,
         gid="map-local-moran-key",
+        max_columns=len(allowed),
     )
     return panel_axes
 
@@ -1001,8 +1274,8 @@ def draw_cluster_membership_axis(
     if not members.empty:
         members.plot(
             ax=map_ax,
-            facecolor="0.35",
-            edgecolor=style.boundary_colour,
+            facecolor=CLUSTER_MEMBER_FACE,
+            edgecolor=CLUSTER_MEMBER_EDGE,
             linewidth=style.boundary_width,
             rasterized=False,
         )
@@ -1027,6 +1300,22 @@ def draw_cluster_membership_axis(
 
 
 
+def cluster_recurrence_titles(analysis: AnalysisContract) -> dict[str, str]:
+    """Label each product with its model and complete scan analysis window."""
+    model_labels = {
+        MODEL_DISCRETE_POISSON: "discrete Poisson",
+        MODEL_SPACE_TIME_PERMUTATION: "space-time permutation",
+    }
+    titles: dict[str, str] = {}
+    for scenario in load_scan_scenarios(analysis):
+        start, end = _window_bounds(analysis, scenario.temporal_window)
+        titles[scenario.product] = (
+            f"{scenario.product.upper()} {model_labels[scenario.model]}\n"
+            f"{start.strftime('%b %Y')} - {end.strftime('%b %Y')}"
+        )
+    return titles
+
+
 def build_cluster_recurrence_map_figure(
     authority: GhanaMapAuthority,
     figure_data: pd.DataFrame,
@@ -1041,6 +1330,8 @@ def build_cluster_recurrence_map_figure(
     style: PublicationStyle,
     layout: GridLayoutContract,
     figure_size: tuple[float, float],
+    norm: mcolors.Normalize | None = None,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> tuple[Figure, tuple[MapPanelAxes, ...], Axes]:
     """Build the descriptive recurrence map pair with one common colour normalisation."""
     if len(panel_order) != len(layout.data_cells):
@@ -1061,13 +1352,19 @@ def build_cluster_recurrence_map_figure(
         numeric.to_numpy(dtype=float), np.round(numeric.to_numpy(dtype=float)), atol=0.0, rtol=0.0
     ):
         raise MappingError("Cluster recurrence plotted values must be non-negative integers")
-    positive = numeric.loc[numeric.gt(0)]
-    common_norm = _continuous_norm(positive)
+    if norm is None:
+        common_norm = _continuous_norm(numeric.loc[numeric.gt(0)])
+    else:
+        _check_scale_values(numeric, norm)
+        common_norm = norm
 
     grid = build_grid_figure(layout, figure_size=figure_size)
     apply_grid_spacing(grid.figure, layout, style=style)
+    if style.title_inside_figure:
+        title_lines = max(str(title).count("\n") + 1 for title in panel_titles)
+        extra_title_in = (title_lines - 1) * 1.2 * style.base_font / 72
+        grid.figure.subplots_adjust(top=1 - style.geometry.outer_top_fraction - extra_title_in / figure_size[1])
     realised_panels: list[MapPanelAxes] = []
-    any_excluded = False
     for idx, (product, title) in enumerate(zip(panel_order, panel_titles, strict=True)):
         panel = figure_data.loc[figure_data[product_column].astype(str).eq(str(product))].copy()
         realised = draw_choropleth_axis(
@@ -1082,18 +1379,21 @@ def build_cluster_recurrence_map_figure(
             norm=common_norm,
             draw_colorbar=False,
         )
-        realised.map_ax.set_title(str(title))
-        any_excluded |= panel["support_status"].astype(str).eq("excluded").any()
+        if style.title_inside_figure:
+            realised.map_ax.set_title(str(title), fontsize=style.base_font)
         realised_panels.append(realised)
 
-    status_handles = [
-        Patch(
-            facecolor=style.semantic.valid_zero.face,
-            edgecolor=style.semantic.valid_zero.edge,
-            label="Valid zero",
+    support_status = figure_data["support_status"].astype(str)
+    status_handles = []
+    if support_status.eq("valid_zero").any():
+        status_handles.append(
+            Patch(
+                facecolor=style.semantic.valid_zero.face,
+                edgecolor=style.semantic.valid_zero.edge,
+                label="Valid zero",
+            )
         )
-    ]
-    if any_excluded:
+    if support_status.eq("excluded").any():
         status_handles.append(
             Patch(
                 facecolor=style.semantic.excluded.face,
@@ -1138,6 +1438,7 @@ def build_cluster_recurrence_map_figure(
         style=style,
         gid="map-shared-cluster-recurrence-colorbar",
         labelpad_pt=colorbar_labelpad_pt,
+        ticks=colorbar_ticks,
     )
 
     map_axes = tuple(realised.map_ax for realised in realised_panels)
@@ -1160,6 +1461,8 @@ def cluster_recurrence_maps_grid(
     style: PublicationStyle,
     layout: GridLayoutContract,
     figure_size: tuple[float, float],
+    norm: mcolors.Normalize | None = None,
+    colorbar_ticks: tuple[float, ...] | None = None,
 ) -> RenderedFigure:
     """Render validated significant-cluster recurrence as a descriptive paired map."""
     with plt.rc_context(matplotlib.RcParams(style.rc_params())):
@@ -1176,6 +1479,8 @@ def cluster_recurrence_maps_grid(
             style=style,
             layout=layout,
             figure_size=figure_size,
+            norm=norm,
+            colorbar_ticks=colorbar_ticks,
         )
         return _export_map_figure(fig, style)
 

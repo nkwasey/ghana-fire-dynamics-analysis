@@ -4,26 +4,22 @@ This document defines the maintained data contract for the consolidated monthly
 fire panels written by `RP1_Project/merge_af_ba_panels.py` and consumed by the
 live `RP1_Project/rp1_analysis/RP1_Analysis_v1.ipynb` workflow.
 
-Source of truth:
-- `RP1_Project/merge_af_ba_panels.py`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_manifest.json`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_merge_summary.json`
-- `RP1_Project/rp1_analysis/data/raw/fire_panel_key_audit.csv`
+Contract authorities are `RP1_Project/merge_af_ba_panels.py`, the configured study window and the selected geography unit universe. Each run writes `fire_panel_manifest.json`, `fire_panel_merge_summary.json` and `fire_panel_key_audit.csv` as evidence of its realised schema, population and source identities; these generated files are not supplied acceptance answers.
 
 ## Output inventory
 
 The merger writes the following maintained raw-panel artefacts under
 `RP1_Project/rp1_analysis/data/raw/`:
 
-| Path | Level | Rows | Columns | Locked month window |
+| Path | Level | Rows | Columns | Configured month window |
 | --- | --- | ---: | ---: | --- |
-| `fire_panel_acz_monthly_consolidated_2001_2024.csv` | `acz` | 1,440 | 111 | `200101` to `202412` |
-| `fire_panel_district_monthly_consolidated_2001_2024.csv` | `district` | 74,880 | 111 | `200101` to `202412` |
+| `fire_panel_acz_monthly_consolidated_2001_2024.csv` | `acz` | selected ACZ units ? configured months | governed schema | configured study interval |
+| `fire_panel_district_monthly_consolidated_2001_2024.csv` | `district` | selected district units ? configured months | governed schema | configured study interval |
 | `fire_panel_manifest.json` | metadata | n/a | n/a | exact ordered schema, upstream source inventory, schema hash |
 | `fire_panel_merge_summary.json` | metadata | n/a | n/a | row counts, unique-unit counts, structural-missing totals |
-| `fire_panel_key_audit.csv` | metadata | 2 | 9 | row-count and key-uniqueness audit by level |
+| `fire_panel_key_audit.csv` | metadata | one row per selected level | audit schema | row-count and key-uniqueness audit by level |
 
-The maintained schema version is `rp1_fire_panel_consolidated_v2`.
+The maintained schema version is `rp1_fire_panel_consolidated_v2`. Row counts are calculated from the selected unit universe and month spine, and column counts from the schema. The default file names describe the configured study interval; they do not prescribe a downstream population or numerical result.
 
 ## Purpose and analytical role
 
@@ -148,9 +144,9 @@ The following 12 stems appear for both `modis_` and `viirs_` sensor prefixes:
 | `pct_high_conf` | Percent of detections that are high confidence |
 | `days_active_nh` | Number of days with at least one nominal-plus-high detection |
 | `streak_max_nh` | Longest run of active days using nominal-plus-high detections |
-| `frp_active_days` | Number of days with positive FRP support |
+| `frp_active_days` | Number of UTC days with at least one eligible nominal/high-confidence FRP value passing the configured minimum-FRP gate |
 | `frp_sum_daily_max_mw` | Sum of daily maximum FRP values in MW |
-| `frp_mean_mw` | Mean FRP in MW |
+| `frp_mean_mw` | Sum of eligible unit-day FRP maxima divided by the number of FRP-supported UTC days; null if none |
 | `frp_p95_daily_max_mw` | 95th percentile of daily maximum FRP in MW |
 
 These fields are the direct governed inputs from the AF merger-ready base
@@ -220,7 +216,7 @@ paired analysis.
 | `modis_frp_sum_daily_max_mw_per_primary_det` | MODIS summed daily-max FRP per primary detection |
 | `viirs_det_primary_per_active_day` | VIIRS primary detections per active day |
 | `viirs_frp_sum_daily_max_mw_per_active_day` | VIIRS summed daily-max FRP per active day |
-| `viirs_frp_sum_daily_max_mw_per_primary_det` | VIIRS summed daily-max FRP per primary detection |
+| `viirs_frp_sum_daily_max_mw_per_primary_det` | Cross-stream VIIRS summed daily-max FRP per count-stream primary detection; missing when the count is zero |
 
 ## Support flags
 

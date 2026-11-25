@@ -52,10 +52,11 @@ from pathlib import Path
 
 import pandas as pd
 from mv_firms_panels.core.config import LoadedConfig, SensorName, load_config
-from mv_firms_panels.core.hashing import sha256_text, short_hash8, stable_json_dumps
+from mv_firms_panels.core.hashing import sha256_file, sha256_text, short_hash8, stable_json_dumps
 from mv_firms_panels.core.logging import initialise_run
 from mv_firms_panels.core.schema import load_json_schema, validate_dataframe_against_schema
 from mv_firms_panels.io.paths import (
+    build_run_dir,
     panel_monthly_ext_path,
     panel_monthly_wide_path,
     rp1_af_dir,
@@ -257,12 +258,10 @@ def _gate_stage_execution(
     skip_existing: bool,
     force: bool,
 ) -> tuple[bool, str]:
-    """Return (should_run, reason).
+    """Decide whether to run the stage and identify the reason.
 
-    Notes (why this shape):
-    - Tests require that 'outputs exist but sentinel missing' raises even when skip_existing=False.
-    - Some outputs are format-alternatives (csv.gz vs csv). Contract checks must not fail if an
-      alternative format is absent but another exists.
+    A missing receipt prevents reuse or implicit replacement of existing
+    outputs. CSV and gzip CSV are alternatives when the contract allows both.
     """
     if force:
         return True, "force"
@@ -270,7 +269,7 @@ def _gate_stage_execution(
     outputs_exist = any(p.exists() for p in output_candidates)
     sentinel_exists = sentinel_path.exists()
 
-    # Binding: fail fast if outputs exist but sentinel is missing (regardless of skip_existing).
+    # Guard existing data before considering the skip-existing option.
     if outputs_exist and not sentinel_exists:
         raise CliError(
             f"{stage}: outputs exist but sentinel is missing; refusing to proceed without --force.\n"
@@ -286,6 +285,48 @@ def _gate_stage_execution(
     if not outputs_exist:
         return True, "no outputs"
 
+    if stage == "aggregate_monthly":
+        receipt = _load_json_object(path=sentinel_path, context="aggregation reuse")
+        for key in ("panel_sensor_monthly", "qa_summary_json"):
+            entry = receipt.get(key, {})
+            _validate_manifest_path_entry(repo_root=repo_root, entry=entry, context="aggregation reuse")
+            source = repo_root / str(entry["path"])
+            if entry.get("sha256") != sha256_file(source):
+                raise CliError("Aggregation reuse rejected: input/output hash mismatch")
+        policy = _load_json_object(path=repo_root / str(receipt["qa_summary_json"]["path"]), context="aggregation policy")
+        frp = policy.get("steps", {}).get("frp", {})
+        if frp.get("confidence_categories") != ["n", "h"] or frp.get("aggregation") != "mean_of_daily_maxima_over_eligible_utc_days":
+            raise CliError("Aggregation reuse rejected: rebuild FRP with nominal/high policy")
+        sensor = policy.get("sensor")
+        if sensor not in ("viirs", "modis"):
+            raise CliError("Aggregation reuse rejected: sensor identity missing")
+        parts = policy.get("steps", {}).get("read_fires_canonical", {}).get("partitions", [])
+        if not parts:
+            raise CliError("Aggregation reuse rejected: annual partition evidence missing")
+        try:
+            annual_paths = [(int(p["year"]), repo_root / p["path"]) for p in parts]
+            for part in parts:
+                if sha256_file(repo_root / part["path"]) != part["sha256"]:
+                    raise ValueError("count partition changed after aggregation")
+            if sensor == "viirs":
+                if frp.get("method_version") != "viirs_frp_dual_stream_v1" or frp.get("selection_stage") != "before_independent_deduplication":
+                    raise ValueError("VIIRS dual-stream evidence missing")
+                from mv_firms_panels.stages.aggregate_monthly import _validate_viirs_partitions
+                for part in parts:
+                    if sha256_file(repo_root / part["frp_path"]) != part["frp_sha256"]:
+                        raise ValueError("FRP partition changed after aggregation")
+                _validate_viirs_partitions(repo_root=repo_root, cfg=cfg, run_dir=sentinel_path.parent.parent,
+                    run_id=policy["run_id"], annual_paths=annual_paths,
+                    explicit_paths=[repo_root / p["frp_path"] for p in parts])
+            else:
+                from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+                for year, count_path in annual_paths:
+                    validate_preparation_partition(repo_root=repo_root, cfg=cfg,
+                        run_dir=sentinel_path.parent.parent, run_id=policy["run_id"],
+                        sensor="modis", year=year, count_path=count_path,
+                        require_configured_source=True)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise CliError(f"Aggregation reuse rejected: {exc}") from exc
     # Only validate contracted schema checks for files that exist.
     for schema_key, csv_rel_path in contracted_schema_checks:
         abs_p = (repo_root / csv_rel_path).resolve()
@@ -317,6 +358,9 @@ def _validate_manifest_path_entry(*, repo_root: Path, entry: object, context: st
     abs_path = (repo_root / rel_path).resolve()
     if not abs_path.exists():
         raise CliError(f"{context}: referenced path missing: {rel_path}")
+    expected_hash = entry.get("sha256")
+    if not isinstance(expected_hash, str) or not abs_path.is_file() or sha256_file(abs_path) != expected_hash:
+        raise CliError(f"{context}: referenced file hash mismatch: {rel_path}")
 
 
 def _validate_rp1_af_exports_manifest(*, repo_root: Path, manifest: object, cfg) -> None:
@@ -495,6 +539,23 @@ def _validate_rp1_af_exports_manifest(*, repo_root: Path, manifest: object, cfg)
 
 def _validate_combine_skip_existing_contract(*, repo_root: Path, manifest_path: Path, cfg) -> None:
     manifest = _load_json_object(path=manifest_path, context="combine_panels manifest")
+    method = manifest.get("active_fire_method", {})
+    if method.get("status") != "VERIFIED_AGGREGATION_INPUTS" or method.get("method_version") != "viirs_frp_dual_stream_v1" or method.get("frp_selection_stage") != "before_independent_deduplication":
+        raise CliError("Combine reuse rejected: missing verified aggregation method receipt")
+    if method.get("config_sha256") != sha256_text(stable_json_dumps(cfg.to_canonical_dict())):
+        raise CliError("Combine reuse rejected: configuration changed")
+    if not isinstance(method.get("evidence_files"), list) or len(method["evidence_files"]) != 6:
+        raise CliError("Combine reuse rejected: aggregation evidence incomplete")
+    preparation = method.get("viirs_preparation_evidence", [])
+    if not isinstance(preparation, list) or len(preparation) < 5:
+        raise CliError("Combine reuse rejected: VIIRS preparation evidence missing")
+    for entry in [*method.get("evidence_files", []), *preparation]:
+        base = (repo_root.parent.parent if entry.get("scope") == "workspace" else repo_root).resolve()
+        relative = Path(str(entry.get("path", "")))
+        source = (base / relative).resolve()
+        if relative.is_absolute() or not source.is_relative_to(base) or not source.is_file() or entry.get("sha256") != sha256_file(source):
+            raise CliError("Combine reuse rejected: aggregation evidence changed")
+
 
     for key in ("panel_monthly", "qa_summary_json"):
         if key not in manifest:
@@ -558,18 +619,27 @@ def cmd_prepare_year(
     sentinel_path = run_dir / "qa" / f"prepare_year_{sensor}_{year}_manifest.json"
     qa_out = run_dir / "qa" / f"prepare_year_{sensor}_{year}_summary.json"
     fires_out = run_dir / "fires_canonical" / sensor / f"fires_canonical_{sensor}_{year}.csv"
+    frp_out = run_dir / "fires_frp_canonical" / sensor / f"fires_frp_canonical_{sensor}_{year}.csv"
 
     should_run, _ = _gate_stage_execution(
         stage=f"prepare_year({sensor},{year})",
         repo_root=repo_root,
         cfg=loaded.config,
         sentinel_path=sentinel_path,
-        output_candidates=[qa_out, fires_out],
+        output_candidates=[qa_out, fires_out, *([frp_out] if sensor == "viirs" else [])],
         contracted_schema_checks=[],
         skip_existing=bool(skip_existing),
         force=bool(force),
     )
     if not should_run:
+        from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+        try:
+            validate_preparation_partition(repo_root=repo_root, cfg=loaded.config, run_dir=run_dir,
+                run_id=rid, sensor=sensor, year=year, count_path=fires_out,
+                frp_path=frp_out if sensor == "viirs" else None,
+                require_configured_source=True)
+        except ValueError as exc:
+            raise CliError(f"Preparation reuse rejected: {exc}") from exc
         return 0
 
     try:
@@ -626,6 +696,15 @@ def cmd_aggregate(
         force=bool(force),
     )
     if not should_run:
+        from mv_firms_panels.stages.aggregate_monthly import _resolve_time_window
+        expected_start, expected_end, _ = _resolve_time_window(
+            loaded.config, sensor=sensor, start_yyyymm=start_yyyymm, end_yyyymm=end_yyyymm
+        )
+        policy = _load_json_object(path=qa_out, context="aggregation reuse")
+        window = policy.get("effective_time_window", {})
+        if (policy.get("sensor") != sensor or policy.get("run_id") != rid or
+            window.get("start_yyyymm") != expected_start or window.get("end_yyyymm") != expected_end):
+            raise CliError("Aggregation reuse rejected: sensor, run or time window changed")
         return 0
 
     try:
@@ -973,10 +1052,10 @@ def cmd_pipeline(
     repo_root = _resolve_repo_root(repo_root=repo_root, config_path=config_path)
     loaded = _load_cfg(config_path, repo_root=repo_root)
     rid = derive_run_id(loaded, explicit_run_id=run_id)
-    run_ctx = _initialise_run(
-        loaded, repo_root=repo_root, run_id=rid, zip_sha256=zip_sha256, log_level=log_level
-    )
-    run_dir = run_ctx.run_dir
+    try:
+        run_dir = build_run_dir(repo_root=repo_root, outputs_base_dir=loaded.config.outputs.base_dir, run_id=rid)
+    except ValueError as exc:
+        raise CliError(f"Invalid run directory: {exc}") from exc
 
     plan: dict[str, object] = {
         "run_id": rid,
@@ -1075,6 +1154,9 @@ def cmd_pipeline(
         print(json.dumps(plan, indent=2, sort_keys=True))
         return 0
 
+    _initialise_run(
+        loaded, repo_root=repo_root, run_id=rid, zip_sha256=zip_sha256, log_level=log_level
+    )
     for sensor in loaded.config.processing.sensors_enabled:
         for y in years_by_sensor.get(sensor, []):
             cmd_prepare_year(

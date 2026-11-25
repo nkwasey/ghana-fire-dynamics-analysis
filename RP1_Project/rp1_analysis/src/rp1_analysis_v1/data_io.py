@@ -14,6 +14,7 @@ import pandas as pd
 from .config import load_configuration_bundle
 from .contracts import DataSchemaContract, GeometrySpecification, PanelSpecification
 from .paths import ProjectPaths
+from .ba_support import BAObservationSupportError, load_observation_support, validate_profile_output_hashes
 
 
 class DataLoadError(RuntimeError):
@@ -31,6 +32,7 @@ class DataAuthorities:
     district_geometry: gpd.GeoDataFrame
     district_to_acz_crosswalk: pd.DataFrame
     district_to_acz_crosswalk_provenance: dict[str, Any]
+    ba_observation_support: pd.DataFrame | None = None
 
 
 def _schema(paths: ProjectPaths, schema: DataSchemaContract | None) -> DataSchemaContract:
@@ -194,14 +196,21 @@ def load_district_to_acz_crosswalk_provenance(
 def load_data_authorities(paths: ProjectPaths | None = None, schema: DataSchemaContract | None = None) -> DataAuthorities:
     governed = paths or ProjectPaths.discover()
     ds = _schema(governed, schema)
+    manifest = load_manifest(governed, ds)
+    try:
+        support = load_observation_support(governed.root, manifest)
+        validate_profile_output_hashes(governed.root, manifest)
+    except BAObservationSupportError as exc:
+        raise DataLoadError(str(exc)) from exc
     return DataAuthorities(
         acz_panel=load_acz_panel(governed, ds),
         district_panel=load_district_panel(governed, ds),
         key_audit=load_key_audit(governed, ds),
-        manifest=load_manifest(governed, ds),
+        manifest=manifest,
         merge_summary=load_merge_summary(governed, ds),
         acz_geometry=load_acz_geometry(governed, ds),
         district_geometry=load_district_geometry(governed, ds),
         district_to_acz_crosswalk=load_district_to_acz_crosswalk(governed, ds),
         district_to_acz_crosswalk_provenance=load_district_to_acz_crosswalk_provenance(governed, ds),
+        ba_observation_support=support,
     )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
 
@@ -8,11 +9,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from PIL import Image
+from pypdf import PdfReader
 
 from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.data_io import load_data_authorities
-from rp1_analysis_v1.mapping import build_cluster_recurrence_map_figure, cluster_recurrence_maps_grid, prepare_geography
+from rp1_analysis_v1.mapping import build_cluster_recurrence_map_figure, cluster_recurrence_titles, prepare_geography
 from rp1_analysis_v1.paths import ProjectPaths
+from rp1_analysis_v1.presentation import load_figure_specs
+from rp1_analysis_v1.publication import _render
 from rp1_analysis_v1.publication_sources import PublicationSourceError, build_cluster_recurrence_source
 from rp1_analysis_v1.style import PublicationStyle
 from rp1_analysis_v1.validation import validate_data_authorities
@@ -105,8 +109,12 @@ def test_recurrence_fails_closed_for_non_significant_wrong_product_and_excluded_
         )
 
 
-def test_recurrence_renderer_has_equal_map_viewports_one_shared_scale_and_exact_canvas(governed) -> None:
-    bundle, _, summary, style, geography = governed
+@pytest.mark.parametrize("titled", [False, True], ids=["notebook", "titled"])
+def test_recurrence_renderer_has_equal_map_viewports_one_shared_scale_and_exact_canvas(governed, titled) -> None:
+    bundle, authorities, summary, style, geography = governed
+    if not titled:
+        assert not style.title_inside_figure
+    style = replace(style, title_inside_figure=titled)
     mcd = _eligible_ids(summary, "mcd64a1")
     viirs = _eligible_ids(summary, "viirs")
     source_rows = []
@@ -117,14 +125,15 @@ def test_recurrence_renderer_has_equal_map_viewports_one_shared_scale_and_exact_
         for uid in viirs[:cid + 1]:
             source_rows.append({"product": "viirs", "unit_id": uid, "cluster_id": cid})
     recurrence = build_cluster_recurrence_source(pd.DataFrame(source_rows), summary)
-    spec = next(x for x in bundle.figure.figures if x.figure_id == "F6")
+    spec = next(item for item in load_figure_specs(bundle.figure) if item.figure_id == "F6")
+    titles = cluster_recurrence_titles(bundle.analysis)
     fig, panels, shared = build_cluster_recurrence_map_figure(
         geography,
         recurrence,
         product_column="product",
         panel_order=("mcd64a1", "viirs"),
         value_column="significant_cluster_count",
-        panel_titles=("MCD64A1", "VIIRS"),
+        panel_titles=(titles["mcd64a1"], titles["viirs"]),
         cmap="cividis",
         colorbar_label="Distinct significant clusters containing district",
         colorbar_labelpad_pt=2.0,
@@ -142,25 +151,20 @@ def test_recurrence_renderer_has_equal_map_viewports_one_shared_scale_and_exact_
         assert a.get_xlim() == pytest.approx(b.get_xlim(), abs=1e-9)
         assert a.get_ylim() == pytest.approx(b.get_ylim(), abs=1e-9)
         assert shared.get_gid() == "map-shared-cluster-recurrence-colorbar"
+        renderer = fig.canvas.get_renderer()
+        for ax, product in zip((a, b), ("mcd64a1", "viirs"), strict=True):
+            assert ax.get_title() == (titles[product] if titled else "")
+            panel_id = next(text for text in ax.texts if str(text.get_gid()).startswith("panel-marker"))
+            if titled:
+                title_box = ax.title.get_window_extent(renderer)
+                assert not title_box.overlaps(panel_id.get_window_extent(renderer))
+                assert title_box.y1 < fig.bbox.y1
         assert len([ax for ax in fig.axes if ax.get_gid() == "map-shared-cluster-recurrence-colorbar"]) == 1
         assert fig.get_size_inches()[0] == pytest.approx(20 / 2.54, abs=1e-12)
         assert fig.get_size_inches()[1] == pytest.approx(15 / 2.54, abs=1e-12)
     finally:
         plt.close(fig)
-    rendered = cluster_recurrence_maps_grid(
-        geography,
-        recurrence,
-        product_column="product",
-        panel_order=("mcd64a1", "viirs"),
-        value_column="significant_cluster_count",
-        panel_titles=("MCD64A1", "VIIRS"),
-        cmap="cividis",
-        colorbar_label="Distinct significant clusters containing district",
-        colorbar_labelpad_pt=2.0,
-        style=style,
-        layout=bundle.figure.grid_layouts[spec.layout_role],
-        figure_size=style.dimensions_for(spec.layout_role),
-    )
+    rendered = _render(spec, recurrence, authorities=authorities, style=style, analysis=bundle.analysis)
     image = Image.open(BytesIO(rendered.png)).convert("RGB")
     assert image.size == (2362, 1772)
     width, height = image.size
@@ -171,3 +175,24 @@ def test_recurrence_renderer_has_equal_map_viewports_one_shared_scale_and_exact_
         edge_pixels.extend(image.getpixel((x, y)) for x in (0, 1, width - 2, width - 1))
     assert all(pixel == (255, 255, 255) for pixel in edge_pixels)
     assert len(rendered.pdf) > 10_000
+    pdf_text = PdfReader(BytesIO(rendered.pdf)).pages[0].extract_text()
+    assert "Valid zero" in pdf_text
+    assert "Excluded / unsupported" in pdf_text
+    for label in ("MCD64A1 discrete Poisson", "Jan 2001 - Dec 2024",
+                  "VIIRS space-time permutation", "Feb 2012 - Dec 2024"):
+        assert (label in pdf_text) == titled
+
+
+def test_recurrence_renderer_omits_absent_zero_class(governed) -> None:
+    bundle, authorities, summary, style, _geography = governed
+    memberships = [
+        {"product": product, "unit_id": unit_id, "cluster_id": 1}
+        for product in ("mcd64a1", "viirs")
+        for unit_id in _eligible_ids(summary, product)
+    ]
+    recurrence = build_cluster_recurrence_source(pd.DataFrame(memberships), summary)
+    spec = next(item for item in load_figure_specs(bundle.figure) if item.figure_id == "F6")
+    rendered = _render(spec, recurrence, authorities=authorities, style=style, analysis=bundle.analysis)
+    pdf_text = PdfReader(BytesIO(rendered.pdf)).pages[0].extract_text()
+    assert "Valid zero" not in pdf_text
+    assert "Excluded / unsupported" in pdf_text

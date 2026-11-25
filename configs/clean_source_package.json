@@ -1,0 +1,122 @@
+{
+  "schema": "rp1-clean-source-package-v1",
+  "embedded_source_allowlists": [
+    {
+      "project_root": "RP1_Project/rp1_firms_archive",
+      "path": "tools/package_source.py",
+      "assignment": "SOURCE_FILES"
+    }
+  ],
+  "include_roots": [
+    ".editorconfig",
+    ".gitattributes",
+    ".gitignore",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "environment.yml",
+    "pyproject.toml",
+    "configs",
+    "docs",
+    "geo_data_prep",
+    "RP1_Project",
+    "tools",
+    "tests",
+    "CITATION.cff"
+  ],
+  "exclude_directory_names": [
+    "out",
+    "downloads",
+    "merge_runs",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".ipynb_checkpoints",
+    "build",
+    "dist",
+    "htmlcov",
+    ".git",
+    ".tox",
+    ".nox",
+    ".venv",
+    "venv"
+  ],
+  "exclude_directory_suffixes": [
+    ".egg-info"
+  ],
+  "generated_directory_markers": [
+    "RP1_PRESENTATION_FIGURE_MANIFEST.json",
+    "EXECUTION_EVIDENCE_MANIFEST.json",
+    "qualification_report.json",
+    "projection_evidence.json"
+  ],
+  "exclude_paths": [
+    "configs/workflow_local.json",
+    "docs/C3_EXISTING_SCRIPT_INVENTORY.json",
+    "docs/C3_IMPLEMENTATION_STATUS.md",
+    "docs/C3_MIGRATION_AUDIT_AND_ACTION_PLAN.md",
+    "docs/C3_SCRIPT_CHANGE_REGISTER_AND_EXECUTION_PLAN.md",
+    "RP1_Project/rp1_gee_ba_scripts/c3/tests/fixtures/asutifi_north_ba2012_202401.csv",
+    "RP1_Project/rp1_gee_ba_scripts/c3/tests/fixtures/PROVENANCE.json",
+    "RP1_Project/rp1_gee_ba_scripts/c3/tests/reference/ee_core_previous.txt",
+    "RP1_Project/rp1_gee_ba_scripts/c3/tests/reference/HEADER_MAP.csv",
+    "RP1_Project/geo_handoff_manifest.json",
+    "RP1_Project/rp1_analysis/data",
+    "RP1_Project/rp1_analysis/presentation_all",
+    "RP1_Project/rp1_analysis/presentation_one",
+    "RP1_Project/rp1_analysis/presentation_rq3",
+    "RP1_Project/rp1_mv_firms_panels/data/metadata",
+    "RP1_Project/rp1_mv_firms_panels/data/raw",
+    "RP1_Project/rp1_mv_firms_panels/configs/generated",
+    "RP1_Project/configs/ba_source_lock_c1.json",
+    "RP1_Project/configs/ba_source_lock_c2.json",
+    "RP1_Project/configs/ba_source_lock_c3.json",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c3_2001",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c3_2012",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c2_2001",
+    "RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c2_2012",
+    "configs/release_identity.json",
+    "RP1_Project/rp1_firms_archive/data/reference/geography/acz.geojson",
+    "RP1_Project/rp1_firms_archive/data/reference/geography/districts.geojson",
+    "RP1_Project/rp1_firms_archive/data/reference/geography/ghana.geojson",
+    "RP1_Project/rp1_firms_archive/data/reference/geography/units.json"
+  ],
+  "exclude_file_patterns": [
+    "RELEASE_REVISION_*.md",
+    "*.pyc",
+    "*.pyo",
+    "*.zip",
+    "*.log",
+    "*.tmp",
+    "*.bak",
+    "*~",
+    ".*.dbf.*",
+    "*.executed.ipynb",
+    "*.nbconvert.ipynb",
+    ".coverage",
+    "coverage.xml",
+    ".DS_Store",
+    "Thumbs.db",
+    "desktop.ini",
+    ".env",
+    ".env.*",
+    "firms_map_key.txt",
+    "map_key.txt",
+    "*.zip.sha256",
+    "*.zip.audit.json",
+    "*.partial"
+  ],
+  "retained_download_roots": [
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release"
+  ],
+  "source_input_roots": [
+    "geo_data_prep/data/raw",
+    "RP1_Project/rp1_gee_ba_scripts/downloads/c3_release"
+  ],
+  "empty_directories": [
+    "RP1_Project/rp1_mv_firms_panels/data/raw"
+  ]
+}

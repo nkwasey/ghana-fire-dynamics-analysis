@@ -90,7 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument(
         "--years",
         default=None,
-        help='Years list "2014,2015" or range "2014-2024" (default: auto-detect)',
+        help='Years list "2014,2015" or range "2014-2024" (default: inspect prepared partitions in this run)',
     )
     pipeline.add_argument(
         "--years-viirs",
@@ -102,7 +102,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional MODIS-specific years list/range overriding --years",
     )
-    pipeline.add_argument("--dry-run", action="store_true", help="Print the resolved plan without running")
+    pipeline.add_argument("--dry-run", action="store_true", help="Print the resolved plan without writing outputs")
     pipeline.add_argument("--no-plots", action="store_true", help="Disable plot generation")
 
     return parser

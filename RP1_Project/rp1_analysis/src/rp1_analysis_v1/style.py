@@ -7,7 +7,7 @@ independent styling decisions.  Renderers consume this authority directly for go
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 from types import MappingProxyType
 from typing import Any, Mapping
@@ -15,6 +15,28 @@ from typing import Any, Mapping
 from .config import FigureContract
 from .contracts import GridLayoutContract
 from .presentation import LayoutRole
+
+
+ACZ_SERIES_STYLES = MappingProxyType({
+    "CZ": ("o", "-"),
+    "FZ": ("s", "--"),
+    "GS": ("^", "-."),
+    "SS": ("D", ":"),
+    "TZ": ("v", (0, (3, 1, 1, 1, 1, 1))),
+})
+_ACZ_COLOURS = MappingProxyType({
+    "CZ": "#88CCEE",
+    "FZ": "#117733",
+    "GS": "#DDCC77",
+    "SS": "#CC6677",
+    "TZ": "#332288",
+})
+_DETECTION_SCENARIO_COLOURS = MappingProxyType({
+    "fitted_weak_ar1": "#0072B2",
+    "independent_years": "#D55E00",
+    "negative_ar1_stress": "#009E73",
+    "positive_ar1_stress": "#482677",
+})
 
 
 def _dimension_pair(value: Any, context: str) -> tuple[float, float]:
@@ -163,6 +185,8 @@ class PublicationStyle:
     boundary_width: float = 0.35
     acz_boundary_width: float = 0.9
     grid_alpha: float = 0.25
+    acz_colours: Mapping[str, str] = field(default_factory=lambda: _ACZ_COLOURS)
+    detection_scenario_colours: Mapping[str, str] = field(default_factory=lambda: _DETECTION_SCENARIO_COLOURS)
 
     @classmethod
     def from_contract(cls, contract: FigureContract) -> PublicationStyle:
@@ -186,6 +210,7 @@ class PublicationStyle:
         governed_geometry = contract.publication_geometry
         semantic = contract.semantic_styles
         circular_display = contract.display_conventions.circular_mean_month
+        renderer_colours = contract.presentation_export.semantic_styles if contract.presentation_export else {}
         return cls(
             dpi=int(contract.resolution_dpi),
             title_inside_figure=bool(contract.text_policy["title_inside_figure"]),
@@ -289,6 +314,10 @@ class PublicationStyle:
                 ticks=tuple(circular_display.ticks),
                 tick_labels=tuple(circular_display.tick_labels),
             ),
+            acz_colours=MappingProxyType({**_ACZ_COLOURS, **renderer_colours.get("acz_categories", {})}),
+            detection_scenario_colours=MappingProxyType({
+                **_DETECTION_SCENARIO_COLOURS, **renderer_colours.get("detection_scenarios", {}),
+            }),
         )
 
     @property

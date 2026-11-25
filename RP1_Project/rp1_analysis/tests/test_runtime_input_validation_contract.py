@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+import pytest
+from _generated_input_contract import configured_input_paths
 
 
 SUBPROJECT = Path(__file__).resolve().parents[1]
@@ -30,13 +32,14 @@ def _validate_in_subprocess(root: Path) -> dict:
     code = """
 import json
 from rp1_analysis_v1.integration import validate_governed_inputs
-r = validate_governed_inputs()
+r = validate_governed_inputs(raise_on_failure=False)
 print(json.dumps({
     'input_validation_status': r['input_validation_status'],
     'canonical_input_identity': r['canonical_input_identity'],
     'panel_status': r['panel_schema_validation']['status'],
-    'geometry_status': r['geometry_summary']['status'],
-    'reconciliation_status': r['reconciliation_summary']['status'],
+    'geometry_status': r['geometry_summary'].get('status'),
+    'reconciliation_status': r['reconciliation_summary'].get('status'),
+    'validation_error': r['validation_error'],
     'changed': [x['staged_path'] for x in r['current_input_identities'] if not x['identity_match']],
 }, sort_keys=True))
 """
@@ -83,31 +86,26 @@ def _replace_json(path: Path, payload: dict, *, indent: int | None, sort_keys: b
     path.write_text(text + "\n", encoding="utf-8")
 
 
-def test_provenance_mutation_and_equivalent_serialisation_pass_as_noncanonical(
-    tmp_path: Path,
+@pytest.mark.parametrize("role", ["merge_summary", "manifest"])
+def test_generated_handoff_rejects_provenance_mutation_and_equivalent_serialisation(
+    tmp_path: Path, role: str,
 ) -> None:
     root = _candidate_root(tmp_path)
-
-    # Case B: provenance-only content mutation that leaves the scientific contract valid.
-    merge_path = root / "data/raw/fire_panel_merge_summary.json"
-    merge_payload = json.loads(merge_path.read_text(encoding="utf-8"))
-    merge_payload["merge_run_id"] = "v12301_runtime_reconstruction"
-    _replace_json(merge_path, merge_payload, indent=2, sort_keys=True)
-
-    # Case C: semantically equivalent JSON serialisation with different bytes.
-    manifest_path = root / "data/raw/fire_panel_manifest.json"
-    manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    _replace_json(manifest_path, manifest_payload, indent=None, sort_keys=False)
+    # Exact generated handoff identity binds metadata bytes too. Even equivalent
+    # serialization requires a deliberate new handoff, never runtime acceptance.
+    relative = "data/raw/" + ("fire_panel_merge_summary.json" if role == "merge_summary" else "fire_panel_manifest.json")
+    path = root / relative
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if role == "merge_summary":
+        payload["merge_run_id"] = "altered_runtime_identity"
+    _replace_json(path, payload, indent=None, sort_keys=False)
 
     report = _validate_in_subprocess(root)
-    assert report["input_validation_status"] == "PASS"
+    assert report["input_validation_status"] == "FAIL"
     assert report["canonical_input_identity"] == "DIFFERENT"
-    assert set(report["changed"]) == {
-        "data/raw/fire_panel_merge_summary.json",
-        "data/raw/fire_panel_manifest.json",
-    }
-    assert report["panel_status"] == "PASS"
-    assert report["reconciliation_status"] == "PASS"
+    assert set(report["changed"]) == {relative}
+    assert report["panel_status"] == "FAIL"
+    assert "differ from the generated handoff inventory" in report["validation_error"]["message"]
 
 
 def test_canonical_release_bytes_still_match_immutable_inventory() -> None:
@@ -115,7 +113,7 @@ def test_canonical_release_bytes_still_match_immutable_inventory() -> None:
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
     assert inventory["schema_version"] == "rp1-analysis-v1.1"
     assert inventory["provenance_schema_version"] == "rp1-input-provenance-v2"
-    assert len(inventory["files"]) == 15
+    assert {row["staged_path"] for row in inventory["files"]} == configured_input_paths(SUBPROJECT)
     for item in inventory["files"]:
         path = SUBPROJECT / item["staged_path"]
         assert path.is_file(), item["staged_path"]

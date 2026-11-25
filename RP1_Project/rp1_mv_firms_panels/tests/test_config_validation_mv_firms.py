@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from mv_firms_panels.core.config import LOCKED_RP1_EXPORT_WINDOWS, load_config
+from mv_firms_panels.core.config import DEFAULT_RP1_EXPORT_WINDOWS, load_config
 
 
 def _repo_root() -> Path:
@@ -44,14 +44,14 @@ def test_example_project_config_loads_and_validates_dual_sensor_rp1_contract() -
     assert (
         viirs_contract.window.start_yyyymm,
         viirs_contract.window.end_yyyymm,
-    ) == LOCKED_RP1_EXPORT_WINDOWS["viirs"]
+    ) == DEFAULT_RP1_EXPORT_WINDOWS["viirs"]
     assert (
         modis_contract.window.start_yyyymm,
         modis_contract.window.end_yyyymm,
-    ) == LOCKED_RP1_EXPORT_WINDOWS["modis"]
+    ) == DEFAULT_RP1_EXPORT_WINDOWS["modis"]
 
-    # Transitional compatibility: the legacy flat keys remain aligned to the
-    # VIIRS-specific RP1 schemas until exporter execution logic is generalised.
+    # The configured flat schema aliases must agree with the explicit
+    # VIIRS export contract.
     assert cfg.outputs.schemas["rp1_af_monthly_base"] == viirs_contract.schemas.base
     assert cfg.outputs.schemas["rp1_af_monthly_ext"] == viirs_contract.schemas.ext
 
@@ -97,12 +97,15 @@ def test_rp1_exports_requires_both_supported_sensor_contracts(tmp_path: Path) ->
         load_config(p, validate_paths=False)
 
 
-def test_rp1_exports_rejects_wrong_locked_window(tmp_path: Path) -> None:
+def test_rp1_exports_rejects_window_different_from_declared_study(tmp_path: Path) -> None:
     bad_cfg = _example_config_dict()
+    bad_cfg['study'] = {'start_yyyymm': 200101, 'end_yyyymm': 202412, 'viirs_support_start_yyyymm': 201201}
+    bad_cfg['processing']['sensor_coverage']['viirs']['start_yyyymm'] = 201201
+    bad_cfg['processing']['sensor_coverage']['viirs']['end_yyyymm'] = 202412
     bad_cfg["outputs"]["rp1_exports"]["sensors"]["modis"]["window"]["start_yyyymm"] = 200011
 
     p = _write_tmp_config(tmp_path, bad_cfg, filename="bad_window.yaml")
-    with pytest.raises(ValueError, match="locked RP1 export window"):
+    with pytest.raises(ValueError, match="differs from the declared study calendar"):
         load_config(p, validate_paths=False)
 
 
@@ -115,13 +118,13 @@ def test_rp1_exports_rejects_missing_schema_path(tmp_path: Path) -> None:
         load_config(p, validate_paths=False)
 
 
-def test_legacy_viirs_schema_alias_must_match_explicit_rp1_contract(tmp_path: Path) -> None:
+def test_viirs_schema_alias_must_match_explicit_rp1_contract(tmp_path: Path) -> None:
     bad_cfg = _example_config_dict()
     bad_cfg["outputs"]["schemas"][
         "rp1_af_monthly_base"
     ] = "configs/schemas/rp1_af_monthly_base_modis.schema.json"
 
-    p = _write_tmp_config(tmp_path, bad_cfg, filename="legacy_alias_mismatch.yaml")
+    p = _write_tmp_config(tmp_path, bad_cfg, filename="schema_alias_mismatch.yaml")
     with pytest.raises(ValueError, match="must match"):
         load_config(p, validate_paths=False)
 
@@ -134,7 +137,34 @@ def test_validate_paths_missing_unit_universe_reports_access_guidance(tmp_path: 
         load_config(p, validate_paths=True, repo_root=tmp_path)
 
     msg = str(excinfo.value)
-    assert "Missing required Stage 2 input `unit_universe_csv`" in msg
+    assert "Missing required Stage 3 input `unit_universe_csv`" in msg
     assert "docs/data_access.md" in msg
     assert "README.md" in msg
-    assert "Required by stage: rp1_mv_firms_panels (Stage 2)." in msg
+    assert "Required by stage: rp1_mv_firms_panels (Stage 3)." in msg
+
+
+def test_extended_export_period_is_configured_and_coverage_checked(tmp_path: Path) -> None:
+    settings = _example_config_dict()
+    settings['study'] = {'start_yyyymm': 200101, 'end_yyyymm': 202512, 'viirs_support_start_yyyymm': 201201}
+    for sensor in ('modis', 'viirs'):
+        settings['outputs']['rp1_exports']['sensors'][sensor]['window']['end_yyyymm'] = 202512
+        settings['processing']['sensor_coverage'][sensor]['end_yyyymm'] = 202512
+    settings['processing']['sensor_coverage']['viirs']['start_yyyymm'] = 201201
+    config = _write_tmp_config(tmp_path, settings)
+    assert load_config(config, validate_paths=False).config.outputs.rp1_exports.sensors['viirs'].window.end_yyyymm == 202512
+    settings['processing']['sensor_coverage']['viirs']['end_yyyymm'] = 202412
+    with pytest.raises(ValueError, match='coverage does not contain'):
+        load_config(_write_tmp_config(tmp_path, settings), validate_paths=False)
+
+
+@pytest.mark.parametrize('missing', [None, 'modis', 'viirs'])
+def test_declared_study_requires_explicit_coverage_for_both_sensors(tmp_path: Path, missing) -> None:
+    settings = _example_config_dict()
+    settings['study'] = {'start_yyyymm': 200101, 'end_yyyymm': 202412,
+                         'viirs_support_start_yyyymm': 201201}
+    if missing is None:
+        settings['processing']['sensor_coverage'] = None
+    else:
+        del settings['processing']['sensor_coverage'][missing]
+    with pytest.raises(ValueError, match='requires sensor coverage for both'):
+        load_config(_write_tmp_config(tmp_path, settings), validate_paths=False)

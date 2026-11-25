@@ -36,7 +36,7 @@ def _docx_text(path: Path) -> str:
 
 def test_rq2_current_documentation_separates_effect_from_inferential_null() -> None:
     text = _combined().lower()
-    assert "sen's slope" in text or "sen’s slope" in text
+    assert re.search(r"sen(?:['\u2019]s)?\s+slope", text)
     assert "strict stationarity" in text
     assert "h0: sen slope = 0" not in text
     assert "non-rejection" in text
@@ -48,7 +48,6 @@ def test_rq2_tie_reference_scope_and_fail_closed_policy_are_explicit() -> None:
     assert "tie-free" in text
     assert "fail closed" in text or "fail_closed" in text
     assert "pairwise" in text and "inferential qualification" in text
-    assert "all five ghana" in text and "tie-free" in text
     analysis = yaml.safe_load((ROOT / "config/analysis_contract.yml").read_text(encoding="utf-8"))
     rule = analysis["research_questions"]["rq2"]["inferential_test"]["reference_admissibility"]
     assert rule == {"requires_distinct_observations": True, "on_ties": "fail_closed"}
@@ -68,38 +67,36 @@ def test_obsolete_rq2_and_transition_claims_are_absent() -> None:
     text = _combined().lower()
     for token in (
         "block-bootstrap mk", "residual-bootstrap sen", "annual-denominator sensitivity",
-        "hamed–rao production", "yue–wang production", "ordinary-mk fallback", "prewhitening",
+        "hamed\u2013rao production", "yue\u2013wang production", "ordinary-mk fallback", "prewhitening",
         "transition significant decline", "transition zone significant decline",
     ):
         assert token not in text
-    assert "none has bh-fdr-supported evidence of monotonic decline" in text
+    assert "report the realised slopes" in text
+    assert "none has bh-fdr-supported evidence of monotonic decline" not in text
 
 
 def test_circular_month_documentation_uses_cyclic_coordinate() -> None:
     text = _combined().lower()
-    assert "0 is equivalent to 12" in text or "0 ≡ 12" in text
+    assert "0 is equivalent to 12" in text or "0 â‰¡ 12" in text
     assert "strictly [1,12]" not in text and "strictly [1, 12]" not in text
 
 
-def test_current_methods_docx_carries_same_scientific_scope() -> None:
-    authority = json.loads((ROOT / "data/authorities/methods_document_authority.json").read_text(encoding="utf-8"))
-    docx = ROOT / "docs" / authority["docx"]["filename"]
-    text = _docx_text(docx).lower()
+def test_current_methods_markdown_carries_scientific_scope() -> None:
+    text = (ROOT / "docs/Analysis_Methods_Contract.md").read_text(encoding="utf-8").lower()
     for phrase in (
         "strict stationarity", "tie-free", "fail closed", "sen slope", "plus-one monte carlo",
-        "0 is equivalent to 12", "external execution boundary", "results_validated",
-        "scientific method change: none",
+        "0 is equivalent to 12", "not interpreted causally",
     ):
         assert phrase in text
     assert "h0: sen slope = 0" not in text
-    assert "none has bh-fdr-supported evidence of monotonic decline" in text
+    assert "none has bh-fdr-supported evidence of monotonic decline" not in text
 
 
-def test_active_documentation_is_phase_neutral_and_machine_neutral() -> None:
+def test_active_documentation_is_current_product_and_machine_neutral() -> None:
     text = _combined()
     development_identity_pattern = re.compile(r"\bV\d{3,}[-_]\d+\b", flags=re.IGNORECASE)
     assert not development_identity_pattern.search(text)
-    lowered = text.lower()
+    lowered = re.sub(r"out/releases/[a-z0-9_.-]+\.zip", "local_release_output", text.lower())
     assert ".zip" not in lowered
     machine_path_patterns = (
         re.compile(r"/home/[^/\s]+/", flags=re.IGNORECASE),

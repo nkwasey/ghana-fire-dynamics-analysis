@@ -48,8 +48,8 @@ def main() -> int:
     payload = {
         "schema": "rp1-methods-document-authority-v1",
         "document_role": "current_methods_authority",
-        "scientific_method_change": "NONE",
-        "alignment_scope": ["scientific_documentation", "reference_scope", "method_provenance", "presentation_outputs", "optional_external_result_integration"],
+        "scientific_method_change": "STATISTICAL_ESTIMATORS_UNCHANGED_C3_MEASUREMENT_CONTRACT_REVISED",
+        "alignment_scope": ["scientific_documentation", "c3_source_scenario_and_admission_contract", "reference_scope", "method_provenance", "presentation_outputs", "optional_external_result_integration"],
         "docx": {"filename": docx.name, "sha256": sha256(docx), "size_bytes": docx.stat().st_size},
         "pdf": {"filename": pdf.name, "sha256": sha256(pdf), "size_bytes": pdf.stat().st_size},
         "scientific_run_provenance_policy": (

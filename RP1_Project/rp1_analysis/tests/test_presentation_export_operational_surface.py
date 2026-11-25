@@ -3,22 +3,35 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import shutil
 import sys
 from collections import Counter
-from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
 import rp1_analysis_v1.presentation_export as pe
+from generated_run_reference import selected_run_base
 from rp1_analysis_v1.paths import ProjectPaths
 from rp1_analysis_v1.presentation import load_presentation_export_registry
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = "synthetic_presentation_test"
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 SCRIPT = ROOT / "scripts" / "export_presentation_figures.py"
+
+
+def test_generated_run_requires_explicit_selection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for suffix in ("pub", "sec", "close"):
+        (tmp_path / "out/runs" / f"unselected_{suffix}").mkdir(parents=True)
+    monkeypatch.delenv("RP1_ANALYSIS_TEST_RUN", raising=False)
+    assert selected_run_base(tmp_path) == "generated_integration_selection_required"
+    monkeypatch.setenv("RP1_ANALYSIS_TEST_RUN", "chosen_run")
+    assert selected_run_base(tmp_path) == "chosen_run"
+    monkeypatch.setenv("RP1_ANALYSIS_TEST_RUN", "../invalid")
+    with pytest.raises(ValueError, match="portable"):
+        selected_run_base(tmp_path)
 
 
 def _validation(state: str = "RESULTS_VALIDATED") -> pe.RunValidationResult:
@@ -36,14 +49,39 @@ def _validation(state: str = "RESULTS_VALIDATED") -> pe.RunValidationResult:
     )
 
 
-def _run(state: str = "RESULTS_VALIDATED") -> pe.RunFamilyAuthority:
-    base = pe.resolve_run_family(RUN_CLOSE, paths=ProjectPaths(ROOT), validate=False)
-    return replace(base, validation=_validation(state))
+def _patch_run(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, state: str = "RESULTS_VALIDATED") -> pe.RunFamilyAuthority:
+    """Isolate export mechanics from empirical sources and scientific renderers.
 
-
-def _patch_run(monkeypatch: pytest.MonkeyPatch, state: str = "RESULTS_VALIDATED") -> pe.RunFamilyAuthority:
-    run = _run(state)
+    The renderer/source doubles are explicitly synthetic. Real renderer and
+    authority validation have their own integration suites. These tests exercise
+    orchestration, result-state guards, hashing, immutability and collisions.
+    """
+    root = tmp_path / "synthetic_project"
+    shutil.copytree(ROOT / "config", root / "config")
+    shutil.copy2(ROOT / "pyproject.toml", root / "pyproject.toml")
+    members = tuple(root / "out/runs" / f"{RUN_BASE}_{suffix}" for suffix in ("pub", "sec", "close"))
+    for member in members:
+        member.mkdir(parents=True)
+        (member / "SYNTHETIC_TEST_ONLY.txt").write_text("No empirical results or engine execution.\n")
+    source_path = members[0] / "synthetic_source.csv"
+    source_path.write_text("value\n1\n2\n", encoding="utf-8")
+    run = pe.RunFamilyAuthority(RUN_BASE, *members, _validation(state))
+    monkeypatch.setitem(globals(), "ROOT", root)
+    monkeypatch.setitem(globals(), "RUN_CLOSE", members[2])
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
+    monkeypatch.setattr(pe, "resolve_source", lambda spec, *args, **kwargs: pe.SourceAuthority(
+        "synthetic_test_only", source_path, source_path.relative_to(root).as_posix(),
+        _sha(source_path), source_path.stat().st_size, pd.read_csv(source_path), 2,
+    ))
+    monkeypatch.setattr(pe, "resolve_geometry_dependency", lambda dependency_id, **kwargs: pe.GeometryAuthority(dependency_id, {}, {}))
+    monkeypatch.setattr(pe, "resolve_secondary_export_authority", lambda *args, **kwargs: ())
+    from rp1_analysis_v1.figures import RenderedFigure
+    # Valid format signatures with deterministic test payloads. Pixel/figure
+    # correctness belongs to the separately tested scientific renderers.
+    def render(frame, *, spec, context):
+        return RenderedFigure(b"\x89PNG\r\n\x1a\nSYNTHETIC_TEST_ONLY", b"%PDF-1.4\nSYNTHETIC_TEST_ONLY", 1, 1, 72)
+    registry = load_presentation_export_registry(paths=ProjectPaths(root))
+    monkeypatch.setattr(pe, "build_core_renderer_registry", lambda: pe.RendererRegistry({spec.renderer_identity: render for spec in registry.exports}))
     return run
 
 
@@ -55,7 +93,7 @@ def _load_script_module():
     scripts_dir = str(SCRIPT.parent)
     sys.path.insert(0, scripts_dir)
     try:
-        spec = importlib.util.spec_from_file_location("rp1_fig08_export_script", SCRIPT)
+        spec = importlib.util.spec_from_file_location("rp1_presentation_export_script", SCRIPT)
         assert spec is not None and spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -66,8 +104,8 @@ def _load_script_module():
 
 def test_configured_selection_routes_complete_estate_and_each_group() -> None:
     registry = load_presentation_export_registry(paths=ProjectPaths(ROOT))
-    assert len(pe.select_presentation_exports(registry=registry, all_exports=True)) == 24
-    expected = {"study": 2, "rq1": 8, "rq2": 6, "rq3": 4, "rq4": 4}
+    assert len(pe.select_presentation_exports(registry=registry, all_exports=True)) == 26
+    expected = {"study": 2, "rq1": 9, "rq2": 7, "rq3": 4, "rq4": 4}
     for group, count in expected.items():
         selected = pe.select_presentation_exports(registry=registry, group=group)
         assert len(selected) == count
@@ -135,7 +173,7 @@ def test_public_script_routes_selected_figure_and_all(tmp_path: Path, monkeypatc
 
 
 def test_selected_export_png_only_and_collision_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    run = _patch_run(monkeypatch)
+    run = _patch_run(monkeypatch, tmp_path)
     before = pe.snapshot_run_tree(run, project_root=ROOT)
     destination = tmp_path / "selected"
     report = pe.export_presentation_figure_estate(
@@ -163,7 +201,7 @@ def test_selected_export_png_only_and_collision_policy(tmp_path: Path, monkeypat
 def test_unvalidated_satscan_group_fails_closed_without_zero_cluster_graphics(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    run = _patch_run(monkeypatch, "EXTERNAL_RESULTS_REQUIRED")
+    run = _patch_run(monkeypatch, tmp_path, "EXTERNAL_RESULTS_REQUIRED")
     before = pe.snapshot_run_tree(run, project_root=ROOT)
     destination = tmp_path / "rq4-blocked"
     report = pe.export_presentation_figure_estate(
@@ -186,7 +224,7 @@ def test_unvalidated_satscan_group_fails_closed_without_zero_cluster_graphics(
 def test_missing_source_and_geometry_become_explicit_failed_records(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _patch_run(monkeypatch)
+    _patch_run(monkeypatch, tmp_path)
     original_source = pe.resolve_source
     monkeypatch.setattr(pe, "resolve_source", lambda *args, **kwargs: (_ for _ in ()).throw(pe.SourceResolutionError("missing source witness")))
     source_dest = tmp_path / "missing-source"
@@ -217,7 +255,7 @@ def test_missing_source_and_geometry_become_explicit_failed_records(
 def test_complete_all_export_has_full_manifest_hashes_inventory_and_immutable_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    run = _patch_run(monkeypatch)
+    run = _patch_run(monkeypatch, tmp_path)
     before = pe.snapshot_run_tree(run, project_root=ROOT)
     destination = tmp_path / "all"
     report = pe.export_presentation_figure_estate(
@@ -227,10 +265,10 @@ def test_complete_all_export_has_full_manifest_hashes_inventory_and_immutable_ru
         paths=ProjectPaths(ROOT),
     )
     assert report["status"] == "PASS"
-    assert report["requested_exports"] == 24
-    assert report["successful_exports"] == 24
+    assert report["requested_exports"] == 26
+    assert report["successful_exports"] == 26
     assert report["failed_exports"] == 0
-    assert report["generated_figure_files"] == 48
+    assert report["generated_figure_files"] == 52
 
     manifest_path = destination / pe.AGGREGATE_MANIFEST_NAME
     report_path = destination / pe.AGGREGATE_REPORT_NAME
@@ -240,9 +278,9 @@ def test_complete_all_export_has_full_manifest_hashes_inventory_and_immutable_ru
     assert manifest["schema"] == pe.AGGREGATE_MANIFEST_SCHEMA
     assert manifest["source_run"]["run_identity"] == RUN_BASE
     assert manifest["analysis_schema"] == "rp1-analysis-v1.1"
-    assert manifest["data_schema"] == "rp1-data-schema-v1.1"
-    assert len(manifest["requested_export_ids"]) == 24
-    assert len(manifest["records"]) == 48
+    assert manifest["data_schema"] == "rp1-data-schema-v1.2"
+    assert len(manifest["requested_export_ids"]) == 26
+    assert len(manifest["records"]) == 52
     required_record_fields = {
         "export_id", "group", "renderer_identity", "run_identity", "analysis_schema",
         "data_schema", "source_semantic_identity", "source_path", "source_sha256",
@@ -257,9 +295,9 @@ def test_complete_all_export_has_full_manifest_hashes_inventory_and_immutable_ru
         assert _sha(output) == row["output_sha256"]
 
     group_files = Counter(path.parent.name for path in destination.glob("*/*") if path.is_file())
-    assert group_files == {"study": 4, "rq1": 16, "rq2": 12, "rq3": 8, "rq4": 8}
+    assert group_files == {"study": 4, "rq1": 18, "rq2": 14, "rq3": 8, "rq4": 8}
     inventory = pd.read_csv(inventory_path)
-    assert len(inventory) == 50
+    assert len(inventory) == 54
     for row in inventory.itertuples(index=False):
         path = destination / row.path
         assert path.is_file()
@@ -270,7 +308,7 @@ def test_complete_all_export_has_full_manifest_hashes_inventory_and_immutable_ru
 
 
 def test_selected_export_estate_is_byte_deterministic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _patch_run(monkeypatch)
+    _patch_run(monkeypatch, tmp_path)
     first = tmp_path / "one-a"
     second = tmp_path / "one-b"
     for destination in (first, second):

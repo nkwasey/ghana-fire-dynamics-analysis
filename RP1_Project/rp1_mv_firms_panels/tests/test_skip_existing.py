@@ -13,6 +13,7 @@ These tests lock in the command-layer safety contract for combine:
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -25,10 +26,12 @@ from mv_firms_panels.cli.commands import (
     _fast_schema_check_csv,
     _gate_stage_execution,
     cmd_combine,
+    cmd_prepare_year,
 )
 from mv_firms_panels.core.config import load_config
 from mv_firms_panels.core.hashing import sha256_file
 from mv_firms_panels.io.paths import build_run_dir, sensor_panel_monthly_path
+from dual_stream_fixture import write_dual_stream_evidence
 
 
 def _write_minimal_repo(tmp_repo: Path) -> Path:
@@ -129,6 +132,15 @@ def _write_sensor_inputs(*, tmp_repo: Path, cfg_path: Path, run_id: str) -> None
         p = sensor_panel_monthly_path(run_dir=run_dir, sensor=sensor, fmt="csv")
         p.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(p, index=False)
+        # Synthetic provenance fixtures exercise reuse checks, not real data qualification.
+        qa_dir = run_dir / "qa"
+        qa_dir.mkdir(exist_ok=True)
+        policy_path = qa_dir / f"aggregate_monthly_{sensor}_summary.json"
+        policy_path.write_text(json.dumps({"steps":{"frp":{"confidence_categories":["n","h"],"aggregation":"mean_of_daily_maxima_over_eligible_utc_days"}}}))
+        manifest_path = qa_dir / f"aggregate_monthly_{sensor}_manifest.json"
+        manifest_path.write_text(json.dumps({"panel_sensor_monthly":{"path":p.relative_to(tmp_repo).as_posix(),"sha256":hashlib.sha256(p.read_bytes()).hexdigest()},"qa_summary_json":{"path":policy_path.relative_to(tmp_repo).as_posix(),"sha256":hashlib.sha256(policy_path.read_bytes()).hexdigest()}}))
+    write_dual_stream_evidence(tmp_repo, cfg_path, run_dir, run_id)
+
 
 
 def _combine_manifest_path(*, tmp_repo: Path, run_id: str) -> Path:
@@ -187,6 +199,19 @@ def test_combine_skip_existing_returns_early_when_dual_sensor_manifest_is_comple
 
     assert sha256_file(manifest_path) == manifest_hash_before
     assert sha256_file(panel_path) == panel_hash_before
+
+
+def test_prepare_skip_existing_rejects_count_only_receipt(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    config = _write_minimal_repo(repo)
+    _write_sensor_inputs(tmp_repo=repo, cfg_path=config, run_id="testrun")
+    receipt = repo / "out/runs/testrun/qa/prepare_year_viirs_2024_manifest.json"
+    payload = json.loads(receipt.read_text())
+    payload.pop("fires_frp_canonical_csv")
+    receipt.write_text(json.dumps(payload))
+    with pytest.raises(CliError, match="Preparation reuse rejected"):
+        cmd_prepare_year(repo_root=repo, config_path=config, sensor="viirs", year=2024,
+                         run_id="testrun", skip_existing=True)
 
 
 def test_gate_stage_execution_raises_when_outputs_exist_but_sentinel_missing(
@@ -282,3 +307,10 @@ def test_skip_existing_manifest_contains_referenced_dual_sensor_af_outputs(tmp_p
     af_paths = _af_output_paths_from_manifest(manifest, repo_root=tmp_repo)
     assert af_paths
     assert all(path.exists() for path in af_paths)
+    target = af_paths[0]
+    target.write_bytes(target.read_bytes() + b"\n")
+    cfg = load_config(cfg_path, validate_paths=False, repo_root=tmp_repo).config
+    with pytest.raises(CliError, match="hash mismatch"):
+        cli_commands._validate_combine_skip_existing_contract(
+            repo_root=tmp_repo, manifest_path=_combine_manifest_path(tmp_repo=tmp_repo, run_id=run_id), cfg=cfg
+        )

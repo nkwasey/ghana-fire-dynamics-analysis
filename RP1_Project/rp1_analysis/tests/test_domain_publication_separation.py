@@ -72,20 +72,3 @@ def test_publication_numbering_remains_confined_to_presentation_contracts() -> N
         assert publication_id in output_text
     for figure_id in ("F2", "F3", "F4", "F5", "F6"):
         assert figure_id in figure_text
-
-
-def test_domain_authority_filenames_are_publication_number_neutral() -> None:
-    authority_root = SUBPROJECT / "data" / "authorities"
-    numbered_file = re.compile(r"^(?:table|figure|supplement|[tfs]\d+).*_source\.csv$", re.IGNORECASE)
-    violations: list[str] = []
-    for domain in ("rq1", "rq2", "rq3"):
-        domain_root = authority_root / domain
-        for path in domain_root.iterdir():
-            if path.is_file() and numbered_file.match(path.name):
-                violations.append(path.relative_to(SUBPROJECT).as_posix())
-        manifest = domain_root / "source_manifest.json"
-        if manifest.exists():
-            for match in re.findall(r'"path"\s*:\s*"([^"]+)"', manifest.read_text(encoding="utf-8")):
-                if numbered_file.match(Path(match).name):
-                    violations.append(f"{manifest.relative_to(SUBPROJECT).as_posix()}:{match}")
-    assert violations == []

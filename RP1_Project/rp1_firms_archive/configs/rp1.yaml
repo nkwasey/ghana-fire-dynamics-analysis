@@ -1,0 +1,16 @@
+schema_version: 1
+# RP1 count/FRP preparation uses these two SP sensor families.
+years:
+  start: 2000
+  end: 2025
+sources: [MODIS_SP, VIIRS_SNPP_SP]
+country: Ghana
+geography: ../data/reference/geography
+downloads: ../data/raw
+output_root: ../out/runs
+run_id: rp1
+# Prefer FIRMS_MAP_KEY. An optional key_file must remain outside source releases.
+timeout_seconds: 120
+retries: 3
+api_batch_max_age_hours: 24
+refresh_api_batches: false

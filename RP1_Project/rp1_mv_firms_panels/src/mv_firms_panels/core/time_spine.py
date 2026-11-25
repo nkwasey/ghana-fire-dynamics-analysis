@@ -107,12 +107,14 @@ def parse_acq_time_to_timedelta(acq_time: pd.Series, *, strict: bool = True) -> 
     for v in acq_time.tolist():
         try:
             hh, mm = _hhmm_to_hours_minutes(v)
-            out.append(pd.Timedelta(hours=hh, minutes=mm))
-        except Exception:
+            out.append(pd.Timedelta(hh * 60 + mm, unit="m"))
+        except ValueError:
             if strict:
                 raise
             out.append(pd.NaT)
-    return pd.Series(out, index=acq_time.index)
+    # The explicit dtype also preserves timestamp arithmetic for a validated
+    # zero-observation annual input; pandas otherwise infers object for [].
+    return pd.Series(out, index=acq_time.index, dtype="timedelta64[ns]")
 
 
 def acq_datetime_utc_from_date_time(

@@ -23,7 +23,78 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_PYTHON = (3, 13)
 EXPECTED_ENVIRONMENT = "rp_ghana_fire"
 QUALIFICATION_CONTRACT = Path("RP1_Project/rp1_analysis/config/qualification_contract.yml")
-ROOT_EVIDENCE_FILES = ("qualification_report.json", "projection_evidence.json")
+UNCONTROLLED_PYTEST_ENVIRONMENT = ("PYTEST_ADDOPTS", "PYTEST_DEBUG_TEMPROOT")
+
+
+def _logical_path(value: str | Path) -> Path:
+    """Normalize supported Windows namespace spellings before containment checks.
+
+    These bootstrap helpers must work before package-origin validation, without
+    importing a possibly stale installed copy of the projection package.
+    """
+    token = os.fspath(value)
+    if os.name == "nt":
+        if token.startswith(("\\\\.\\", "\\??\\")):
+            raise ValueError("unsupported Windows device namespace; use a drive or UNC filesystem path")
+        if token.casefold().startswith("\\\\?\\unc\\"):
+            return Path("\\\\" + token[8:])
+        if token.startswith("\\\\?\\"):
+            token = token[4:]
+            if (len(token) < 3 or not token[0].isascii() or not token[0].isalpha()
+                    or token[1] != ":" or token[2] not in "\\/"):
+                raise ValueError("unsupported Windows namespace; use a drive or UNC filesystem path")
+    return Path(token)
+
+
+def _native_path(value: str | Path) -> Path:
+    """Use extended Windows IO paths without changing public path identities."""
+    path = _logical_path(value)
+    if os.name != "nt":
+        return path
+    token = os.path.abspath(path)
+    if token.startswith("\\\\"):
+        return Path("\\\\?\\UNC\\" + token[2:])
+    return Path("\\\\?\\" + token)
+
+
+def _resolved_path(value: str | Path) -> Path:
+    return _logical_path(_native_path(value).resolve())
+
+
+def _automatic_pytest_parent(evidence_dir: Path) -> Path:
+    if os.name != "nt":
+        return evidence_dir.parent
+    # A deep evidence sibling can exceed Windows limits in native libraries.
+    # Resolve the actual per-user folder through Windows, independently of
+    # TEMP/TMP/LOCALAPPDATA environment overrides. This query creates nothing.
+    # https://learn.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath
+    import ctypes
+    from ctypes import wintypes
+
+    class GUID(ctypes.Structure):
+        _fields_ = [("data1", wintypes.DWORD), ("data2", wintypes.WORD),
+                    ("data3", wintypes.WORD), ("data4", wintypes.BYTE * 8)]
+
+    local_app_data = GUID.from_buffer_copy(uuid.UUID("F1B32785-6FBA-4FCF-9D55-7B8E7F157091").bytes_le)
+    get_folder = ctypes.WinDLL("shell32").SHGetKnownFolderPath
+    get_folder.argtypes = (ctypes.POINTER(GUID), wintypes.DWORD, wintypes.HANDLE,
+                          ctypes.POINTER(ctypes.c_void_p))
+    get_folder.restype = ctypes.c_long
+    release = ctypes.WinDLL("ole32").CoTaskMemFree
+    release.argtypes = (ctypes.c_void_p,)
+    release.restype = None
+    allocated = ctypes.c_void_p()
+    result = get_folder(ctypes.byref(local_app_data), 0, None, ctypes.byref(allocated))
+    try:
+        if result != 0 or not allocated.value:
+            raise ValueError("Windows temporary root is unavailable; provide --pytest-base-temp")
+        parent = _resolved_path(Path(ctypes.wstring_at(allocated.value)) / "Temp")
+    finally:
+        if allocated.value:
+            release(allocated)
+    if not _native_path(parent).is_dir():
+        raise ValueError("Windows temporary root does not exist; provide --pytest-base-temp")
+    return parent
 
 
 def _is_within(candidate: Path, root: Path) -> bool:
@@ -35,9 +106,25 @@ def _is_within(candidate: Path, root: Path) -> bool:
 
 
 def _paths_overlap(left: Path, right: Path) -> bool:
-    left = left.resolve()
-    right = right.resolve()
+    left = _resolved_path(left)
+    right = _resolved_path(right)
     return _is_within(left, right) or _is_within(right, left)
+
+
+def _select_pytest_base(repository_root: Path, evidence_dir: Path, requested: Path | None) -> Path:
+    """Select one fresh external base before any qualification evidence changes.
+
+    A default base is independent of ambient pytest options and TEMP. Windows
+    uses its per-user platform temporary root; POSIX uses an evidence sibling.
+    No directory is created here; pytest owns creation when a fixture runs.
+    """
+    candidate = _resolved_path(requested if requested is not None else
+                               _automatic_pytest_parent(evidence_dir) / f".rp1-pytest-{uuid.uuid4().hex[:12]}")
+    if _paths_overlap(evidence_dir, candidate):
+        raise ValueError("pytest base and qualification evidence must be disjoint; neither may contain the other")
+    if _paths_overlap(repository_root, candidate) or _native_path(candidate).exists():
+        raise ValueError("pytest base must be a fresh dedicated path outside the repository")
+    return candidate
 
 
 def _safe_relative_path(value: str, *, field: str) -> str:
@@ -171,16 +258,24 @@ def _package_states_pass(states: Mapping[str, Any]) -> bool:
     )
 
 
-def _environment_identity(*, defer_native_environment: bool) -> dict[str, Any]:
+def _environment_identity(
+    *, defer_native_environment: bool, validation_env_prefix: Path | None = None,
+) -> dict[str, Any]:
     actual_env = os.environ.get("CONDA_DEFAULT_ENV")
     python_ok = sys.version_info[:2] == EXPECTED_PYTHON
-    env_ok = actual_env == EXPECTED_ENVIRONMENT
+    explicit_prefix = validation_env_prefix.resolve() if validation_env_prefix is not None else None
+    prefix_ok = bool(explicit_prefix is not None and explicit_prefix == Path(sys.prefix).resolve()
+                     and (explicit_prefix / "conda-meta/history").is_file())
+    env_ok = prefix_ok if explicit_prefix is not None else actual_env == EXPECTED_ENVIRONMENT
     if not python_ok:
         status = "FAIL"
         reason = "Canonical qualification requires Python 3.13; this check is not deferrable."
+    elif explicit_prefix is not None and not prefix_ok:
+        status = "FAIL"
+        reason = "The declared validation prefix must be the current interpreter's genuine Conda environment."
     elif env_ok:
         status = "PASS"
-        reason = None
+        reason = "Explicit dedicated Conda validation prefix verified." if prefix_ok else None
     elif defer_native_environment:
         status = "DEFERRED"
         reason = (
@@ -193,6 +288,9 @@ def _environment_identity(*, defer_native_environment: bool) -> dict[str, Any]:
     return {
         "expected_conda_env": EXPECTED_ENVIRONMENT,
         "actual_conda_env": actual_env,
+        "identity_mode": "explicit_conda_prefix" if explicit_prefix is not None else "canonical_conda_name",
+        "declared_validation_prefix": str(explicit_prefix) if explicit_prefix is not None else None,
+        "actual_interpreter_prefix": str(Path(sys.prefix).resolve()),
         "expected_python": "3.13",
         "actual_python": f"{sys.version_info.major}.{sys.version_info.minor}",
         "python_identity_ok": python_ok,
@@ -263,11 +361,43 @@ def run_step(
     }
 
 
+def _c3_source_checks(projection_root: Path, logs_dir: Path, env: dict[str, str]) -> dict[str, Any]:
+    """Qualify the pinned JS source and shared wheel contract in the projection."""
+    steps: dict[str, Any] = {}
+    shared_root = projection_root / 'RP1_Project/rp1_analysis/src'
+    shared_probe = (
+        'import pathlib,rp1_ba_contracts.c3 as c3;'
+        f'expected=pathlib.Path({str(shared_root)!r}).resolve();'
+        'origin=pathlib.Path(c3.__file__).resolve();print(origin);'
+        'raise SystemExit(0 if origin.is_relative_to(expected) else 2)'
+    )
+    steps['c3_contract_import'] = run_step(
+        'c3_contract_import', [sys.executable, '-c', shared_probe], logs_dir,
+        cwd=projection_root, env=env,
+    )
+    node = shutil.which('node', path=env.get('PATH'))
+    if node is None:
+        steps['node_version'] = {'status': 'FAIL', 'reason': 'Node.js is required for c3 source qualification'}
+        steps['c3_offline'] = {'status': 'FAIL', 'reason': 'Node.js prerequisite unavailable'}
+    else:
+        steps['node_version'] = run_step(
+            'node_version', [node, '--version'], logs_dir, cwd=projection_root, env=env,
+        )
+        steps['c3_offline'] = run_step(
+            'c3_offline', [sys.executable, 'tests/run_offline.py'], logs_dir,
+            cwd=projection_root / 'RP1_Project/rp1_gee_ba_scripts/c3', env=env,
+        )
+    return steps
+
+
 def _isolated_import_command(
     target: Path,
     expected: Mapping[str, tuple[str, str]],
 ) -> str:
     values = [(module, distribution, version) for module, (distribution, version) in expected.items()]
+    if 'rp1_analysis_v1' in expected:
+        distribution, version = expected['rp1_analysis_v1']
+        values.append(('rp1_ba_contracts.c3', distribution, version))
     return (
         "import importlib,importlib.metadata,json,pathlib;"
         f"target=pathlib.Path({str(target)!r}).resolve();"
@@ -325,6 +455,11 @@ def _load_runtime_authorities(repository_root: Path) -> dict[str, Any]:
     projection_module = importlib.import_module("rp1_analysis_v1.source_projection")
     contract_path = repository_root / QUALIFICATION_CONTRACT
     contract = config_module.load_qualification_contract(contract_path)
+    shared = importlib.import_module('rp1_ba_contracts.c3')
+    shared_origin = Path(shared.__file__).resolve()
+    shared_root = (repository_root / 'RP1_Project/rp1_analysis/src').resolve()
+    if not shared_origin.is_relative_to(shared_root):
+        raise ValueError(f'Shared c3 contract imported from {shared_origin}, expected under {shared_root}')
     raw_hashes = config_module.qualification_configuration_file_hashes(contract_path.parent)
     hashes = dict(raw_hashes)
     return {
@@ -343,32 +478,12 @@ def _load_runtime_authorities(repository_root: Path) -> dict[str, Any]:
     }
 
 
-def _clear_stale_root_evidence(repository_root: Path, evidence_dir: Path) -> tuple[str, ...]:
-    """Remove only qualifier-owned root evidence before starting a new run.
-
-    Runtime/build/install directories are recreated later from the fully validated
-    qualification contract.  These two root-level files are also qualifier-owned,
-    so a failed or interrupted prior run must not leave them looking current.
-    """
-
-    repository_root = repository_root.resolve()
-    evidence_dir = evidence_dir.resolve()
-    if _paths_overlap(repository_root, evidence_dir):
-        raise ValueError("evidence directory must be external to and non-overlapping with the repository")
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-    removed: list[str] = []
-    for name in ROOT_EVIDENCE_FILES:
-        path = evidence_dir / name
-        if not path.exists() and not path.is_symlink():
-            continue
-        if path.is_symlink():
-            path.unlink()
-        elif path.is_dir():
-            shutil.rmtree(path)
-        else:
-            path.unlink()
-        removed.append(name)
-    return tuple(removed)
+def _claim_fresh_evidence_directory(evidence_dir: Path) -> None:
+    """Reserve the destination atomically so concurrent runs cannot share it."""
+    try:
+        _native_path(evidence_dir).mkdir(parents=True, exist_ok=False)
+    except FileExistsError as exc:
+        raise ValueError("qualification evidence directory must be a fresh path") from exc
 
 
 def _prepare_external_workspace(
@@ -378,30 +493,28 @@ def _prepare_external_workspace(
 ) -> dict[str, Path]:
     if _paths_overlap(repository_root, evidence_dir):
         raise ValueError("evidence directory must be external to and non-overlapping with the repository")
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-
     allowed = set(contract.projection.allowed_temporary_subdirectories)
     required = {"clean_projection", "wheels", "isolated_install", "logs", "runtime"}
     missing = required.difference(allowed)
     if missing:
         raise ValueError(f"qualification contract does not authorise required external roots: {sorted(missing)!r}")
 
-    paths = {name: evidence_dir / name for name in required}
+    paths = {name: evidence_dir / name for name in sorted(required)}
     for path in paths.values():
-        if path.exists() or path.is_symlink():
-            if path.is_symlink():
-                raise ValueError(f"qualification external root may not be a symlink: {path}")
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink()
+        native_path = _native_path(path)
+        if native_path.exists() or native_path.is_symlink() or native_path.is_junction():
+            raise ValueError(f"qualification external root must be fresh: {path}")
     for path in paths.values():
-        path.mkdir(parents=True, exist_ok=False)
+        _native_path(path).mkdir(exist_ok=False)
     return paths
 
 
 def _base_environment(runtime_dir: Path) -> dict[str, str]:
     env = os.environ.copy()
+    # Canonical options belong to this qualifier, including nested pytest
+    # processes. '-o addopts=' alone does not neutralize PYTEST_ADDOPTS.
+    for name in UNCONTROLLED_PYTEST_ENVIRONMENT:
+        env.pop(name, None)
     env.update(
         {
             "OMP_NUM_THREADS": "1",
@@ -419,6 +532,25 @@ def _base_environment(runtime_dir: Path) -> dict[str, str]:
     )
     for name in ("mplconfig", "pycache", "pip_cache"):
         (runtime_dir / name).mkdir(parents=True, exist_ok=True)
+    return env
+
+
+GENERATED_RUN_TEST_SELECTORS = (
+    "RP1_ANALYSIS_TEST_RUN",
+    "RP1_EXPORT_REGRESSION_ANALYSIS_ROOT",
+    "RP1_EXPORT_REGRESSION_RUN_ID",
+)
+
+
+def _projected_test_environment(base_environment: Mapping[str, str]) -> dict[str, str]:
+    """A clean test projection has no generated scientific run to select.
+
+    Keep selection in the caller and operational environment. Only the copied
+    environment passed to projected collection/full tests is sanitized.
+    """
+    env = dict(base_environment)
+    for name in GENERATED_RUN_TEST_SELECTORS:
+        env.pop(name, None)
     return env
 
 
@@ -501,31 +633,68 @@ def _wheel_build_command(
         "hosted-pip-wheel-fallback",
     )
 
+def _source_input_validation(
+    *, source_only: bool, repository_root: Path, logs_dir: Path, env: dict[str, str],
+) -> dict[str, Any]:
+    if source_only:
+        return {
+            "status": "NOT_APPLICABLE",
+            "reason": "Clean source qualification intentionally excludes generated analytical inputs; no input or scientific-result validation is claimed.",
+            "required_stage": "validate the separately prepared analytical handoff before analysis",
+        }
+    return run_step(
+        "validate_inputs",
+        [sys.executable, str(repository_root / "RP1_Project/rp1_analysis/scripts/validate_inputs.py")],
+        logs_dir, cwd=repository_root, env=env,
+    )
+
+
 def qualify(
     *,
     repository_root: Path,
     evidence_dir: Path,
     defer_native_environment: bool = False,
+    source_only: bool = False,
+    validation_env_prefix: Path | None = None,
+    pytest_base_temp: Path | None = None,
 ) -> tuple[dict[str, Any], int]:
-    repository_root = repository_root.resolve()
-    evidence_dir = evidence_dir.resolve()
-    if not repository_root.is_dir():
+    repository_root = _resolved_path(repository_root)
+    requested_evidence_dir = _native_path(evidence_dir)
+    evidence_dir = _resolved_path(evidence_dir)
+    if not _native_path(repository_root).is_dir():
         raise ValueError(f"repository root does not exist: {repository_root}")
     if _paths_overlap(repository_root, evidence_dir):
         raise ValueError("evidence directory must be external to and non-overlapping with the repository")
+    requested_pytest_base_temp = pytest_base_temp
+    pytest_base_temp_mode = ("automatic_platform_temp" if os.name == "nt" else "automatic_sibling") if pytest_base_temp is None else "explicit"
+    pytest_base_temp = _select_pytest_base(repository_root, evidence_dir, pytest_base_temp)
+    # Preserve an explicitly requested extended IO spelling. Ordinary short
+    # paths stay ordinary for compatibility with native geospatial clients.
+    extended_io_requested = (os.name == "nt" and requested_pytest_base_temp is not None
+                             and os.fspath(requested_pytest_base_temp).startswith("\\\\?\\"))
+    pytest_base_temp_argument = str(_native_path(pytest_base_temp) if extended_io_requested else pytest_base_temp)
 
-    stale_root_evidence_removed = _clear_stale_root_evidence(repository_root, evidence_dir)
+    if requested_evidence_dir.is_symlink() or requested_evidence_dir.is_junction():
+        raise ValueError("qualification evidence directory must be a fresh path without a symbolic link or junction")
+    _claim_fresh_evidence_directory(evidence_dir)
     report: dict[str, Any] = {
         "schema": "rp1-analysis-v1-qualification-lifecycle-v3",
         "qualification_run_id": uuid.uuid4().hex,
-        "stale_root_evidence_removed": list(stale_root_evidence_removed),
+        "stale_root_evidence_removed": [],
         "repository_root": str(repository_root),
         "evidence_root": str(evidence_dir),
         "python_executable": sys.executable,
         "python_version": sys.version.split()[0],
         "conda_default_env": os.environ.get("CONDA_DEFAULT_ENV"),
+        "qualification_scope": "source_and_distribution" if source_only else "analysis_inputs_and_distribution",
+        "scientific_results_qualified": False,
+        "pytest_base_temp": str(pytest_base_temp),
+        "pytest_base_temp_argument": pytest_base_temp_argument,
+        "pytest_base_temp_mode": pytest_base_temp_mode,
         "policy": {
             "pytest": "HARD_GATE",
+            "pytest_ignored_environment": list(UNCONTROLLED_PYTEST_ENVIRONMENT),
+            "projected_test_ignored_run_selectors": list(GENERATED_RUN_TEST_SELECTORS),
             "black": "DEVELOPMENT_ONLY_NOT_EXECUTED",
             "ruff": "DEVELOPMENT_ONLY_NOT_EXECUTED",
             "mypy": "DEVELOPMENT_ONLY_NOT_EXECUTED",
@@ -539,14 +708,16 @@ def qualify(
         "hard_failures": [],
     }
 
-    environment_identity = _environment_identity(defer_native_environment=defer_native_environment)
+    environment_identity = _environment_identity(
+        defer_native_environment=defer_native_environment, validation_env_prefix=validation_env_prefix,
+    )
     report["operational_checks"]["environment_identity"] = environment_identity
     if environment_identity["status"] == "DEFERRED":
         report["deferred_checks"].append(
             {
                 "id": "native_canonical_conda_end_to_end",
                 "reason": environment_identity["reason"],
-                "required_stage": "final local L01",
+                "required_stage": "native Conda source qualification",
             }
         )
     elif environment_identity["status"] != "PASS":
@@ -568,16 +739,14 @@ def qualify(
 
     if report["hard_failures"] and not specs:
         report["status"] = "FAIL"
-        evidence_dir.mkdir(parents=True, exist_ok=True)
-        (evidence_dir / "qualification_report.json").write_text(
+        _native_path(evidence_dir / "qualification_report.json").write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
         )
         return report, 1
 
     if not _package_states_pass(report["operational_checks"].get("packages", {})):
         report["status"] = "FAIL"
-        evidence_dir.mkdir(parents=True, exist_ok=True)
-        (evidence_dir / "qualification_report.json").write_text(
+        _native_path(evidence_dir / "qualification_report.json").write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
         )
         return report, 1
@@ -600,8 +769,7 @@ def qualify(
         }
         report["hard_failures"].append("operational:qualification_contract")
         report["status"] = "FAIL"
-        evidence_dir.mkdir(parents=True, exist_ok=True)
-        (evidence_dir / "qualification_report.json").write_text(
+        _native_path(evidence_dir / "qualification_report.json").write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
         )
         return report, 1
@@ -612,8 +780,7 @@ def qualify(
         report["hard_failures"].append("external_workspace")
         report["external_workspace_error"] = f"{type(exc).__name__}: {exc}"
         report["status"] = "FAIL"
-        evidence_dir.mkdir(parents=True, exist_ok=True)
-        (evidence_dir / "qualification_report.json").write_text(
+        _native_path(evidence_dir / "qualification_report.json").write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
         )
         return report, 1
@@ -642,7 +809,7 @@ def qualify(
             {
                 "id": "native_canonical_pip_check",
                 "reason": operational_step["reason"],
-                "required_stage": "final local L01",
+                "required_stage": "native Conda source qualification",
             }
         )
     elif operational_step["status"] != "PASS":
@@ -698,10 +865,14 @@ def qualify(
         base_environment=common_env,
     )
 
-    source_steps: dict[str, Any] = {}
+    source_steps: dict[str, Any] = _c3_source_checks(projection_root, logs_dir, projected_env)
     source_steps["compileall"] = run_step(
         "compileall",
-        [sys.executable, "-m", "compileall", "-q", "."],
+        # Adjacent temporary bytecode avoids duplicating the full absolute
+        # projection path below PYTHONPYCACHEPREFIX on Windows. The governed
+        # generated-file cleanup removes these .pyc files before inventory
+        # comparison and wheel builds.
+        [sys.executable, "-m", "compileall", "-q", "-b", "."],
         logs_dir,
         cwd=projection_root,
         env=projected_env,
@@ -726,19 +897,22 @@ def qualify(
             "error": f"{type(exc).__name__}: {exc}",
         }
 
+    projected_test_env = _projected_test_environment(projected_env)
     source_steps["pytest_collect"] = run_step(
         "pytest_collect",
         [sys.executable, "-m", "pytest", "-o", "addopts=", "-p", "no:cacheprovider", "--collect-only", "-q"],
         logs_dir,
         cwd=projection_root,
-        env=projected_env,
+        env=projected_test_env,
     )
     source_steps["full_pytest"] = run_step(
         "full_pytest",
-        [sys.executable, "-m", "pytest", "-o", "addopts=", "-p", "no:cacheprovider", "-q"],
+        [sys.executable, "-m", "pytest", "-o", "addopts=", "-p", "no:cacheprovider", "-q",
+         "-ra", "--release-tree-checks", "--junitxml", str(logs_dir / "full_pytest.xml"),
+         "--basetemp", pytest_base_temp_argument],
         logs_dir,
         cwd=projection_root,
-        env=projected_env,
+        env=projected_test_env,
     )
     source_steps["full_pytest"]["summary"] = _parse_pytest_summary(logs_dir / "full_pytest.log")
 
@@ -755,12 +929,9 @@ def qualify(
             "error": f"{type(exc).__name__}: {exc}",
         }
 
-    source_steps["validate_inputs"] = run_step(
-        "validate_inputs",
-        [sys.executable, "RP1_Project/rp1_analysis/scripts/validate_inputs.py"],
-        logs_dir,
-        cwd=projection_root,
-        env=projected_env,
+    source_steps["validate_inputs"] = _source_input_validation(
+        source_only=source_only, repository_root=repository_root,
+        logs_dir=logs_dir, env=common_env,
     )
     source_steps["reference_methods"] = run_step(
         "reference_methods",
@@ -798,7 +969,9 @@ def qualify(
 
     report["source_checks"] = source_steps
     for name, state in source_steps.items():
-        if isinstance(state, Mapping) and state.get("status") != "PASS":
+        if isinstance(state, Mapping) and state.get("status") != "PASS" and not (
+            source_only and name == "validate_inputs" and state.get("status") == "NOT_APPLICABLE"
+        ):
             report["hard_failures"].append(f"source:{name}")
 
     build_steps: dict[str, Any] = {}
@@ -862,7 +1035,7 @@ def qualify(
     if build_steps["wheel_inventory"]["status"] == "PASS" and not any(
         item.startswith("build:") for item in report["hard_failures"]
     ):
-        # The install target was already recreated by _prepare_external_workspace.
+        # The install target was reserved for this run.
         isolated_steps["isolated_install"] = run_step(
             "isolated_install",
             [
@@ -934,7 +1107,7 @@ def qualify(
     report["hard_failures"] = list(dict.fromkeys(report["hard_failures"]))
     report["status"] = "PASS" if not report["hard_failures"] else "FAIL"
     report["native_environment_deferred"] = environment_identity["status"] == "DEFERRED"
-    report_path = evidence_dir / "qualification_report.json"
+    report_path = _native_path(evidence_dir / "qualification_report.json")
     report_path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -950,7 +1123,14 @@ def main() -> int:
             "and isolated wheel installation."
         )
     )
-    parser.add_argument("--evidence-dir", required=True)
+    parser.add_argument("--evidence-dir", required=True,
+                        help="Fresh external directory to create for this run.")
+    parser.add_argument("--source-only", action="store_true",
+                        help="Qualify clean source and distributions; generated analytical inputs remain a separate handoff gate.")
+    parser.add_argument("--validation-env-prefix", type=Path,
+                        help="Explicit genuine dedicated Conda prefix for this interpreter; does not falsify the active environment name.")
+    parser.add_argument("--pytest-base-temp", type=Path,
+                        help="Fresh short directory outside source and evidence; defaults to a fresh evidence sibling. Recorded top-level base; ambient pytest options are ignored.")
     parser.add_argument(
         "--defer-native-environment",
         action="store_true",
@@ -961,18 +1141,19 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    evidence_dir = Path(args.evidence_dir).resolve()
     try:
         report, returncode = qualify(
             repository_root=ROOT,
-            evidence_dir=evidence_dir,
+            evidence_dir=Path(args.evidence_dir),
             defer_native_environment=bool(args.defer_native_environment),
+            source_only=bool(args.source_only), validation_env_prefix=args.validation_env_prefix,
+            pytest_base_temp=args.pytest_base_temp,
         )
     except Exception as exc:
         print(f"RP1_ANALYSIS_V1_LOCAL_QUALIFICATION=FAIL\n{type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
-    print(f"QUALIFICATION_REPORT={evidence_dir / 'qualification_report.json'}")
+    print(f"QUALIFICATION_REPORT={Path(report['evidence_root']) / 'qualification_report.json'}")
     if report.get("status") == "PASS" and report.get("native_environment_deferred"):
         print("RP1_ANALYSIS_V1_LOCAL_QUALIFICATION=PASS_WITH_NATIVE_ENVIRONMENT_DEFERRED")
     else:

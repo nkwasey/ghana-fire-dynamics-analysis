@@ -53,6 +53,8 @@ def test_single_map_scale_bar_is_lower_right_and_colourbar_labelled() -> None:
     x = np.asarray(line.get_xdata(), dtype=float)
     xmin, _, xmax, _ = geo.extent
     assert x.mean() > xmin + 0.5 * (xmax - xmin)
+    label = next(text for text in ax.texts if text.get_gid() == "map-scale-bar-label")
+    assert label.get_fontsize() * 140 / (fig.get_figwidth() * 25.4) >= 5.0
     colorbar_ax = next(a for a in fig.axes if a.get_gid() == "map-colorbar")
     assert colorbar_ax.get_xlabel() == "Burned area rate (km² per 100 km²)"
     import matplotlib.pyplot as plt

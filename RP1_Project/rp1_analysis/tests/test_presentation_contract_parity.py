@@ -23,10 +23,10 @@ def test_f4_contract_has_five_data_panels_plus_one_auxiliary_key() -> None:
 
 
 def test_inconsistent_layout_role_and_panel_count_is_rejected(tmp_path: Path) -> None:
-    raw=yaml.safe_load((ROOT/'config/figure_contract.yml').read_text())
+    raw=yaml.safe_load((ROOT/'config/figure_contract.yml').read_text(encoding='utf-8'))
     f4=next(x for x in raw['figures'] if x['id']=='F4')
     f4['layout_role']='rectangular_top_span_two_bottom'
-    path=tmp_path/'figure_contract.yml'; path.write_text(yaml.safe_dump(raw,sort_keys=False))
+    path=tmp_path/'figure_contract.yml'; path.write_text(yaml.safe_dump(raw,sort_keys=False), encoding='utf-8')
     with pytest.raises(ConfigurationError, match='provides 3 data panels'):
         load_figure_contract(path)
 
@@ -42,11 +42,11 @@ def test_grid_builder_consumes_synthetic_dimensions_without_layout_constants() -
 
 
 def _function_source(path: Path,name:str)->str:
-    text=path.read_text(); tree=ast.parse(text); node=next(n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and n.name==name); return ast.get_source_segment(text,node) or ''
+    text=path.read_text(encoding='utf-8'); tree=ast.parse(text); node=next(n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and n.name==name); return ast.get_source_segment(text,node) or ''
 
 
 def test_active_multi_panel_renderers_are_grid_driven_and_do_not_reingest_png() -> None:
-    publication=(ROOT/'src/rp1_analysis_v1/publication.py').read_text(); figures=(ROOT/'src/rp1_analysis_v1/figures.py').read_text()
+    publication=(ROOT/'src/rp1_analysis_v1/publication.py').read_text(encoding='utf-8'); figures=(ROOT/'src/rp1_analysis_v1/figures.py').read_text(encoding='utf-8')
     assert 'build_grid_figure' in publication
     assert 'compose_rendered_panels' not in publication
     assert 'mpimg.imread' not in figures and 'matplotlib.image' not in figures
@@ -56,4 +56,4 @@ def test_active_multi_panel_renderers_are_grid_driven_and_do_not_reingest_png() 
 def test_cluster_renderer_is_generic_grid_renderer_not_vertical_alias() -> None:
     mapping=ROOT/'src/rp1_analysis_v1/mapping.py'; source=_function_source(mapping,'cluster_maps_grid')
     assert 'build_grid_figure' in source and 'layout.data_cells' in source and 'vertical' not in source.casefold()
-    text=mapping.read_text(); assert 'cluster_maps_vertical' not in text and '_build_cluster_maps_vertical_figure' not in text
+    text=mapping.read_text(encoding='utf-8'); assert 'cluster_maps_vertical' not in text and '_build_cluster_maps_vertical_figure' not in text

@@ -99,8 +99,8 @@ grid_layouts:
     - 1.0
     - 1.0
     height_ratios:
-    - 1.0
-    - 1.0
+    - 0.8
+    - 1.2
     cells:
     - kind: data
       panel_index: 0
@@ -173,8 +173,8 @@ grid_layouts:
     rows: 2
     columns: 2
     width_ratios:
-    - 1.35
     - 1.0
+    - 1.12
     height_ratios:
     - 1.0
     - 1.0
@@ -301,6 +301,8 @@ presentation_export:
   - standardised_probability_pairs
   - cluster_membership_map
   - cluster_recurrence_map
+  - rq1_burnable_support_sensitivity
+  - rq2_trend_uncertainty
   sources:
     governed_acz_geometry:
       path_pattern: data/geo/acz.shp
@@ -308,10 +310,16 @@ presentation_export:
       path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F2.csv
     seasonality_spatial_organisation_presentation_source:
       path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    acz_seasonality_figure_source:
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS1.csv
     district_seasonal_diagnostics_source:
-      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS2.csv
+    rq1_burnable_support_figure_source:
+      path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS3.csv
     annual_trend_source:
       path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_F4.csv
+    rq2_trend_uncertainty_figure_source:
+      path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_FS4.csv
     cross_product_observability_presentation_source:
       path_pattern: out/runs/{run_base}_pub/03_rq3_observability/figure_data/FD_F5.csv
     supplement_s5_rq3:
@@ -355,16 +363,16 @@ presentation_export:
     output_inventory: presentation_export_output_inventory.csv
   semantic_styles:
     acz_categories:
-      CZ: '#1f77b4'
-      FZ: '#ff7f0e'
-      GS: '#2ca02c'
-      SS: '#d62728'
-      TZ: '#9467bd'
-    four_state_categories:
-      both_zero: '#1f77b4'
-      mcd64a1_positive_viirs_zero: '#ff7f0e'
-      viirs_positive_mcd64a1_zero: '#2ca02c'
-      both_positive: '#d62728'
+      CZ: '#88CCEE'
+      FZ: '#117733'
+      GS: '#DDCC77'
+      SS: '#CC6677'
+      TZ: '#332288'
+    detection_scenarios:
+      fitted_weak_ar1: '#0072B2'
+      independent_years: '#D55E00'
+      negative_ar1_stress: '#009E73'
+      positive_ar1_stress: '#482677'
   exports:
   - export_id: study_ghana_acz
     group: study
@@ -392,14 +400,14 @@ presentation_export:
       - GS
       - SS
       - TZ
-    colour_semantic: 'fixed ACZ categorical palette: CZ #1f77b4; FZ #ff7f0e; GS #2ca02c; SS #d62728; TZ #9467bd'
+    colour_semantic: shared ACZ categorical palette
     legend_policy:
       show: true
-      position: below
+      position: right
     annotation_policy:
     - north arrow
     - 100 km scale bar
-    - below-map legend with full ACZ names
+    - boxed right-side legend with full ACZ names
     interpretation_boundary: Context only; no fire burden or inferential meaning.
   - export_id: study_district_support
     group: study
@@ -431,11 +439,11 @@ presentation_export:
     colour_semantic: ACZ categorical palette for retained districts; configured excluded hatch
     legend_policy:
       show: true
-      position: below
+      position: right
     annotation_policy:
     - north arrow
     - 100 km scale bar
-    - below-map ACZ/support legend
+    - boxed right-side ACZ/support key
     interpretation_boundary: Eligibility/support map only; excluded districts are not zero-fire districts.
   - export_id: rq1_acz_long_run_rate
     group: rq1
@@ -464,7 +472,7 @@ presentation_export:
       - GS
       - SS
       - TZ
-    colour_semantic: viridis continuous
+    colour_semantic: reversed Cividis on the shared 0–70 rate scale
     legend_policy:
       show: true
       position: below
@@ -496,20 +504,21 @@ presentation_export:
       mode: deterministic
       key: unit_id
       values: []
-    colour_semantic: viridis continuous + configured valid-zero/excluded semantics
+    colour_semantic: reversed Cividis on the shared 0–70 rate scale with keyed valid zero and excluded support
     legend_policy:
       show: true
-      position: below
+      position: renderer_default
     annotation_policy:
     - 'horizontal colourbar: District long-run BA rate (km² per 100 km² yr⁻¹)'
     - north arrow
     - 100 km scale bar
+    - boxed right-side key for applicable support or sign symbols
     interpretation_boundary: Descriptive mapped burned-area rate; excluded/unsupported is distinct from observed zero.
   - export_id: rq1_acz_seasonality
     group: rq1
     label: ACZ burned-area seasonality
-    source_identity: seasonality_spatial_organisation_presentation_source
-    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_F3.csv
+    source_identity: acz_seasonality_figure_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS1.csv
     selector:
       column: panel
       equals: acz_seasonality
@@ -564,14 +573,15 @@ presentation_export:
       mode: deterministic
       key: unit_id
       values: []
-    colour_semantic: coolwarm signed continuous + configured excluded semantics
+    colour_semantic: blue–white–red on −60 to +60 with below-parent stippling and configured excluded semantics
     legend_policy:
       show: true
-      position: below
+      position: renderer_default
     annotation_policy:
     - 'horizontal colourbar: District − parent-ACZ BA rate (km² per 100 km² yr⁻¹)'
     - north arrow
     - 100 km scale bar
+    - boxed right-side key for applicable support or sign symbols
     interpretation_boundary: Raw rate-unit difference; not a z-score, hotspot class or causal effect.
   - export_id: rq1_local_moran
     group: rq1
@@ -603,10 +613,10 @@ presentation_export:
       - ISLAND
     colour_semantic: configured semantic_styles.local_moran and excluded hatch
     legend_policy:
-      show: false
-      position: none
+      show: true
+      position: right
     annotation_policy:
-    - categorical key below map
+    - boxed right-side categorical key
     - north arrow
     - 100 km scale bar
     interpretation_boundary: Only governed BH-supported classes are inferential; islands and excluded units remain distinct.
@@ -614,7 +624,7 @@ presentation_export:
     group: rq1
     label: District seasonal heatmap
     source_identity: district_seasonal_diagnostics_source
-    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS2.csv
     selector:
       column: record_type
       equals: monthly_share
@@ -633,7 +643,7 @@ presentation_export:
       mode: explicit
       values:
       - rows ordered by parent_code, circular_mean_month, unit_name; columns months 1–12
-    colour_semantic: viridis continuous
+    colour_semantic: reversed Viridis on 0–1 with a neutral key for unsupported cells
     legend_policy:
       show: true
       position: below
@@ -645,7 +655,7 @@ presentation_export:
     group: rq1
     label: District circular mean timing
     source_identity: district_seasonal_diagnostics_source
-    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS2.csv
     selector:
       column: record_type
       equals: monthly_share
@@ -676,7 +686,7 @@ presentation_export:
     group: rq1
     label: District seasonal concentration by ACZ
     source_identity: district_seasonal_diagnostics_source
-    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_S1.csv
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS2.csv
     selector:
       column: record_type
       equals: monthly_share
@@ -708,6 +718,34 @@ presentation_export:
     - resultant length on y-axis
     - fliers suppressed as in current S1 renderer
     interpretation_boundary: Resultant length measures seasonal concentration, not fire magnitude or synchronisation.
+  - export_id: rq1_burnable_support_sensitivity
+    group: rq1
+    label: Burnable support and district-rate sensitivity
+    source_identity: rq1_burnable_support_figure_source
+    source_path_pattern: out/runs/{run_base}_pub/01_rq1_spatial_scale/figure_data/FD_FS3.csv
+    selector:
+      all_rows: true
+    geometry_dependency: none
+    renderer_identity: rq1_burnable_support_sensitivity
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq1_burnable_support_sensitivity.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats: [png, pdf]
+    raster_dpi: 300
+    units: Fixed burnable area in square kilometres and dimensionless Gini coefficient
+    category_order:
+      mode: explicit
+      values: [CZ, FZ, GS, SS, TZ]
+    colour_semantic: Distinct marker and colour per reporting zone
+    legend_policy:
+      show: true
+      position: renderer_default
+    annotation_policy:
+    - District rates against burnable area on logarithmic axis
+    - Principal fixed-area threshold
+    - Gini coefficient against fixed-area threshold
+    interpretation_boundary: Threshold analysis is a sensitivity of observed district summaries.
   - export_id: rq2_coastal_trend
     group: rq2
     label: Coastal Zone annual burned-area-rate trend
@@ -911,14 +949,44 @@ presentation_export:
       - TRANSITION ZONE
     colour_semantic: 'observed #0072B2; Sen slope #D55E00'
     legend_policy:
-      show: false
-      position: none
+      show: true
+      position: below
     annotation_policy:
     - five panels
-    - each annotated with governed Sen slope, raw p and BH q
+    - common axes for all five ACZs
     - shared graphical key
+    - ACZ statistics table (Sen slope, raw permutation p and BH q) beneath the graphical key
     interpretation_boundary: Same five prespecified RQ2 series and inferential outputs; layout comparison only, not a new
       pooled test or national trend.
+  - export_id: rq2_trend_uncertainty
+    group: rq2
+    label: Sen slope uncertainty and trend detectability
+    source_identity: rq2_trend_uncertainty_figure_source
+    source_path_pattern: out/runs/{run_base}_pub/02_rq2_temporal_robustness/figure_data/FD_FS4.csv
+    selector:
+      all_rows: true
+    geometry_dependency: none
+    renderer_identity: rq2_trend_uncertainty
+    scenario: null
+    required_result_state: NONE
+    output_filename: rq2_trend_uncertainty.{format}
+    size_role: rectangular_landscape_20x15_cm
+    formats: [png, pdf]
+    raster_dpi: 300
+    units: Annual trend slope and simulated percentage decline per decade
+    category_order:
+      mode: explicit
+      values: [CZ, FZ, GS, SS, TZ]
+    colour_semantic: charcoal intervals and distinct colours, markers and line styles by simulation scenario
+    legend_policy:
+      show: true
+      position: renderer_default
+    annotation_policy:
+    - Zero slope reference
+    - Model-conditional pointwise interval level and availability
+    - Transition detection under concurrent decline and target power
+    - Reference-bank 95% Wilson whiskers and across-bank estimate ranges
+    interpretation_boundary: Detectability is conditional on the four declared Gaussian scenarios and tested decline grid.
   - export_id: rq3_four_state_correspondence
     group: rq3
     label: Four-state observation correspondence
@@ -945,8 +1013,7 @@ presentation_export:
       - mcd64a1_positive_viirs_zero
       - viirs_positive_mcd64a1_zero
       - both_positive
-    colour_semantic: 'four_state_categories: both_zero=#1f77b4; mcd64a1_positive_viirs_zero=#ff7f0e; viirs_positive_mcd64a1_zero=#2ca02c;
-      both_positive=#d62728'
+    colour_semantic: shared F5 state styles with grey, diagonally hatched amber, blue and dotted mauve
     legend_policy:
       show: false
       position: none
@@ -981,14 +1048,15 @@ presentation_export:
       mode: deterministic
       key: unit_id
       values: []
-    colour_semantic: viridis continuous + configured excluded semantics
+    colour_semantic: reversed Viridis on 0–100% with configured excluded semantics
     legend_policy:
       show: true
-      position: below
+      position: renderer_default
     annotation_policy:
     - 'horizontal colourbar: VIIRS-positive / MCD64A1-absent proportion'
     - north arrow
     - 100 km scale bar
+    - boxed right-side key for applicable support or sign symbols
     interpretation_boundary: Mismatch is observation-system disagreement, not a validated omission rate or proof of product
       error.
   - export_id: rq3_focal_effects
@@ -1015,7 +1083,7 @@ presentation_export:
       values:
       - VIIRS detection count (per doubling)
       - Mean FRP (per doubling)
-    colour_semantic: neutral point/CI; null reference at OR=1
+    colour_semantic: charcoal estimate and interval with a dashed grey reference at OR=1
     legend_policy:
       show: false
       position: none
@@ -1024,6 +1092,7 @@ presentation_export:
     - display aliases
     - 95% CI
     - no factor coefficients
+    - grey model-notes box below the x-axis
     interpretation_boundary: Associations are marginal and conditional on VIIRS-positive district-months; not causal effects
       or product accuracy estimates.
   - export_id: rq3_standardised_probabilities
@@ -1052,12 +1121,12 @@ presentation_export:
       - viirs_detection_count Q75
       - viirs_mean_frp Q25
       - viirs_mean_frp Q75
-    colour_semantic: predictor-identity categorical palette; Q25/Q75 linked within predictor
+    colour_semantic: charcoal paired estimates with open circles for Q25 and filled squares for Q75
     legend_policy:
       show: false
       position: none
     annotation_policy:
-    - show raw Q25/Q75 values, standardised probability, n=22,939 and 249 districts
+    - show raw Q25/Q75 values, standardised probability and realised observation and district counts
     - no CI because none is governed
     interpretation_boundary: One focal predictor is changed at a time over observed covariates; these are model-standardised
       descriptive predictions, not causal risks.
@@ -1089,9 +1158,9 @@ presentation_export:
     colour_semantic: configured valid-zero/excluded semantics; member neutral dark fill
     legend_policy:
       show: true
-      position: renderer_default
+      position: right
     annotation_policy:
-    - 'legend: Significant cluster member / No significant cluster membership / Excluded'
+    - 'boxed right-side legend: Significant cluster member / No significant cluster membership / Excluded'
     - north arrow
     - 100 km scale bar
     interpretation_boundary: Binary projection of already validated significant memberships; no significance or cluster classification
@@ -1124,9 +1193,9 @@ presentation_export:
     colour_semantic: configured valid-zero/excluded semantics; member neutral dark fill
     legend_policy:
       show: true
-      position: renderer_default
+      position: right
     annotation_policy:
-    - 'legend: Significant cluster member / No significant cluster membership / Excluded'
+    - 'boxed right-side legend: Significant cluster member / No significant cluster membership / Excluded'
     - north arrow
     - 100 km scale bar
     interpretation_boundary: Binary projection of already validated significant memberships; no significance or cluster classification
@@ -1154,14 +1223,15 @@ presentation_export:
       mode: deterministic
       key: unit_id
       values: []
-    colour_semantic: cividis continuous + configured excluded semantics
+    colour_semantic: reversed Cividis on the shared 0–45 count scale with configured excluded semantics
     legend_policy:
       show: true
-      position: below
+      position: renderer_default
     annotation_policy:
     - 'horizontal colourbar: Distinct significant clusters containing district'
     - north arrow
     - 100 km scale bar
+    - boxed right-side key for applicable support or sign symbols
     interpretation_boundary: Recurrence count is descriptive cluster membership frequency across distinct significant clusters;
       not fire-event count, duration or persistence.
   - export_id: rq4_viirs_recurrence
@@ -1187,14 +1257,15 @@ presentation_export:
       mode: deterministic
       key: unit_id
       values: []
-    colour_semantic: cividis continuous + configured excluded semantics
+    colour_semantic: reversed Cividis on the shared 0–45 count scale with configured excluded semantics
     legend_policy:
       show: true
-      position: below
+      position: renderer_default
     annotation_policy:
     - 'horizontal colourbar: Distinct significant clusters containing district'
     - north arrow
     - 100 km scale bar
+    - boxed right-side key for applicable support or sign symbols
     interpretation_boundary: Recurrence count is descriptive cluster membership frequency across distinct significant clusters;
       not fire-event count, duration or persistence.
 figures:
@@ -1207,7 +1278,7 @@ figures:
   renderer: grid_composite
   data_builder: source_frame
   source_attribute: long_run_spatial_rate_presentation_source
-  requires_results_validated: true
+  requires_results_validated: false
   data_builder_options:
     panel_order:
     - direct_acz_long_run_rate
@@ -1217,6 +1288,7 @@ figures:
     panel_order:
     - direct_acz_long_run_rate
     - district_long_run_rate
+    shared_rate_colorbar_label: Long-run mapped burned-area rate (km² per 100 km² yr⁻¹)
     panel_renderers:
     - acz_choropleth
     - choropleth
@@ -1224,8 +1296,10 @@ figures:
     - Direct ACZ long-run BA rate (km² per 100 km² yr⁻¹)
     - District long-run BA rate (km² per 100 km² yr⁻¹)
     panel_colormaps:
-    - viridis
-    - viridis
+    - cividis_r
+    - cividis_r
+    rate_scale_max: 70
+    rate_scale_ticks: [0, 10, 20, 30, 40, 50, 60, 70]
   panel_count: 2
   required_columns:
   - panel
@@ -1243,66 +1317,50 @@ figures:
   - ''
 - id: F3
   rq: RQ1
-  title: RQ1 seasonality and spatial organisation
+  title: District departures and spatial organisation
   role: manuscript
   evidence_class: PRIMARY_AND_DESCRIPTIVE
-  layout_role: rectangular_top_span_two_bottom
+  layout_role: rectangular_one_by_two
   renderer: grid_composite
   data_builder: source_frame
   source_attribute: seasonality_spatial_organisation_presentation_source
-  requires_results_validated: true
+  requires_results_validated: false
   data_builder_options:
     panel_order:
-    - acz_seasonality
     - district_departure
     - local_moran
   renderer_options:
     panel_column: panel
     panel_order:
-    - acz_seasonality
     - district_departure
     - local_moran
     panel_renderers:
-    - seasonality_lines
     - choropleth
     - categorical_map
     panel_colorbar_labels:
-    - ''
     - District − parent-ACZ BA rate (km² per 100 km² yr⁻¹)
     - ''
     panel_colormaps:
+    - RdBu_r
     - viridis
-    - coolwarm
-    - viridis
-    seasonality_legend_band_fraction: 0.18
-    seasonality_legend_gap_fraction: 0.28
-    seasonality_legend_ncol: 3
-    seasonality_horizontal_inset_fraction: 0.05
-    seasonality_y_label_padding_pt: 2.0
-  panel_count: 3
+    symmetric_departure_scale: true
+    departure_scale_limit: 60
+    departure_scale_ticks: [-60, -40, -20, 0, 20, 40, 60]
+  panel_count: 2
   required_columns:
   - panel
   - record_type
   - unit_id
   - unit_name
   - parent_code
-  - month
   - value
-  - circular_mean_month
-  - mean_resultant_length
   - local_class
   - support_status
   - exclusion_reasons
   panel_xlabels:
-  - Month
   - ''
   - ''
   panel_ylabels:
-  - 'Mean monthly burned area
-
-    (km²)
-
-    '
   - ''
   - ''
 - id: F4
@@ -1314,13 +1372,14 @@ figures:
   renderer: grid_trajectory_with_sen
   data_builder: source_frame
   source_attribute: annual_trend_source
-  requires_results_validated: true
+  requires_results_validated: false
   data_builder_options: {}
   renderer_options:
     x: year
     y: annual_rate
     group: parent_name
     slope: sen_slope
+    shared_trajectory_scale: true
     annotation_fields:
     - sen_slope
     - raw_p
@@ -1342,11 +1401,13 @@ figures:
       observed_series:
         color: '#0072B2'
         linewidth: 0.8
+        linestyle: '-'
         marker: o
         markersize: 2.2
       sen_slope:
         color: '#D55E00'
         linewidth: 1.2
+        linestyle: '--'
     shared_ylabel_x_fraction: 0.018
   panel_count: 5
   required_columns:
@@ -1360,9 +1421,9 @@ figures:
   xlabel: Year
   ylabel: Burned area per 100 km² of fixed BA-2001 burnable area
   panel_xlabels:
-  - Year
-  - Year
-  - Year
+  - ''
+  - ''
+  - ''
   - Year
   - Year
   panel_ylabels:
@@ -1380,7 +1441,7 @@ figures:
   renderer: grid_composite
   data_builder: source_frame
   source_attribute: cross_product_observability_presentation_source
-  requires_results_validated: true
+  requires_results_validated: false
   data_builder_options:
     panel_order:
     - mismatch_geography
@@ -1392,16 +1453,17 @@ figures:
     - mismatch_geography
     - four_state_correspondence
     - focal_adjusted_associations
+    mismatch_percent_scale: true
     panel_renderers:
     - choropleth
     - stacked_proportion
     - coefficient_or_plot
     panel_colorbar_labels:
-    - VIIRS-positive / MCD64A1-absent proportion
+    - VIIRS-positive district-months with no mapped burned area (%)
     - ''
     - ''
     panel_colormaps:
-    - viridis
+    - viridis_r
     - viridis
     - viridis
     panel_expected_rows:
@@ -1413,17 +1475,22 @@ figures:
       mcd64a1_positive_viirs_zero: MCD64A1 only
       viirs_positive_mcd64a1_zero: VIIRS only
       both_positive: Both positive
+    state_styles:
+      both_zero: {color: '#D9D9D9', edgecolor: '#3F3F3F'}
+      mcd64a1_positive_viirs_zero: {color: '#E69F00', edgecolor: '#3F3F3F', hatch: '//'}
+      viirs_positive_mcd64a1_zero: {color: '#0072B2', edgecolor: '#3F3F3F'}
+      both_positive: {color: '#AD80BD', edgecolor: '#3F3F3F', hatch: '..'}
     state_legend_ncol: 2
     state_legend_band_fraction: 0.3
     state_legend_gap_fraction: 0.07
     effect_display_aliases:
-      VIIRS detection count (per doubling): 'VIIRS detection count
-
-        (per doubling)'
-      Mean FRP (per doubling): 'Mean VIIRS FRP
-
-        (per doubling)'
-    effect_label_gutter_fraction: 0.56
+      VIIRS detection count (per doubling): VIIRS count
+      Mean FRP (per doubling): |-
+        Mean daily
+        maximum FRP
+    effect_decimal_ticks: [0.4, 0.6, 0.8, 1.0]
+    effect_style: {estimate_color: '#30343B', reference_color: '#777777'}
+    effect_label_gutter_fraction: 0.36
     effect_label_gap_fraction: 0.02
   panel_count: 3
   required_columns:
@@ -1445,10 +1512,10 @@ figures:
   panel_xlabels:
   - ''
   - ''
-  - Adjusted odds ratio (log scale)
+  - Adjusted odds ratio per doubling (log scale)
   panel_ylabels:
   - ''
-  - Proportion
+  - District-months (%)
   - ''
 - id: F6
   rq: SECONDARY
@@ -1467,11 +1534,10 @@ figures:
     panel_order:
     - mcd64a1
     - viirs
-    panel_titles:
-    - MCD64A1
-    - VIIRS
     value_column: significant_cluster_count
-    cmap: cividis
+    cmap: cividis_r
+    recurrence_scale_max: 45
+    recurrence_scale_ticks: [0, 15, 30, 45]
     colorbar_label: Distinct significant clusters containing district
     colorbar_labelpad_pt: 2.0
     shared_colorbar: true
@@ -1490,7 +1556,34 @@ figures:
   panel_ylabels:
   - ''
   - ''
-- id: S1
+- id: FS1
+  rq: RQ1
+  title: Monthly burned-area climatology by agro-climatic zone
+  role: supplementary
+  evidence_class: DESCRIPTIVE
+  layout_role: wide_single_panel
+  renderer: acz_seasonality_lines
+  data_builder: source_frame
+  source_attribute: seasonality_spatial_organisation_presentation_source
+  requires_results_validated: false
+  data_builder_options:
+    panel_order:
+    - acz_seasonality
+  renderer_options: {}
+  panel_count: 1
+  required_columns:
+  - panel
+  - record_type
+  - unit_id
+  - unit_name
+  - parent_code
+  - month
+  - value
+  - circular_mean_month
+  - mean_resultant_length
+  xlabel: Month
+  ylabel: Mean monthly mapped burned area (km²)
+- id: FS2
   rq: RQ1
   title: Full district seasonal diagnostics
   role: supplementary
@@ -1499,7 +1592,7 @@ figures:
   renderer: grid_district_seasonal_diagnostics
   data_builder: source_frame
   source_attribute: district_seasonal_diagnostics_source
-  requires_results_validated: true
+  requires_results_validated: false
   data_builder_options: {}
   renderer_options: {}
   panel_count: 3
@@ -1520,6 +1613,72 @@ figures:
   - Districts
   - Districts
   - Resultant length
+- id: FS3
+  rq: RQ1
+  title: Burnable support and district-rate sensitivity
+  role: supplementary
+  evidence_class: SENSITIVITY
+  layout_role: rectangular_one_by_two
+  renderer: rq1_burnable_support_sensitivity
+  data_builder: source_frame
+  source_attribute: rq1_burnable_support_figure_source
+  requires_results_validated: false
+  data_builder_options: {}
+  renderer_options: {}
+  panel_count: 2
+  required_columns:
+  - record_type
+  - unit_id
+  - zone
+  - fixed_burnable_union_km2
+  - long_run_rate
+  - minimum_fixed_union_km2
+  - gini
+  - n_districts
+  - is_primary_threshold
+  panel_xlabels:
+  - Fixed burnable area (km²)
+  - Minimum fixed burnable area (km²)
+  panel_ylabels:
+  - District rate (km² per 100 km² yr⁻¹)
+  - Gini coefficient of district rates
+- id: FS4
+  rq: RQ2
+  title: Sen slope uncertainty and trend detectability
+  role: supplementary
+  evidence_class: SENSITIVITY
+  layout_role: rectangular_one_by_two
+  renderer: rq2_trend_uncertainty
+  data_builder: source_frame
+  source_attribute: rq2_trend_uncertainty_figure_source
+  requires_results_validated: false
+  data_builder_options: {}
+  renderer_options: {}
+  panel_count: 2
+  required_columns:
+  - record_type
+  - parent_code
+  - sen_slope
+  - lower
+  - upper
+  - interval_status
+  - interval_level
+  - noise_scenario
+  - effect_pattern
+  - target_zone
+  - decline_fraction_per_decade
+  - power
+  - mc_lower
+  - mc_upper
+  - bank_min
+  - bank_max
+  - target_power
+  panel_xlabels:
+  - Sen slope (annual-rate units per year)
+  - Simulated decline per decade (%)
+  panel_ylabels:
+  - ''
+  - Simulated detection probability (%)
 source_data_policy:
   required_for_manuscript_figures: true
   format: csv
@@ -1568,28 +1727,28 @@ semantic_styles:
   local_moran:
     HH:
       face: '#D55E00'
-      edge: '#666666'
-      hatch: ''
+      edge: '#333333'
+      hatch: 'xx'
     LL:
       face: '#0072B2'
-      edge: '#666666'
-      hatch: ''
+      edge: '#333333'
+      hatch: '...'
     HL:
       face: '#CC79A7'
-      edge: '#666666'
-      hatch: ''
+      edge: '#333333'
+      hatch: '\\'
     LH:
       face: '#009E73'
-      edge: '#666666'
-      hatch: ''
+      edge: '#333333'
+      hatch: '--'
     NS:
       face: '#D9D9D9'
       edge: '#666666'
       hatch: ''
     ISLAND:
       face: '#F0E442'
-      edge: '#666666'
-      hatch: ''
+      edge: '#333333'
+      hatch: 'oo'
 display_conventions:
   circular_mean_month:
     axis_label: Circular mean month (cyclic coordinate; 0 ≡ 12)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import ast
 import os
 from pathlib import Path
 import shutil
@@ -76,7 +77,7 @@ def test_native_environment_identity_is_never_faked(
     assert strict["expected_python"] == "3.13"
 
 
-def test_external_workspace_rerun_clears_stale_qualifier_state(tmp_path: Path) -> None:
+def test_external_workspace_refuses_existing_subdirectories_without_touching_them(tmp_path: Path) -> None:
     qualifier = _load_qualifier_module()
     evidence = tmp_path / "evidence"
     for name in ("clean_projection", "wheels", "isolated_install", "logs", "runtime"):
@@ -84,11 +85,10 @@ def test_external_workspace_rerun_clears_stale_qualifier_state(tmp_path: Path) -
         path.mkdir(parents=True, exist_ok=True)
         (path / "stale.txt").write_text("stale\n", encoding="utf-8")
 
-    paths = qualifier._prepare_external_workspace(REPOSITORY, evidence, CONTRACT)
-    assert set(paths) == {"clean_projection", "wheels", "isolated_install", "logs", "runtime"}
-    for path in paths.values():
-        assert path.is_dir()
-        assert list(path.iterdir()) == []
+    with pytest.raises(ValueError, match="must be fresh"):
+        qualifier._prepare_external_workspace(REPOSITORY, evidence, CONTRACT)
+    assert len(tuple(evidence.glob("*/stale.txt"))) == 5
+    assert all(path.read_text(encoding="utf-8") == "stale\n" for path in evidence.glob("*/stale.txt"))
 
 
 def test_external_workspace_rejects_evidence_inside_or_above_repository(tmp_path: Path) -> None:
@@ -107,8 +107,8 @@ def test_external_workspace_rejects_evidence_inside_or_above_repository(tmp_path
         )
 
 
-def test_exact_editable_metadata_defect_is_closed_by_clean_projection(tmp_path: Path) -> None:
-    """Model the v1.2.1 contradiction without requiring an old checkout.
+def test_editable_metadata_is_excluded_from_clean_projection(tmp_path: Path) -> None:
+    """Model inconsistent execution metadata in an isolated fixture.
 
     The same strict hygiene test fails on an installation-mutated operational
     tree and passes unchanged on the governed projection built from that tree.
@@ -140,8 +140,9 @@ def test_exact_editable_metadata_defect_is_closed_by_clean_projection(tmp_path: 
         stderr=subprocess.STDOUT,
         check=False,
     )
-    assert old_lifecycle.returncode != 0
-    assert "rp1_analysis_v1.egg-info" in old_lifecycle.stdout
+    # Editable installation metadata is permitted in the working checkout.
+    # Distribution projection must still exclude it, as checked below.
+    assert old_lifecycle.returncode == 0, old_lifecycle.stdout
 
     projection = tmp_path / "external" / CONTRACT.projection.clean_projection_subdirectory
     result = project_governed_source(operational, projection, CONTRACT)
@@ -165,8 +166,23 @@ def test_exact_editable_metadata_defect_is_closed_by_clean_projection(tmp_path: 
 def test_canonical_qualifier_routes_full_pytest_and_wheel_sources_to_projection() -> None:
     source = (REPOSITORY / "tools/qualify_environment.py").read_text(encoding="utf-8")
     assert 'source_steps["full_pytest"] = run_step(' in source
-    assert '[sys.executable, "-m", "pytest", "-o", "addopts=", "-p", "no:cacheprovider", "-q"]' in source
-    assert 'cwd=projection_root' in source
+    calls = [node for node in ast.walk(ast.parse(source))
+             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+             and node.func.id == 'run_step' and node.args
+             and isinstance(node.args[0], ast.Constant)
+             and node.args[0].value == 'full_pytest']
+    assert len(calls) == 1
+    call = calls[0]
+    command = call.args[1]
+    prefix = command.left if isinstance(command, ast.BinOp) else command
+    assert isinstance(prefix, ast.List)
+    tokens = [node.value if isinstance(node, ast.Constant) else ast.unparse(node)
+              for node in prefix.elts]
+    assert tokens[:8] == ['sys.executable', '-m', 'pytest', '-o', 'addopts=',
+                          '-p', 'no:cacheprovider', '-q']
+    assert {'-ra', '--release-tree-checks', '--junitxml'}.issubset(tokens)
+    assert ast.unparse(next(item.value for item in call.keywords if item.arg == 'cwd')) == 'projection_root'
+    assert tokens[tokens.index('--junitxml') + 1] == "str(logs_dir / 'full_pytest.xml')"
     assert 'project_root = (projection_root / item.project_root).resolve()' in source
     assert '"source_authority": "clean_projection"' in source
     assert 'remove_generated_artifacts_from_projection' in source
@@ -192,6 +208,10 @@ def test_isolated_import_probe_requires_target_origins_and_versions(tmp_path: Pa
             f"Metadata-Version: 2.1\nName: {distribution}\nVersion: {version}\n",
             encoding="utf-8",
         )
+    shared = target / 'rp1_ba_contracts'
+    shared.mkdir()
+    (shared / '__init__.py').write_text('')
+    (shared / 'c3.py').write_text('SCHEMA = "rp1_ba_c3_extended_v2"\n')
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(target)
@@ -206,6 +226,12 @@ def test_isolated_import_probe_requires_target_origins_and_versions(tmp_path: Pa
         check=False,
     )
     assert completed.returncode == 0, completed.stdout
+    (shared / 'c3.py').unlink()
+    missing = subprocess.run(
+        [sys.executable, '-c', qualifier._isolated_import_command(target, expected)],
+        cwd=tmp_path, env=env, capture_output=True, text=True,
+    )
+    assert missing.returncode != 0
 
 
 def test_qualification_runtime_hash_evidence_is_json_serialisable() -> None:

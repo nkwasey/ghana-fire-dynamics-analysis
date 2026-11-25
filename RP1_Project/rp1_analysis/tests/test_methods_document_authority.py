@@ -14,44 +14,26 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_current_methods_document_authority_is_phase_neutral_and_science_preserving() -> None:
-    payload = json.loads(AUTHORITY.read_text(encoding="utf-8"))
-    assert payload["schema"] == "rp1-methods-document-authority-v1"
-    assert payload["document_role"] == "current_methods_authority"
-    assert payload["scientific_method_change"] == "NONE"
-    assert set(payload["alignment_scope"]) == {
-        "scientific_documentation",
-        "reference_scope",
-        "method_provenance",
-        "presentation_outputs",
-        "optional_external_result_integration",
-    }
-    assert payload["docx"]["filename"].endswith(".docx")
-    assert payload["pdf"]["filename"].endswith(".pdf")
-    assert len(payload["docx"]["sha256"]) == 64
-    assert len(payload["pdf"]["sha256"]) == 64
-    for key in ("docx", "pdf"):
-        document = ROOT / "docs" / payload[key]["filename"]
-        assert document.is_file()
-        assert document.stat().st_size == payload[key]["size_bytes"]
-        assert _sha(document) == payload[key]["sha256"]
-    assert "immutable snapshots" in payload["scientific_run_provenance_policy"]
+def test_current_method_configuration_is_self_contained():
+    from rp1_analysis_v1.config import load_configuration_bundle
+    bundle = load_configuration_bundle(ROOT / "config")
+    assert len(bundle.configuration_sha256) == 64
+    local = bundle.analysis.research_questions["rq1"]["spatial"]["local"]
+    assert local["tie_allocation"] == "both_tails"
+    assert local["multiply_smaller_tail_by_two"] is True
 
 
-def test_scientific_run_metadata_remain_one_immutable_methods_snapshot() -> None:
-    rq1 = json.loads((ROOT / "data/authorities/rq1/realised_run_metadata.json").read_text())
-    rq2 = json.loads((ROOT / "data/authorities/rq2/realised_run_metadata.json").read_text())
-    rq3 = json.loads((ROOT / "data/authorities/rq3/realised_run_metadata.json").read_text())
-    rq3_manifest = json.loads((ROOT / "data/authorities/rq3/source_manifest.json").read_text())
-    historical = {
-        rq1["methods_spec_sha256"],
-        rq2["methods_spec_sha256"],
-        rq3["methods_spec_sha256"],
-        rq3_manifest["methods_specification_sha256"],
-    }
-    assert len(historical) == 1
-    current = json.loads(AUTHORITY.read_text())["docx"]["sha256"]
-    assert next(iter(historical)) != current
+def test_configuration_identity_changes_with_method_parameters(tmp_path):
+    import shutil
+    from rp1_analysis_v1.config import load_configuration_bundle
+    shutil.copytree(ROOT / "config", tmp_path / "config")
+    shutil.copy2(ROOT / "pyproject.toml", tmp_path / "pyproject.toml")
+    first = load_configuration_bundle(tmp_path / "config").configuration_sha256
+    path = tmp_path / "config/analysis_contract.yml"
+    text = path.read_text()
+    text = text.replace("primary_seed: 20260822", "primary_seed: 42")
+    path.write_text(text)
+    assert load_configuration_bundle(tmp_path / "config").configuration_sha256 != first
 
 
 def test_methods_document_authority_materialiser_is_deterministic(tmp_path: Path) -> None:

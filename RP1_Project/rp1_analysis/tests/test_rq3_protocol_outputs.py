@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from scientific_input_reference import (model_input_reference, cluster_reference, paired_input_reference, factor_outcome_reference, design_terms_reference)
 
 from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.data_io import load_data_authorities
@@ -42,7 +43,7 @@ def rq3(bundle):
 
 def test_output_contract_owns_current_rq3_publication_and_internal_sources(bundle) -> None:
     publication = [item for item in bundle.output.tables if item.rq == "RQ3"]
-    assert {item.output_id for item in publication} == {"T2", "S5"}
+    assert {item.output_id for item in publication} == {"T2", "S5", "S18", "S19", "S20"}
     t2 = next(item for item in publication if item.output_id == "T2")
     assert t2.source_attribute == "table2_rq3_model"
     assert t2.required_columns == ("term", "predictor_role", "beta", "corrected_se", "adjusted_or", "or_lower_95", "or_upper_95", "p")
@@ -61,7 +62,7 @@ def test_four_state_summary_source_is_complete(rq3) -> None:
     assert tuple(frame.columns) == FOUR_STATE_SUMMARY_COLUMNS
     assert len(frame) == 24
     assert set(frame["summary_scope"]) == {"overall", "acz"}
-    assert frame.loc[frame["summary_scope"].eq("overall"), "denominator_n"].eq(38595).all()
+    assert frame.loc[frame["summary_scope"].eq("overall"), "denominator_n"].eq(len(paired_input_reference())).all()
     assert frame.loc[frame["summary_scope"].eq("acz"), "parent_code"].nunique() == 5
     grouped = frame.groupby(["summary_scope", "parent_code"], dropna=False, observed=True)
     assert grouped["count"].sum().equals(grouped["denominator_n"].first())
@@ -74,8 +75,8 @@ def test_continuous_model_summary_source_has_exact_schema_and_three_rows(rq3, bu
     assert len(frame) == len(bundle.analysis.research_questions["rq3"]["predictors"]) == 3
     assert frame["predictor_role"].tolist().count("focal") == 2
     assert frame["predictor_role"].tolist().count("adjustment") == 1
-    assert frame["n"].eq(22939).all()
-    assert frame["districts"].eq(249).all()
+    assert frame["n"].eq(len(model_input_reference())).all()
+    assert frame["districts"].eq(model_input_reference().unit_id.nunique()).all()
     assert frame["estimator"].eq("firth_penalized_gee").all()
     assert frame["working_structure"].eq("independence").all()
     assert frame["covariance_method"].eq("morel_bokossa_neerchal").all()
@@ -101,16 +102,19 @@ def test_fit_diagnostics_source_has_exact_schema_and_standard_normal_metadata(rq
     assert tuple(frame.columns) == FIT_DIAGNOSTICS_COLUMNS
     assert len(frame) == 1
     row = frame.iloc[0]
-    assert int(row["observations"]) == 22939
-    assert int(row["districts"]) == 249
-    assert int(row["outcome_y1"]) == 16811
-    assert int(row["outcome_y0"]) == 6128
-    assert int(row["model_columns"]) == int(row["model_rank"]) == 31
-    assert row["complete_separation_levels"] == "month=7|month=9"
-    assert int(row["all_y1_clusters"]) == 29
-    assert int(row["all_y0_clusters"]) == 0
-    assert int(row["cluster_size_min"]) == 7
-    assert int(row["cluster_size_max"]) == 147
+    assert int(row["observations"]) == len(model_input_reference())
+    assert int(row["districts"]) == model_input_reference().unit_id.nunique()
+    reference = model_input_reference()
+    assert int(row["outcome_y1"]) == int(reference.mismatch_y.sum())
+    assert int(row["outcome_y0"]) == int(reference.mismatch_y.eq(0).sum())
+    assert int(row["model_columns"]) == int(row["model_rank"]) == len(design_terms_reference())
+    separated = factor_outcome_reference().loc[lambda x: x.complete_separation]
+    assert set(str(row["complete_separation_levels"]).split("|")) == set(separated.factor + "=" + separated.level)
+    clusters = cluster_reference()
+    assert int(row["all_y1_clusters"]) == int(clusters["sum"].eq(clusters["size"]).sum())
+    assert int(row["all_y0_clusters"]) == int(clusters["sum"].eq(0).sum())
+    assert int(row["cluster_size_min"]) == int(cluster_reference()["size"].min())
+    assert int(row["cluster_size_max"]) == int(cluster_reference()["size"].max())
     assert row["reference_distribution"] == "standard_normal_wald"
     assert row["convergence"] == "PASS"
     assert row["finite_coefficient_status"] == "PASS"
@@ -120,7 +124,7 @@ def test_fit_diagnostics_source_has_exact_schema_and_standard_normal_metadata(rq
 def test_full_coefficient_source_has_complete_count_and_configured_references(rq3, bundle) -> None:
     frame = rq3.full_coefficient_source
     assert tuple(frame.columns) == FULL_COEFFICIENT_COLUMNS
-    assert len(frame) == 31
+    assert len(frame) == len(design_terms_reference())
     assert frame["term_order"].tolist() == list(range(31))
     terms = set(frame["term"].astype(str))
     assert "Intercept" in terms
@@ -148,7 +152,7 @@ def test_or_calculations_are_exact_across_continuous_and_full_coefficient_source
 def test_mismatch_and_focal_effect_sources_are_distinct_and_deterministic(rq3) -> None:
     assert tuple(rq3.district_mismatch_source.columns) == DISTRICT_MISMATCH_COLUMNS
     assert tuple(rq3.focal_effect_source.columns) == FOCAL_EFFECT_COLUMNS
-    assert len(rq3.district_mismatch_source) == 249
+    assert len(rq3.district_mismatch_source) == model_input_reference().unit_id.nunique()
     assert len(rq3.focal_effect_source) == 2
     assert rq3.district_mismatch_source["unit_id"].is_monotonic_increasing
     assert rq3.focal_effect_source["display_order"].tolist() == [1, 2]
@@ -185,9 +189,9 @@ def test_complete_rq3_integration_uses_one_qualified_fit_for_semantic_sources(rq
     fit = rq3.production_pgee.production.fit
     assert fit.converged and fit.coefficients_finite and fit.covariance_finite
     assert fit.covariance_symmetric
-    assert fit.n_observations == 22939
-    assert fit.n_clusters == 249
-    assert fit.design_dimension == 31
+    assert fit.n_observations == len(model_input_reference())
+    assert fit.n_clusters == model_input_reference().unit_id.nunique()
+    assert fit.design_dimension == len(design_terms_reference())
     continuous_coefficients = rq3.full_coefficient_source.loc[rq3.full_coefficient_source["term_role"].astype(str).str.endswith("_predictor")]
     assert rq3.continuous_model_summary_source["term"].tolist() == continuous_coefficients["term"].tolist()
     focal = continuous_coefficients.loc[continuous_coefficients["term_role"].eq("focal_predictor")].reset_index(drop=True)
@@ -202,8 +206,8 @@ def test_standardised_probability_authority_exact_cardinality_and_schema(rq3) ->
     assert set(frame["predictor_role"]) == {"focal"}
     assert set(frame["predictor_id"]) == {"viirs_detection_count", "viirs_mean_frp"}
     assert set(frame["quantile"]) == {0.25, 0.75}
-    assert frame["n"].eq(22939).all()
-    assert frame["districts"].eq(249).all()
+    assert frame["n"].eq(len(model_input_reference())).all()
+    assert frame["districts"].eq(model_input_reference().unit_id.nunique()).all()
     assert frame["standardised_probability"].between(0.0, 1.0, inclusive="both").all()
     for column in ("model_spec_sha256", "design_matrix_sha256", "configuration_sha256"):
         assert frame[column].astype(str).str.fullmatch(r"[0-9a-f]{64}").all()
@@ -214,7 +218,7 @@ def test_standardised_probability_authority_exact_cardinality_and_schema(rq3) ->
 def test_full_model_authority_contains_coefficients_diagnostics_and_probabilities(rq3) -> None:
     frame = rq3.full_model_authority
     assert tuple(frame.columns) == FULL_MODEL_AUTHORITY_COLUMNS
-    assert (frame["record_type"] == "coefficient").sum() == 31
+    assert (frame["record_type"] == "coefficient").sum() == len(design_terms_reference())
     assert (frame["record_type"] == "standardised_probability").sum() == 4
     assert (frame["record_type"] == "diagnostic").sum() > 0
     probs = frame.loc[frame["record_type"].eq("standardised_probability")]

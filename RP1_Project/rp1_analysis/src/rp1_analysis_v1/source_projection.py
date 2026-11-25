@@ -9,6 +9,7 @@ checkout.
 from __future__ import annotations
 
 import hashlib
+import ast
 import json
 import os
 import shutil
@@ -23,6 +24,34 @@ from .contracts import QualificationContract
 
 class QualificationProjectionError(RuntimeError):
     """Raised when clean-source qualification cannot be proven safely."""
+
+
+def _logical_path(path: str | Path) -> Path:
+    """Keep public path identities independent of Windows filesystem prefixes."""
+    token = os.fspath(path)
+    if os.name == "nt":
+        if token.startswith("\\\\?\\UNC\\"):
+            return Path("\\\\" + token[8:])
+        if token.startswith("\\\\?\\"):
+            return Path(token[4:])
+    return Path(token)
+
+
+def _filesystem_path(path: str | Path) -> Path:
+    """Use native extended Windows paths for IO without a MAX_PATH dependency."""
+    value = Path(path)
+    if os.name != "nt":
+        return value
+    token = os.path.abspath(value)
+    if token.startswith("\\\\?\\"):
+        return Path(token)
+    if token.startswith("\\\\"):
+        return Path("\\\\?\\UNC\\" + token[2:])
+    return Path("\\\\?\\" + token)
+
+
+def _resolved_path(path: str | Path) -> Path:
+    return _logical_path(_filesystem_path(path).resolve())
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,15 +123,15 @@ class ProjectionResult:
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
+    with _filesystem_path(path).open("rb") as handle:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
 
 
 def _entry(path: Path, relative: str) -> SourceInventoryEntry:
-    stat = path.stat()
-    if not path.is_file():
+    stat = _filesystem_path(path).stat()
+    if not _filesystem_path(path).is_file():
         raise QualificationProjectionError(f"Governed member is not a regular file: {relative}")
     return SourceInventoryEntry(relative, stat.st_size, _sha256_file(path))
 
@@ -122,8 +151,8 @@ def _safe_repository_member(repository_root: Path, relative: str) -> Path:
     candidate = repository_root / rel
     # Resolve the parent only after lexical validation.  Symlinked members are
     # rejected separately; this guards accidental path escape through a parent.
-    resolved_root = repository_root.resolve()
-    resolved_candidate = candidate.resolve(strict=False)
+    resolved_root = _resolved_path(repository_root)
+    resolved_candidate = _resolved_path(candidate)
     if not _is_within(resolved_candidate, resolved_root):
         raise QualificationProjectionError(f"Governed path escapes repository root: {relative!r}")
     return candidate
@@ -149,45 +178,104 @@ def _generated_file_rule(name: str, contract: QualificationContract) -> str | No
     return None
 
 
+def _generated_path_rule(relative: str, contract: QualificationContract) -> str | None:
+    if relative in contract.generated_artifacts.relative_paths:
+        return f"relative_path:{relative}"
+    return None
+
+
+def _embedded_source_members(root: Path, contract: QualificationContract) -> dict[str, set[str]]:
+    """Use embedded producers' literal release lists without executing code."""
+    result = {}
+    for project, allowlist_path, assignment in contract.repository.embedded_source_allowlists:
+        project_path = _safe_repository_member(root, project)
+        if not _filesystem_path(project_path).exists():
+            continue
+        authority = _safe_repository_member(root, project + "/" + allowlist_path)
+        if _filesystem_path(authority).is_symlink() or not _filesystem_path(authority).is_file():
+            raise QualificationProjectionError("Missing or linked embedded source allowlist: " + str(authority))
+        try:
+            tree = ast.parse(_filesystem_path(authority).read_text(encoding="utf-8"))
+            nodes = [node.value for node in tree.body if isinstance(node, ast.Assign)
+                     and any(isinstance(target, ast.Name) and target.id == assignment for target in node.targets)]
+            if len(nodes) != 1:
+                raise ValueError("requires one literal assignment")
+            values = ast.literal_eval(nodes[0])
+            if not isinstance(values, (tuple, list)) or not values or any(not isinstance(v, str) for v in values):
+                raise ValueError("must contain file paths")
+            if len(set(values)) != len(values):
+                raise ValueError("contains duplicate file paths")
+        except (ValueError, TypeError, SyntaxError) as exc:
+            raise QualificationProjectionError("Embedded source allowlist must be literal data: " + str(authority)) from exc
+        selected = set()
+        for name in values:
+            if "\\" in name or ":" in name or Path(name).as_posix() != name:
+                raise QualificationProjectionError("Unsafe embedded source member: " + name)
+            if (name.startswith(("data/raw/", "data/metadata/", "private/"))
+                    and name not in {"data/raw/README.md", "data/metadata/README.md", "private/README.md"}):
+                raise QualificationProjectionError("Runtime data or private file in embedded source allowlist")
+            relative = project + "/" + name
+            candidate = _safe_repository_member(root, relative)
+            if _filesystem_path(candidate).is_symlink() or not _filesystem_path(candidate).is_file():
+                raise QualificationProjectionError("Missing or unsafe embedded source member: " + relative)
+            selected.add(relative)
+        result[project] = selected
+    return result
+
+
+def _embedded_source_rule(relative: str, allowlists: dict[str, set[str]]) -> str | None:
+    for project, allowed in allowlists.items():
+        if relative == project or relative.startswith(project + "/"):
+            if relative not in allowed and not any(name.startswith(relative + "/") for name in allowed):
+                return "embedded_source_allowlist:" + project
+    return None
+
+
 def inventory_governed_source(
     repository_root: str | Path,
     contract: QualificationContract,
 ) -> SourceInventory:
     """Inventory governed regular files and record configured generated residue."""
 
-    root = Path(repository_root).resolve()
-    if not root.is_dir():
+    root = _resolved_path(repository_root)
+    if not _filesystem_path(root).is_dir():
         raise QualificationProjectionError(f"Repository root does not exist: {root}")
 
     files: dict[str, SourceInventoryEntry] = {}
     exclusions: dict[str, ExcludedArtifact] = {}
+    allowlists = _embedded_source_members(root, contract)
 
     for configured in contract.repository.include_roots:
         member = _safe_repository_member(root, configured)
-        if not member.exists() and not member.is_symlink():
+        if not _filesystem_path(member).exists() and not _filesystem_path(member).is_symlink():
             raise QualificationProjectionError(f"Missing governed source root/file: {configured}")
-        if member.is_symlink():
+        if _filesystem_path(member).is_symlink():
             raise QualificationProjectionError(f"Governed symlink is not permitted: {configured}")
+        path_rule = _generated_path_rule(configured, contract) or _embedded_source_rule(configured, allowlists)
+        if path_rule is not None:
+            exclusions[configured] = ExcludedArtifact(configured, "directory" if _filesystem_path(member).is_dir() else "file", path_rule)
+            continue
 
-        if member.is_file():
+        if _filesystem_path(member).is_file():
             file_rule = _generated_file_rule(member.name, contract)
             if file_rule is not None:
                 exclusions[configured] = ExcludedArtifact(configured, "file", file_rule)
                 continue
             files[configured] = _entry(member, configured)
             continue
-        if not member.is_dir():
+        if not _filesystem_path(member).is_dir():
             raise QualificationProjectionError(f"Unsupported governed member type: {configured}")
 
-        for current, dirs, names in os.walk(member, topdown=True, followlinks=False):
-            current_path = Path(current)
+        for current, dirs, names in os.walk(_filesystem_path(member), topdown=True, followlinks=False):
+            current_path = _logical_path(current)
             kept_dirs: list[str] = []
             for dirname in sorted(dirs):
                 candidate = current_path / dirname
                 rel = candidate.relative_to(root).as_posix()
-                if candidate.is_symlink():
+                if _filesystem_path(candidate).is_symlink():
                     raise QualificationProjectionError(f"Governed symlink is not permitted: {rel}")
-                rule = _generated_directory_rule(dirname, contract)
+                rule = (_generated_path_rule(rel, contract) or _generated_directory_rule(dirname, contract)
+                        or _embedded_source_rule(rel, allowlists))
                 if rule is not None:
                     exclusions[rel] = ExcludedArtifact(rel, "directory", rule)
                 else:
@@ -197,13 +285,14 @@ def inventory_governed_source(
             for filename in sorted(names):
                 candidate = current_path / filename
                 rel = candidate.relative_to(root).as_posix()
-                if candidate.is_symlink():
+                if _filesystem_path(candidate).is_symlink():
                     raise QualificationProjectionError(f"Governed symlink is not permitted: {rel}")
-                rule = _generated_file_rule(filename, contract)
+                rule = (_generated_path_rule(rel, contract) or _generated_file_rule(filename, contract)
+                        or _embedded_source_rule(rel, allowlists))
                 if rule is not None:
                     exclusions[rel] = ExcludedArtifact(rel, "file", rule)
                     continue
-                if not candidate.is_file():
+                if not _filesystem_path(candidate).is_file():
                     raise QualificationProjectionError(f"Unsupported governed member type: {rel}")
                 if rel in files:
                     raise QualificationProjectionError(f"Governed file selected more than once: {rel}")
@@ -218,19 +307,19 @@ def inventory_governed_source(
 
 def _inventory_projected_tree(projection_root: Path) -> SourceInventory:
     entries: list[SourceInventoryEntry] = []
-    for current, dirs, names in os.walk(projection_root, topdown=True, followlinks=False):
-        current_path = Path(current)
+    for current, dirs, names in os.walk(_filesystem_path(projection_root), topdown=True, followlinks=False):
+        current_path = _logical_path(current)
         for dirname in dirs:
             candidate = current_path / dirname
-            if candidate.is_symlink():
+            if _filesystem_path(candidate).is_symlink():
                 rel = candidate.relative_to(projection_root).as_posix()
                 raise QualificationProjectionError(f"Unexpected symlink in clean projection: {rel}")
         for filename in names:
             candidate = current_path / filename
             rel = candidate.relative_to(projection_root).as_posix()
-            if candidate.is_symlink():
+            if _filesystem_path(candidate).is_symlink():
                 raise QualificationProjectionError(f"Unexpected symlink in clean projection: {rel}")
-            if not candidate.is_file():
+            if not _filesystem_path(candidate).is_file():
                 raise QualificationProjectionError(f"Unexpected non-regular projection member: {rel}")
             entries.append(_entry(candidate, rel))
     return SourceInventory(entries=tuple(sorted(entries, key=lambda item: item.path)), exclusions=())
@@ -242,8 +331,8 @@ def verify_projected_inventory(
 ) -> SourceInventory:
     """Require an exact path/size/SHA-256 match with the expected governed set."""
 
-    root = Path(projection_root).resolve()
-    if not root.is_dir():
+    root = _resolved_path(projection_root)
+    if not _filesystem_path(root).is_dir():
         raise QualificationProjectionError(f"Clean projection does not exist: {root}")
     actual = _inventory_projected_tree(root)
     expected_map = expected.by_path
@@ -266,11 +355,11 @@ def verify_projected_inventory(
 
 
 def _copy_verified(source: Path, destination: Path, expected: SourceInventoryEntry) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
+    _filesystem_path(destination.parent).mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     size = 0
     try:
-        with source.open("rb") as src, destination.open("xb") as dst:
+        with _filesystem_path(source).open("rb") as src, _filesystem_path(destination).open("xb") as dst:
             for block in iter(lambda: src.read(1024 * 1024), b""):
                 digest.update(block)
                 size += len(block)
@@ -297,9 +386,9 @@ def project_governed_source(
     that inventory and copying is detected by byte-size/SHA-256 verification.
     """
 
-    repository = Path(repository_root).resolve()
-    destination = Path(projection_root).resolve()
-    if not repository.is_dir():
+    repository = _resolved_path(repository_root)
+    destination = _resolved_path(projection_root)
+    if not _filesystem_path(repository).is_dir():
         raise QualificationProjectionError(f"Repository root does not exist: {repository}")
     if _is_within(destination, repository) or _is_within(repository, destination):
         raise QualificationProjectionError(
@@ -310,7 +399,7 @@ def project_governed_source(
             "Clean projection destination must use the configured clean projection subdirectory "
             f"{contract.projection.clean_projection_subdirectory!r}"
         )
-    if destination.parent == Path(destination.anchor) or destination.parent == Path.home().resolve():
+    if destination.parent == Path(destination.anchor) or destination.parent == _resolved_path(Path.home()):
         raise QualificationProjectionError("Clean projection parent is too broad for safe recreation")
 
     source_inventory = expected_inventory or inventory_governed_source(repository, contract)
@@ -321,29 +410,29 @@ def project_governed_source(
         if current.entries != expected_inventory.entries:
             raise QualificationProjectionError("Governed source inventory changed before projection")
 
-    if destination.exists():
-        if destination.is_symlink():
+    if _filesystem_path(destination).exists():
+        if _filesystem_path(destination).is_symlink():
             raise QualificationProjectionError("Projection destination may not be a symlink")
-        if destination.is_dir():
-            shutil.rmtree(destination)
+        if _filesystem_path(destination).is_dir():
+            shutil.rmtree(_filesystem_path(destination))
         else:
-            destination.unlink()
-    destination.mkdir(parents=True, exist_ok=False)
+            _filesystem_path(destination).unlink()
+    _filesystem_path(destination).mkdir(parents=True, exist_ok=False)
 
     try:
         for entry in source_inventory.entries:
             source = _safe_repository_member(repository, entry.path)
-            if source.is_symlink():
+            if _filesystem_path(source).is_symlink():
                 raise QualificationProjectionError(f"Governed symlink is not permitted: {entry.path}")
-            if not source.is_file():
+            if not _filesystem_path(source).is_file():
                 raise QualificationProjectionError(f"Missing governed file during projection: {entry.path}")
             _copy_verified(source, destination / entry.path, entry)
         projected_inventory = verify_projected_inventory(destination, source_inventory)
     except Exception:
         # A failed projection is not a qualification authority.  Remove only
         # the external destination we created; never touch operational source.
-        if destination.exists() and not destination.is_symlink():
-            shutil.rmtree(destination, ignore_errors=True)
+        if _filesystem_path(destination).exists() and not _filesystem_path(destination).is_symlink():
+            shutil.rmtree(_filesystem_path(destination), ignore_errors=True)
         raise
 
     return ProjectionResult(
@@ -368,37 +457,37 @@ def remove_generated_artifacts_from_projection(
     members are deliberately left for exact-inventory verification to reject.
     """
 
-    root = Path(projection_root).resolve()
-    if not root.is_dir():
+    root = _resolved_path(projection_root)
+    if not _filesystem_path(root).is_dir():
         raise QualificationProjectionError(f"Clean projection does not exist: {root}")
 
     removed: list[str] = []
-    for current, dirs, names in os.walk(root, topdown=True, followlinks=False):
-        current_path = Path(current)
+    for current, dirs, names in os.walk(_filesystem_path(root), topdown=True, followlinks=False):
+        current_path = _logical_path(current)
         kept_dirs: list[str] = []
         for dirname in sorted(dirs):
             candidate = current_path / dirname
             rel = candidate.relative_to(root).as_posix()
-            if candidate.is_symlink():
+            if _filesystem_path(candidate).is_symlink():
                 kept_dirs.append(dirname)
                 continue
-            rule = _generated_directory_rule(dirname, contract)
+            rule = _generated_path_rule(rel, contract) or _generated_directory_rule(dirname, contract)
             if rule is None:
                 kept_dirs.append(dirname)
                 continue
-            shutil.rmtree(candidate)
+            shutil.rmtree(_filesystem_path(candidate))
             removed.append(rel)
         dirs[:] = kept_dirs
 
         for filename in sorted(names):
             candidate = current_path / filename
             rel = candidate.relative_to(root).as_posix()
-            if candidate.is_symlink():
+            if _filesystem_path(candidate).is_symlink():
                 continue
-            rule = _generated_file_rule(filename, contract)
+            rule = _generated_path_rule(rel, contract) or _generated_file_rule(filename, contract)
             if rule is None:
                 continue
-            candidate.unlink()
+            _filesystem_path(candidate).unlink()
             removed.append(rel)
 
     return tuple(sorted(removed))
@@ -407,8 +496,8 @@ def projected_source_roots(
     projection_root: str | Path,
     contract: QualificationContract,
 ) -> tuple[Path, ...]:
-    root = Path(projection_root).resolve()
-    return tuple((root / item.source_root).resolve() for item in contract.packages)
+    root = _resolved_path(projection_root)
+    return tuple(_resolved_path(root / item.source_root) for item in contract.packages)
 
 
 def projected_import_environment(
@@ -420,10 +509,10 @@ def projected_import_environment(
     """Return an environment that intentionally prioritises projected sources."""
 
     env = dict(os.environ if base_environment is None else base_environment)
-    projection = Path(projection_root).resolve()
+    projection = _resolved_path(projection_root)
     roots = projected_source_roots(projection, contract)
     for source_root in roots:
-        if not source_root.is_dir():
+        if not _filesystem_path(source_root).is_dir():
             raise QualificationProjectionError(
                 f"Projected package source root is missing: {source_root}"
             )
@@ -443,8 +532,8 @@ def projected_import_environment(
         raise QualificationProjectionError(
             "Qualification contract does not define the rp1_analysis_v1 package mapping"
         )
-    projected_project_root = (projection / analysis_project.project_root).resolve()
-    if not projected_project_root.is_dir():
+    projected_project_root = _resolved_path(projection / analysis_project.project_root)
+    if not _filesystem_path(projected_project_root).is_dir():
         raise QualificationProjectionError(
             f"Projected analysis project root is missing: {projected_project_root}"
         )
@@ -462,7 +551,7 @@ def probe_projected_imports(
 ) -> dict[str, dict[str, str]]:
     """Import governed modules in a subprocess and prove projected origins."""
 
-    root = Path(projection_root).resolve()
+    root = _resolved_path(projection_root)
     env = projected_import_environment(root, contract)
     modules = [item.module for item in contract.packages]
     probe = (
@@ -494,8 +583,8 @@ def probe_projected_imports(
     for module, raw_origin in origins.items():
         if module not in by_module or not isinstance(raw_origin, str):
             raise QualificationProjectionError("Projected import probe returned unexpected module data")
-        origin = Path(raw_origin).resolve()
-        expected_root = (root / by_module[module].source_root).resolve()
+        origin = _resolved_path(raw_origin)
+        expected_root = _resolved_path(root / by_module[module].source_root)
         if not _is_within(origin, expected_root):
             raise QualificationProjectionError(
                 f"Projected import resolved from wrong authority: {module} -> {origin}; expected under {expected_root}"
@@ -509,16 +598,16 @@ def probe_projected_imports(
 def write_projection_evidence(result: ProjectionResult, path: str | Path) -> Path:
     """Write deterministic JSON projection evidence outside the projection tree."""
 
-    destination = Path(path).resolve()
-    projection = Path(result.projection_root).resolve()
-    repository = Path(result.repository_root).resolve()
+    destination = _resolved_path(path)
+    projection = _resolved_path(result.projection_root)
+    repository = _resolved_path(result.repository_root)
     if _is_within(destination, projection):
         raise QualificationProjectionError("Projection evidence must be outside the clean projection")
     if _is_within(destination, repository):
         raise QualificationProjectionError("Projection evidence must be external to the operational repository")
-    destination.parent.mkdir(parents=True, exist_ok=True)
+    _filesystem_path(destination.parent).mkdir(parents=True, exist_ok=True)
     payload = json.dumps(result.to_dict(), sort_keys=True, indent=2, ensure_ascii=False) + "\n"
-    destination.write_text(payload, encoding="utf-8", newline="\n")
+    _filesystem_path(destination).write_text(payload, encoding="utf-8", newline="\n")
     return destination
 
 

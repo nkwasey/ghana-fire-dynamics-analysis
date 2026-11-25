@@ -96,6 +96,7 @@ def test_pipeline_year_resolution_clamps_global_years_and_sets_combine_bounds(
         force=False,
     )
     assert rc == 0
+    assert not (tmp_repo / "out").exists()
 
     plan = json.loads(capsys.readouterr().out.strip())
 

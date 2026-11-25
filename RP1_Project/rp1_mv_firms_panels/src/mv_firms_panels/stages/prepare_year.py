@@ -1,6 +1,6 @@
 # file: src/mv_firms_panels/stages/prepare_year.py
 """
-Stage: prepare_year (annual points → fires_canonical per-detection table).
+Stage: prepare_year (annual points → governed per-detection streams).
 
 This stage processes one sensor-year of FIRMS-like active fire points into the project’s
 contracted detection table (`fires_canonical_*`). The processing pipeline is:
@@ -18,8 +18,9 @@ contracted detection table (`fires_canonical_*`). The processing pipeline is:
    - points are split into inside-land vs outside-land using a configurable predicate
    - if require_land_intersection is True, outside-land points are dropped from
      the contracted output, but counts are still recorded in QA.
-4) Deterministically deduplicate points using a configurable key (rounded lat/lon) and
-   tie-break strategy.
+5) Deduplicate the established count stream using the configured key and tie-break.
+   VIIRS independently selects nominal/high points before FRP deduplication; finite
+   FRP ranks first, followed by the configured tie-break. MODIS retains its prior path.
 5) Join points to one or more polygon boundary levels (e.g., district, ACZ). Points that
    do not intersect any unit polygon for a given level are dropped for that level
    (unit_id is required by the fires_canonical schema).
@@ -35,6 +36,7 @@ Contractual bindings (CP)
   * Exact column order from cfg.determinism.column_order["fires_canonical"].
 - Output contract:
   * fires_canonical validates against cfg.outputs.schemas["fires_canonical"].
+  * VIIRS fires_frp_canonical has its own configured schema and ordering contract.
   * TYPE is retained in fires_canonical and only TYPE == 0 detections are allowed through.
   * One row per (deduplicated detection × polygon level), after dropping unmatched points.
 
@@ -74,6 +76,7 @@ Notes
 from __future__ import annotations
 
 import glob
+import os
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -81,9 +84,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from mv_firms_panels.core.config import AppConfig, SensorName
 from mv_firms_panels.core.hashing import sha256_file, sha256_text, short_hash8, stable_json_dumps
+from mv_firms_panels.core.input_profiles import (
+    ARCHIVE_PROFILE,
+    InputProfileError,
+    adapt_archive_sp,
+    source_profile_evidence,
+)
 from mv_firms_panels.core.schema import (
     enforce_exact_column_order,
     load_json_schema,
@@ -117,7 +127,9 @@ class PrepareYearResult:
 
     fires_canonical: pd.DataFrame
     qa_summary: dict[str, object]
+    fires_frp_canonical: pd.DataFrame | None = None
     fires_canonical_path: Path | None = None
+    fires_frp_canonical_path: Path | None = None
     qa_summary_path: Path | None = None
     manifest_path: Path | None = None
 
@@ -424,14 +436,19 @@ def _build_dedup_key(
 
 
 def deduplicate_points(
-    *, points: gpd.GeoDataFrame, sensor: SensorName, cfg: AppConfig
+    *, points: gpd.GeoDataFrame, sensor: SensorName, cfg: AppConfig,
+    finite_frp_first: bool = False,
 ) -> tuple[gpd.GeoDataFrame, dict[str, object]]:
     """Deduplicate points deterministically and return (kept_points, QA stats)."""
     if len(points) == 0:
         pts = points.copy()
         pts["dedup_key"] = pd.Series([], dtype="object")
         pts["was_dedup_kept"] = pd.Series([], dtype="bool")
-        return pts, {"n_in": 0, "n_kept": 0, "n_dropped": 0}
+        dcfg = cfg.processing.deduplication
+        return pts, {"n_in": 0, "n_kept": 0, "n_dropped": 0,
+            "latlon_round_decimals": int(dcfg.latlon_round_decimals),
+            "include_satellite_in_key": bool(dcfg.include_satellite_in_key),
+            "tie_break": list(dcfg.tie_break), "finite_frp_first": finite_frp_first}
 
     dcfg = cfg.processing.deduplication
     pts = points.copy()
@@ -459,6 +476,10 @@ def deduplicate_points(
 
     sort_cols: list[str] = ["dedup_key"]
     ascending: list[bool] = [True]
+    if finite_frp_first:
+        work["_finite_frp"] = np.isfinite(pd.to_numeric(work["frp_mw"], errors="coerce"))
+        sort_cols.append("_finite_frp")
+        ascending.append(False)
 
     for tb in tie_break:
         if tb == "max_frp_mw":
@@ -479,7 +500,7 @@ def deduplicate_points(
     work["was_dedup_kept"] = kept_flags.astype(bool)
 
     kept = work.loc[kept_flags].copy()
-    kept = kept.drop(columns=["_conf_rank", "_row_order"], errors="ignore")
+    kept = kept.drop(columns=["_conf_rank", "_row_order", "_finite_frp"], errors="ignore")
 
     stats = {
         "n_in": int(len(points)),
@@ -488,6 +509,7 @@ def deduplicate_points(
         "latlon_round_decimals": int(dcfg.latlon_round_decimals),
         "include_satellite_in_key": bool(dcfg.include_satellite_in_key),
         "tie_break": list(dcfg.tie_break),
+        "finite_frp_first": finite_frp_first,
     }
     return kept, stats
 
@@ -918,7 +940,20 @@ def prepare_year(
         "year": int(year),
         "run_id": run_id,
         "steps": {},
+        "in_memory_inputs": bool(points_gdf is not None or polygons_by_level is not None or land_mask_gdf is not None),
+        "geography_file_identity": [],
+        "source_selection": (
+            "in_memory" if points_gdf is not None else
+            "configured_glob" if points_path is None else "explicit_path"
+        ),
     }
+
+    if (cfg.io.inputs.firms_points[sensor].input_profile == ARCHIVE_PROFILE
+            and qa["in_memory_inputs"] and write_outputs):
+        raise PrepareYearError(
+            "Governed Archive SP writes require file-backed inputs; "
+            "use configured files or write_outputs=False for an in-memory probe"
+        )
 
     # Read points
     if points_gdf is None:
@@ -940,9 +975,30 @@ def prepare_year(
         points_path = points_path or Path("<in-memory>")
 
     qa["source_file"] = _rel_source_file(repo_root, Path(points_path))
+    source_path = Path(points_path)
+    source_files = [source_path] if source_path.suffix.lower() != ".shp" else sorted(source_path.parent.glob(source_path.stem + ".*"))
+    qa["source_file_identity"] = [{"path": _rel_source_file(repo_root, item), "sha256": sha256_file(item)} for item in source_files if item.is_file()]
+
+    fin = cfg.io.inputs.firms_points[sensor]
+    try:
+        qa["input_profile_evidence"] = source_profile_evidence(
+            input_config=fin, repo_root=repo_root, sensor=sensor, year=int(year),
+            points_path=source_path,
+        )
+        if fin.input_profile == ARCHIVE_PROFILE:
+            points_gdf, record_profile = adapt_archive_sp(
+                points=points_gdf, input_config=fin, repo_root=repo_root,
+                sensor=sensor, year=int(year), points_path=source_path,
+            )
+            qa["archive_record_profile"] = record_profile
+    except InputProfileError as exc:
+        raise PrepareYearError(str(exc)) from exc
 
     # Standardise (strict)
     pts = _standardise_points(points=points_gdf, sensor=sensor, cfg=cfg, strict=True)
+    if fin.input_profile == ARCHIVE_PROFILE:
+        # Source IDs trace selected representatives; they never alter RP1 keys.
+        pts["_archive_obs_id"] = points_gdf.loc[pts.index, "obs_id"].astype(str)
     qa["steps"]["standardise"] = {"n_points": int(len(pts))}
 
     # Binding policy: retain only FIRMS TYPE == 0 before land masking and deduplication.
@@ -981,12 +1037,14 @@ def prepare_year(
                 )
             )
         land_mask_gdf = read_polygons(land_mask_path)
+        land_files = [land_mask_path] if land_mask_path.suffix.lower() != ".shp" else sorted(land_mask_path.parent.glob(land_mask_path.stem + ".*"))
+        qa["geography_file_identity"].extend({"path": Path(os.path.relpath(p.resolve(), repo_root.resolve())).as_posix(), "sha256": sha256_file(p)} for p in land_files if p.is_file())
 
     if land_mask_gdf is not None and land_mask_enabled:
         lm = land_mask_gdf.copy()
         if lm.crs is None:
-            lm = lm.set_crs(pts.crs, allow_override=True)
-        elif lm.crs != pts.crs:
+            raise PrepareYearError("Land mask has no CRS; supply its authoritative spatial reference")
+        if lm.crs != pts.crs:
             lm = lm.to_crs(pts.crs)
 
         inside, outside, land_stats = split_points_by_land_mask(
@@ -1036,9 +1094,26 @@ def prepare_year(
     # Dedup (on whichever point set is flowing into fires_canonical)
     pts_dedup, dedup_stats = deduplicate_points(points=pts, sensor=sensor, cfg=cfg)
     qa["steps"]["dedup"] = dedup_stats
+    pts_dedup["_stream"] = "count"
+    if sensor == "viirs":
+        candidates = pts.loc[pts["conf_cat"].isin(("n", "h"))].copy()
+        pts_frp, frp_stats = deduplicate_points(
+            points=candidates, sensor=sensor, cfg=cfg, finite_frp_first=True
+        )
+        pts_frp["_stream"] = "frp"
+        qa["steps"]["frp_dedup"] = frp_stats
+        join_points = gpd.GeoDataFrame(
+            pd.concat([pts_dedup, pts_frp], ignore_index=True),
+            geometry=pts_dedup.geometry.name, crs=pts_dedup.crs,
+        )
+    else:
+        join_points = pts_dedup
+    qa["method_version"] = "viirs_frp_dual_stream_v1"
+    qa["config_sha256"] = sha256_text(stable_json_dumps(cfg.to_canonical_dict()))
 
     # Join to polygons (1+ levels)
     out_frames: list[pd.DataFrame] = []
+    trace_frames: list[pd.DataFrame] = []
     dropped_unmatched_by_level: dict[str, int] = {}
 
     for lvl in cfg.io.inputs.polygons:
@@ -1057,14 +1132,19 @@ def prepare_year(
                     )
                 )
             polys = read_polygons(polygon_path, columns=[lvl.unit_id_field, lvl.unit_name_field])
+            polygon_files = [polygon_path] if polygon_path.suffix.lower() != ".shp" else sorted(polygon_path.parent.glob(polygon_path.stem + ".*"))
+            qa["geography_file_identity"].extend({"path": Path(os.path.relpath(p.resolve(), repo_root.resolve())).as_posix(), "sha256": sha256_file(p)} for p in polygon_files if p.is_file())
 
         if polys.crs is None:
-            polys = polys.set_crs(pts_dedup.crs, allow_override=True)
-        elif polys.crs != pts_dedup.crs:
+            raise PrepareYearError(
+                f"Reporting polygons for level {level!r} have no CRS; "
+                "supply their authoritative spatial reference"
+            )
+        if polys.crs != pts_dedup.crs:
             polys = polys.to_crs(pts_dedup.crs)
 
         joined = join_points_to_units(
-            points=pts_dedup,
+            points=join_points,
             polygons=polys,
             level=level,
             unit_id_field=lvl.unit_id_field,
@@ -1075,12 +1155,25 @@ def prepare_year(
         # Drop unmatched points (unit_id required by schema)
         unit_id = joined["unit_id"].astype("object")
         keep = unit_id.notna() & (unit_id.astype(str).str.len() > 0)
-        dropped_unmatched_by_level[level] = int((~keep).sum())
+        dropped_unmatched_by_level[level] = int(((~keep) & (joined["_stream"] == "count")).sum())
         joined = joined.loc[keep].copy()
+        if fin.input_profile == ARCHIVE_PROFILE:
+            trace_frames.append(pd.DataFrame({
+                "run_id": run_id, "sensor": sensor, "year": int(year),
+                "source_file": qa["source_file"],
+                "obs_id": joined["_archive_obs_id"].astype(str),
+                "stream": joined["_stream"].astype(str), "level": level,
+                "unit_id": joined["unit_id"].astype(str),
+                "dedup_key": joined["dedup_key"].astype(str),
+                "acq_datetime_utc": joined["acq_datetime_utc"].astype(str),
+                "conf_cat": joined["conf_cat"].astype(str),
+                "frp_mw": joined["frp_mw"].astype(float),
+            }))
 
         # Canonical row record (schema properties; no extras)
         df = pd.DataFrame(
             {
+                "_stream": joined["_stream"].astype("object"),
                 "run_id": run_id,
                 "source_file": qa["source_file"],
                 "sensor": sensor,
@@ -1111,7 +1204,9 @@ def prepare_year(
     if not out_frames:
         raise PrepareYearError("No polygon levels configured (io.inputs.polygons is empty).")
 
-    fires = pd.concat(out_frames, ignore_index=True)
+    joined_streams = pd.concat(out_frames, ignore_index=True)
+    fires = joined_streams.loc[joined_streams["_stream"] == "count"].drop(columns="_stream")
+    fires_frp = joined_streams.loc[joined_streams["_stream"] == "frp"].drop(columns="_stream") if sensor == "viirs" else None
 
     qa["steps"]["polygon_join"] = {
         "levels": [lvl.level for lvl in cfg.io.inputs.polygons],
@@ -1128,6 +1223,14 @@ def prepare_year(
     if col_order is None:
         raise PrepareYearError("Config missing determinism.column_order.fires_canonical")
     fires = enforce_exact_column_order(fires, col_order, allow_reorder=True)
+    if fires_frp is not None:
+        frp_sort_keys = cfg.determinism.sort_keys.get("fires_frp_canonical")
+        frp_col_order = cfg.determinism.column_order.get("fires_frp_canonical")
+        if frp_sort_keys is None or frp_col_order is None:
+            raise PrepareYearError("Config missing fires_frp_canonical ordering contract")
+        if frp_sort_keys:
+            fires_frp = stable_sort_df(fires_frp, frp_sort_keys)
+        fires_frp = enforce_exact_column_order(fires_frp, frp_col_order, allow_reorder=True)
 
     # Schema validation
     if validate_schema:
@@ -1135,16 +1238,32 @@ def prepare_year(
         if not schema_rel:
             raise PrepareYearError("Config missing outputs.schemas.fires_canonical")
         schema_path = (repo_root / schema_rel).resolve()
+        qa["schema_file_identity"] = [{
+            "path": _repo_relative_text(repo_root, schema_path),
+            "sha256": sha256_file(schema_path),
+        }]
         schema_obj = load_json_schema(schema_path)
         fires = validate_dataframe_against_schema(
             df=fires, schema=schema_obj, expected_columns=col_order, allow_reorder=True
         )
+        if fires_frp is not None:
+            frp_schema_rel = cfg.outputs.schemas.get("fires_frp_canonical")
+            if not frp_schema_rel:
+                raise PrepareYearError("Config missing outputs.schemas.fires_frp_canonical")
+            fires_frp = validate_dataframe_against_schema(
+                df=fires_frp, schema=load_json_schema((repo_root / frp_schema_rel).resolve()), expected_columns=frp_col_order, allow_reorder=True
+            )
+            qa["schema_file_identity"].append({
+                "path": _repo_relative_text(repo_root, (repo_root / frp_schema_rel).resolve()),
+                "sha256": sha256_file((repo_root / frp_schema_rel).resolve()),
+            })
         qa["steps"]["schema_validation"] = {"status": "PASS", "schema": schema_rel}
     else:
         qa["steps"]["schema_validation"] = {"status": "SKIPPED"}
 
     # Writes: CSV + QA + manifest (+ optional QA exports)
     fires_path: Path | None = None
+    frp_path: Path | None = None
     qa_path: Path | None = None
     manifest_path: Path | None = None
 
@@ -1156,6 +1275,9 @@ def prepare_year(
         fires_path = out_dir / f"fires_canonical_{sensor}_{int(year)}.csv"
 
         write_dataframe_csv(df=fires, path=fires_path, sort_keys=sort_keys, column_order=col_order)
+        if fires_frp is not None:
+            frp_path = run_dir / "fires_frp_canonical" / sensor / f"fires_frp_canonical_{sensor}_{int(year)}.csv"
+            write_dataframe_csv(df=fires_frp, path=frp_path, sort_keys=frp_sort_keys, column_order=frp_col_order)
 
         # Optional QA exports (best-effort, must not affect fires_canonical)
         qa_exports_status, manifest_additions = _write_prepare_year_qa_exports(
@@ -1164,7 +1286,7 @@ def prepare_year(
             run_dir=run_dir,
             sensor=sensor,
             year=int(year),
-            cleaned_points=pts_dedup,
+            cleaned_points=pts_dedup.drop(columns="_stream"),
             outside_land_points=outside_land_points,
             all_points_for_plot=all_points_for_plot,
             land_mask_for_plot=land_mask_for_plot,
@@ -1174,10 +1296,29 @@ def prepare_year(
         qa["qa_exports"] = qa_exports_status
 
         qa_dir = run_dir / "qa"
+        if fin.input_profile == ARCHIVE_PROFILE:
+            trace = pd.concat(trace_frames, ignore_index=True)
+            trace_columns = ["run_id", "sensor", "year", "source_file", "obs_id", "stream",
+                             "level", "unit_id", "dedup_key", "acq_datetime_utc", "conf_cat", "frp_mw"]
+            trace_path = qa_dir / f"source_observation_trace_{sensor}_{int(year)}.csv"
+            write_dataframe_csv(
+                df=trace, path=trace_path, sort_keys=["stream", "level", "unit_id", "dedup_key", "obs_id"],
+                column_order=trace_columns,
+            )
+            qa["source_observation_trace_csv"] = {
+                "path": trace_path.relative_to(repo_root).as_posix(),
+                "sha256": sha256_file(trace_path), "rows": len(trace),
+            }
         qa_path = qa_dir / f"prepare_year_{sensor}_{int(year)}_summary.json"
         write_json(obj=qa, path=qa_path)
 
         manifest: dict[str, object] = {
+            "method_version": "viirs_frp_dual_stream_v1",
+            "sensor": sensor,
+            "year": int(year),
+            "run_id": run_id,
+            "config_sha256": qa["config_sha256"],
+            "input_profile_evidence": qa["input_profile_evidence"],
             "fires_canonical_csv": {
                 "path": fires_path.relative_to(repo_root).as_posix(),
                 "sha256": sha256_file(fires_path),
@@ -1187,6 +1328,14 @@ def prepare_year(
                 "sha256": sha256_file(qa_path),
             },
         }
+        if "source_observation_trace_csv" in qa:
+            manifest["source_observation_trace_csv"] = qa["source_observation_trace_csv"]
+        if frp_path is not None:
+            manifest["fires_frp_canonical_csv"] = {
+                "path": frp_path.relative_to(repo_root).as_posix(),
+                "sha256": sha256_file(frp_path),
+                "rows": len(fires_frp),
+            }
 
         # Optional additions are only for successfully written files.
         if manifest_additions:
@@ -1197,8 +1346,10 @@ def prepare_year(
 
     return PrepareYearResult(
         fires_canonical=fires,
+        fires_frp_canonical=fires_frp,
         qa_summary=qa,
         fires_canonical_path=fires_path,
+        fires_frp_canonical_path=frp_path,
         qa_summary_path=qa_path,
         manifest_path=manifest_path,
     )

@@ -1,0 +1,105 @@
+{
+  "identity_basis": "Observed hashes of delivered user-supplied input components",
+  "files": [
+    {
+      "path": "raw/aoi/gha_admin0.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "bytes": 5
+    },
+    {
+      "path": "raw/aoi/gha_admin0.dbf",
+      "sha256": "f0ab5ff0277b0266026394951a4390e91bbf92685b50341a23ea6838904cf3b9",
+      "bytes": 1739
+    },
+    {
+      "path": "raw/aoi/gha_admin0.prj",
+      "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4",
+      "bytes": 145
+    },
+    {
+      "path": "raw/aoi/gha_admin0.shp",
+      "sha256": "0b0f0e5f7f68e1ed137f425c8c0d53268b4393e2fb0af3266aef5684d3e3b825",
+      "bytes": 70044
+    },
+    {
+      "path": "raw/aoi/gha_admin0.shx",
+      "sha256": "a0fe7a49c932432ceab2d201756ac5e6f261dcafd4d0c40369ed947a9e8d57d2",
+      "bytes": 108
+    },
+    {
+      "path": "raw/districts/gha_admin2.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "bytes": 5
+    },
+    {
+      "path": "raw/districts/gha_admin2.dbf",
+      "sha256": "6055e69a88383ab7da0ccb18b9c46377e599b9fc12851c0520c3e5441301232c",
+      "bytes": 460806
+    },
+    {
+      "path": "raw/districts/gha_admin2.prj",
+      "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4",
+      "bytes": 145
+    },
+    {
+      "path": "raw/districts/gha_admin2.shp",
+      "sha256": "b6489e63e44c74a3b98aeef8c24d08c0c843297aceeef3cbf0dbf7ff2c7c524f",
+      "bytes": 1227360
+    },
+    {
+      "path": "raw/districts/gha_admin2.shx",
+      "sha256": "6f7fedbc31edee918f5e3f221a1fe357c3a1c7e277662567f4ec707ea385be25",
+      "bytes": 2180
+    },
+    {
+      "path": "raw/zones/Agro_climatic_zone.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "bytes": 5
+    },
+    {
+      "path": "raw/zones/Agro_climatic_zone.dbf",
+      "sha256": "fa6322e526de4f0ddd421dd43b76f020079b481919cafcd535990cca741cc507",
+      "bytes": 1275
+    },
+    {
+      "path": "raw/zones/Agro_climatic_zone.prj",
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b",
+      "bytes": 401
+    },
+    {
+      "path": "raw/zones/Agro_climatic_zone.shp",
+      "sha256": "b5e95136539e3da7765c295e43eb8afc0e547e04263dc13439232d176da4a309",
+      "bytes": 218404
+    },
+    {
+      "path": "raw/zones/Agro_climatic_zone.shx",
+      "sha256": "c4bda44b4d6ad488cbd739ebb0125042c1ff3c4b8cf740b323321be697f6b80c",
+      "bytes": 140
+    },
+    {
+      "path": "raw/zones/Agro_ecological_zone.cpg",
+      "sha256": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+      "bytes": 5
+    },
+    {
+      "path": "raw/zones/Agro_ecological_zone.dbf",
+      "sha256": "ff0d0cca8927c82f82608f405e741f5f33360a06b98bed77cde693995cbe2173",
+      "bytes": 922
+    },
+    {
+      "path": "raw/zones/Agro_ecological_zone.prj",
+      "sha256": "c05e9c2713f1e1ada3a79f092dbc1985fa624ec7a3d037fd9f6766e3c5820f8b",
+      "bytes": 401
+    },
+    {
+      "path": "raw/zones/Agro_ecological_zone.shp",
+      "sha256": "e730a8b70f41335c5e4d8e9df78deca76c5d385c734510fea125b12cd77c8b4f",
+      "bytes": 99980
+    },
+    {
+      "path": "raw/zones/Agro_ecological_zone.shx",
+      "sha256": "b545f7323ca60beaea037326ae69922932ed474917f5f4b2442139e3d2b2d9cd",
+      "bytes": 156
+    }
+  ]
+}

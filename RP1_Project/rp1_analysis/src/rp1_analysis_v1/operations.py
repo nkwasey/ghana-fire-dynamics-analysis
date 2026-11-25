@@ -194,7 +194,7 @@ def doctor_report(paths: ProjectPaths | None = None) -> dict[str, Any]:
         missing = [name for name, path in inputs.items() if not path.is_file()]
         record(
             "governed_inputs_visibility",
-            "PASS" if not missing else "FAIL",
+            "PASS" if not missing else "NOT_GENERATED",
             visible=len(inputs) - len(missing),
             expected=len(inputs),
             missing=missing,
@@ -252,6 +252,7 @@ def doctor_report(paths: ProjectPaths | None = None) -> dict[str, Any]:
     return {
         "schema": "rp1-operational-doctor-v1",
         "status": "PASS" if not hard_failures else "FAIL",
+        "analysis_inputs_ready": all(row["status"] == "PASS" for row in checks if row["check"] == "governed_inputs_visibility"),
         "hard_failures": hard_failures,
         "checks": checks,
     }

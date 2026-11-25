@@ -22,18 +22,24 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Patch
 
-from .contracts import PresentationExportSpecificationContract
+from .contracts import FigureContract, PresentationExportSpecificationContract
 from .data_io import load_data_authorities
 from .figures import FigureRenderError, RenderedFigure, export_figure
 from .mapping import (
+    CLUSTER_MEMBER_EDGE,
+    CLUSTER_MEMBER_FACE,
     GhanaMapAuthority,
     MappingError,
     _draw_legend_band,
+    arrange_presentation_map,
+    bounded_map_norm,
+    cluster_recurrence_titles,
     draw_choropleth_axis,
     draw_cluster_membership_axis,
     prepare_geography,
 )
 from .paths import ProjectPaths
+from .presentation import get_figure_spec
 from .style import PublicationStyle
 from .validation import DataContractSummary, validate_data_authorities
 
@@ -49,6 +55,7 @@ class _RegistryLike(Protocol):
 class _BundleLike(Protocol):
     analysis: Any
     data_schema: Any
+    figure: FigureContract
 
 
 class _PathsLike(Protocol):
@@ -74,7 +81,6 @@ _RECURRENCE_COLUMNS = (
     "exclusion_reasons",
 )
 _ALLOWED_SUPPORT = {"valid_nonzero", "valid_zero", "excluded"}
-_EXPECTED_TOTALS = {"mcd64a1": 104, "viirs": 108}
 
 
 @lru_cache(maxsize=8)
@@ -206,27 +212,47 @@ def _recurrence_map_source(
     if work["unit_id"].astype(str).duplicated().any():
         raise FigureRenderError(f"{spec.export_id} recurrence source must contain unique unit IDs")
 
-    totals = pd.to_numeric(work["total_significant_clusters"], errors="raise")
+    # The export authority has reconciled this source to the selected run's
+    # validated memberships. Cluster totals are results, not fixed design inputs.
+    totals = pd.to_numeric(work["total_significant_clusters"], errors="coerce")
+    total_values = totals.to_numpy(dtype=float, na_value=np.nan)
+    if (
+        not np.isfinite(total_values).all()
+        or (total_values < 0).any()
+        or (total_values != np.floor(total_values)).any()
+    ):
+        raise FigureRenderError(f"{spec.export_id} total significant clusters must be finite non-negative integers")
     if totals.nunique(dropna=False) != 1:
         raise FigureRenderError(f"{spec.export_id} must preserve a single total significant-cluster count")
-    expected_total = _EXPECTED_TOTALS[product]
-    observed_total = int(float(totals.iloc[0]))
-    if observed_total != expected_total:
-        raise FigureRenderError(
-            f"{spec.export_id} total significant clusters must be {expected_total}; observed {observed_total}"
-        )
+    total = int(totals.iloc[0])
 
     excluded = work["support_status"].astype(str).eq("excluded")
     valid = work.loc[~excluded].copy()
-    valid_counts = pd.to_numeric(valid["significant_cluster_count"], errors="raise")
-    if (valid_counts < 0).any() or not np.allclose(valid_counts.to_numpy(), np.round(valid_counts.to_numpy())):
+    valid_counts = pd.to_numeric(valid["significant_cluster_count"], errors="coerce")
+    count_values = valid_counts.to_numpy(dtype=float, na_value=np.nan)
+    if (
+        not np.isfinite(count_values).all()
+        or (count_values < 0).any()
+        or (count_values != np.floor(count_values)).any()
+    ):
         raise FigureRenderError(f"{spec.export_id} recurrence counts must be non-negative integers")
-    valid["significant_cluster_count"] = valid_counts.astype(float)
+    if (valid_counts > total).any():
+        raise FigureRenderError(f"{spec.export_id} recurrence counts exceed the selected run's total significant clusters")
+    zero = valid["support_status"].astype(str).eq("valid_zero")
+    if (valid_counts.loc[zero] != 0).any() or (valid_counts.loc[~zero] <= 0).any():
+        raise FigureRenderError(f"{spec.export_id} recurrence counts are inconsistent with support status")
 
-    expected_fraction = valid_counts / float(expected_total)
-    observed_fraction = pd.to_numeric(valid["significant_cluster_fraction"], errors="raise")
-    if not np.allclose(observed_fraction.to_numpy(), expected_fraction.to_numpy(), atol=1e-12, rtol=0.0):
-        raise FigureRenderError(f"{spec.export_id} recurrence fractions are not concordant with the cluster counts")
+    if total == 0:
+        if valid["significant_cluster_fraction"].notna().any():
+            raise FigureRenderError(f"{spec.export_id} recurrence fractions must be missing when no significant clusters exist")
+    else:
+        expected_fraction = count_values / float(total)
+        observed_fraction = pd.to_numeric(valid["significant_cluster_fraction"], errors="coerce")
+        fraction_values = observed_fraction.to_numpy(dtype=float, na_value=np.nan)
+        if not np.isfinite(fraction_values).all() or not np.allclose(
+            fraction_values, expected_fraction, atol=1e-12, rtol=0.0
+        ):
+            raise FigureRenderError(f"{spec.export_id} recurrence fractions are not concordant with the cluster counts")
 
     if work.loc[excluded, ["significant_cluster_count", "significant_cluster_fraction"]].notna().any().any():
         raise FigureRenderError(f"{spec.export_id} excluded districts must not carry plotted recurrence values")
@@ -252,19 +278,17 @@ def render_rq4_cluster_membership(
             figure_data,
             style=context.style,
         )
-        panel_axes.map_ax.set_title(spec.label)
-        handles = [
-            Patch(
+        handles = []
+        if any_members:
+            handles.append(
+                Patch(facecolor=CLUSTER_MEMBER_FACE, edgecolor=CLUSTER_MEMBER_EDGE, label="Significant cluster member")
+            )
+        if figure_data["support_status"].eq("valid_zero").any():
+            handles.append(Patch(
                 facecolor=context.style.semantic.valid_zero.face,
                 edgecolor=context.style.semantic.valid_zero.edge,
                 label="No significant cluster membership",
-            )
-        ]
-        if any_members:
-            handles.insert(
-                0,
-                Patch(facecolor="0.35", edgecolor=context.style.boundary_colour, label="Significant cluster member"),
-            )
+            ))
         if any_excluded:
             handles.append(
                 Patch(
@@ -275,8 +299,7 @@ def render_rq4_cluster_membership(
                 )
             )
         _draw_legend_band(panel_axes.support_or_status_legend_ax, handles, style=context.style)
-        panel_axes.colorbar_or_categorical_key_ax.clear()
-        panel_axes.colorbar_or_categorical_key_ax.set_axis_off()
+        arrange_presentation_map(fig, panel_axes, title=spec.label, style=context.style)
         return export_figure(fig, context.style)
 
 
@@ -291,6 +314,7 @@ def render_rq4_cluster_recurrence(
     authority = _map_authority(context)
     figure_data = _recurrence_map_source(frame, spec=spec)
     label = _configured_colourbar_label(spec)
+    opts = get_figure_spec("F6", context.bundle.figure).renderer_options
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         fig, ax = plt.subplots(figsize=context.style.full_width_map)
         panel_axes = draw_choropleth_axis(
@@ -301,10 +325,15 @@ def render_rq4_cluster_recurrence(
             value="significant_cluster_count",
             colorbar_label=label,
             style=context.style,
-            cmap="cividis",
+            cmap=str(opts["cmap"]),
+            norm=bounded_map_norm(float(opts["recurrence_scale_max"])),
+            colorbar_ticks=tuple(opts["recurrence_scale_ticks"]),
             draw_colorbar=True,
         )
-        panel_axes.map_ax.set_title(spec.label)
+        arrange_presentation_map(
+            fig, panel_axes, style=context.style,
+            title=cluster_recurrence_titles(context.bundle.analysis)[_expected_product(spec)],
+        )
         return export_figure(fig, context.style)
 
 

@@ -1,0 +1,44 @@
+'use strict';
+// Designed scalar observations exercise the real core without remote sources.
+const fs=require('fs'),path=require('path'),vm=require('vm');
+const base=path.resolve(__dirname,'../..');
+const mock=fs.readFileSync(path.join(base,'tests/offline/test_mock_ee.cjs'),'utf8');
+const cutoff=mock.indexOf('let r=row(image(100,3));');
+if(cutoff<0)throw Error('Mock setup marker not found');
+const checks=String.raw`
+let selected=ctx.c3Profile('BA2001');
+assert.strictEqual(selected.end,2024);
+assert.throws(()=>ctx.c3ParseDate(selected,2025,1),/observation/);
+ctx.C3.observationEndYear=2025;
+selected=ctx.c3Profile('BA2001');
+assert.strictEqual(selected.end,2024,'observation extension changed union');
+assert.strictEqual(ctx.c3ParseDate(selected,2025,1).year,2025);
+assert.strictEqual(ctx.c3Selectors(selected,2024).length,69);
+assert.strictEqual(ctx.c3Selectors(selected,2025).length,70);
+assert.strictEqual(ctx.c3Selectors(selected,2025)[69],'ba_annual_lc_source_index');
+assert.throws(()=>ctx.c3ParseDate(selected,2026,1),/observation/);
+let years=Array.from(ctx.c3RequiredLcYears(selected,[{year:2025,month:1}]));
+assert.strictEqual(years.length,25);
+assert.strictEqual(years[0],2001);assert.strictEqual(years[24],2025);
+// A newly eligible annual pixel must not enlarge the fixed union.
+profile={id:'BA2001',start:2001,end:2002,observationStart:2001,observationEnd:2025};
+date={year:2025,month:1};
+sources={2001:annual(13,2),2002:annual(13,2),2025:annual(9,2)};
+ctx.c3LcImage=index=>sources[Number(String(index).slice(0,4))];
+receipt.annual_lc_indexes={'2001':'2001','2002':'2002','2025':'2025_01_01'};
+let fixed=ctx.c3Domain(profile,receipt);
+assert.strictEqual(Boolean(fixed.eligible.one().v),false);
+assert.strictEqual(Boolean(fixed.annual[2025].eligible.one().v),true);
+let value=unwrap(ctx.c3Row(unit,profile,date,fixed,ctx.c3Evidence(image(100,3)),'2025_01_01',['2001','2002'],'future').p);
+assert.strictEqual(value.modis_ba_km2,0);
+assert.strictEqual(value.modis_burnable_km2_union,0);
+assert.strictEqual(value.modis_burnable_km2_annual,1);
+assert.strictEqual(value.ba_annual_lc_source_index,'2025_01_01');
+assert.strictEqual(value.ba_domain_end_year,2002);
+fixed.annualSourceIndexes['2025']='2024_01_01';
+assert.throws(()=>ctx.c3Row(unit,profile,date,fixed,ctx.c3Evidence(image(100,3)),'2025_01_01',['2001','2002'],'future'),/does not match observation year/);
+delete fixed.annualSourceIndexes['2025'];
+assert.throws(()=>ctx.c3Row(unit,profile,date,fixed,ctx.c3Evidence(image(100,3)),'2025_01_01',['2001','2002'],'future'),/Missing admitted annual LC/);
+console.log('PASS declared observation years, annual source inventory and fixed-union preservation');
+`;
+vm.runInNewContext(mock.slice(0,cutoff)+checks,{require,console,__dirname:path.join(base,'tests/offline'),process,Buffer},{filename:'c3_observation_period_mock.cjs'});

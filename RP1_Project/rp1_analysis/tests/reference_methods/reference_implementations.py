@@ -154,9 +154,7 @@ def local_moran_reference(values, ids, neighbours, permutations, seed):
     """Independent population-standardised conditional Local Moran calculation.
 
     For each non-island observation, neighbour values are sampled without
-    replacement from all other non-island standardised values.  The pseudo
-    permutation p-value uses the smaller randomisation tail, consistent with
-    common Local Moran randomisation implementations.
+    replacement from all other non-island standardised values.  The two-sided p-value doubles the smaller inclusive plus-one tail.
     """
     active = [u for u in ids if neighbours[u]]
     raw = dict(zip(ids, values, strict=True))
@@ -185,7 +183,7 @@ def local_moran_reference(values, ids, neighbours, permutations, seed):
                 sampled = rng.choice(other, size=len(ns), replace=False)
                 simulated[i] = zm[u] * float(np.mean(sampled))
             above = int(np.count_nonzero(simulated >= obs))
-            extreme_tail = min(above, permutations - above)
-            p = (extreme_tail + 1) / (permutations + 1)
+            below = int(np.count_nonzero(simulated <= obs))
+            p = min(1.0, 2.0 * (min(above, below) + 1) / (permutations + 1))
         out.append({"unit_id": u, "local_morans_i": obs, "permutation_p": p})
     return out

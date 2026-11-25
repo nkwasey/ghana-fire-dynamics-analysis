@@ -168,19 +168,12 @@ class ProjectPaths:
 
     @property
     def governed_inputs(self) -> dict[str, Path]:
-        return {
-            "acz_panel": self.resolve_inside(
-                "data/raw/fire_panel_acz_monthly_consolidated_2001_2024.csv"
-            ),
-            "district_panel": self.resolve_inside(
-                "data/raw/fire_panel_district_monthly_consolidated_2001_2024.csv"
-            ),
-            "key_audit": self.resolve_inside("data/raw/fire_panel_key_audit.csv"),
-            "panel_manifest": self.resolve_inside("data/raw/fire_panel_manifest.json"),
-            "merge_summary": self.resolve_inside("data/raw/fire_panel_merge_summary.json"),
-            "acz_geometry": self.resolve_inside("data/geo/acz.shp"),
-            "district_geometry": self.resolve_inside("data/geo/districts_within_acz.shp"),
-        }
+        from .config import load_configuration_bundle
+        schema = load_configuration_bundle(self.root / "config").data_schema
+        result = {name: self.resolve_inside(spec.path) for name, spec in schema.panels.items()}
+        result.update({name: self.resolve_inside(spec["path"]) for name, spec in schema.auxiliary_inputs.items()})
+        result.update({name + "_geometry": self.resolve_inside(spec.path) for name, spec in schema.geometries.items()})
+        return result
 
     @property
     def all_hashed_inputs(self) -> tuple[Path, ...]:

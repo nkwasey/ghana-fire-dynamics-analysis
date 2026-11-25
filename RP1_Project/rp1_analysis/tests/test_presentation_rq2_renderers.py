@@ -1,4 +1,5 @@
 from __future__ import annotations
+from generated_run_reference import selected_run_base, require_selected_run
 
 import hashlib
 import json
@@ -8,6 +9,7 @@ import pandas as pd
 import pytest
 
 import rp1_analysis_v1.presentation_export as pe
+import rp1_analysis_v1.presentation_rq2 as rq2
 from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.figures import FigureRenderError
 from rp1_analysis_v1.paths import ProjectPaths
@@ -15,18 +17,10 @@ from rp1_analysis_v1.presentation import get_presentation_export_spec
 from rp1_analysis_v1.presentation_rq2 import render_rq2_five_acz_comparison, render_rq2_single_trend
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_BASE = "qualified_presentation_fixture"
+RUN_BASE = selected_run_base(ROOT)
 RUN_CLOSE = ROOT / "out" / "runs" / f"{RUN_BASE}_close"
 FD_F4 = ROOT / "out" / "runs" / f"{RUN_BASE}_pub" / "02_rq2_temporal_robustness" / "figure_data" / "FD_F4.csv"
 S4 = ROOT / "out" / "runs" / f"{RUN_BASE}_pub" / "02_rq2_temporal_robustness" / "tables" / "S4.csv"
-EXPECTED_SOURCE_SHA = "7e92e946c3c8f6ad6cefd9850de2dcb6f45ab45c8df14e7b5513a9b42336a32a"
-EXPECTED = {
-    "CZ": ("COASTAL ZONE", -0.1647449475437066, 0.2322, 0.29025),
-    "FZ": ("FOREST ZONE", -0.0531408764429660, 0.5741, 0.5741),
-    "GS": ("GUINEA SAVANNAH", -0.4502995257160126, 0.0833, 0.20825),
-    "SS": ("SUDAN SAVANNAH", -0.5015820536774339, 0.1372, 0.2286666666666666),
-    "TZ": ("TRANSITION ZONE", -0.6753271231724751, 0.0571, 0.20825),
-}
 EXPORTS = {
     "rq2_coastal_trend": "CZ",
     "rq2_forest_trend": "FZ",
@@ -37,6 +31,7 @@ EXPORTS = {
 
 
 def _context_and_source(export_id: str):
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     bundle = load_configuration_bundle(ROOT / "config")
     registry = bundle.figure.presentation_export
@@ -50,11 +45,13 @@ def _context_and_source(export_id: str):
     return spec, context, source
 
 
-def test_fd_f4_is_byte_identical_to_governed_source_identity() -> None:
-    assert hashlib.sha256(FD_F4.read_bytes()).hexdigest() == EXPECTED_SOURCE_SHA
+def test_fd_f4_source_identity_is_computed_from_selected_run() -> None:
+    spec, context, source = _context_and_source("rq2_five_acz_comparison")
+    assert source.sha256 == hashlib.sha256(source.path.read_bytes()).hexdigest()
 
 
 def test_fd_f4_numeric_projection_exactly_matches_governed_s4() -> None:
+    require_selected_run(ROOT, RUN_BASE)
     fd = pd.read_csv(FD_F4)
     s4 = pd.read_csv(S4)
     cols = ["parent_code", "parent_name", "year", "annual_rate", "sen_slope", "raw_p", "bh_q"]
@@ -62,27 +59,38 @@ def test_fd_f4_numeric_projection_exactly_matches_governed_s4() -> None:
 
 
 @pytest.mark.parametrize(("export_id", "code"), tuple(EXPORTS.items()))
-def test_each_single_export_resolves_exact_governed_24_year_series(export_id: str, code: str) -> None:
-    _spec, _context, source = _context_and_source(export_id)
+def test_each_single_export_resolves_configured_year_series(export_id: str, code: str) -> None:
+    _spec, context, source = _context_and_source(export_id)
     frame = source.frame
     assert frame is not None
-    assert len(frame) == 24
-    assert tuple(frame["year"].astype(int)) == tuple(range(2001, 2025))
+    window = context.bundle.analysis.study["temporal_windows"]["long_run"]
+    years = tuple(range(int(str(window["start"])[:4]), int(str(window["end"])[:4]) + 1))
+    assert tuple(frame["year"].astype(int)) == years
     assert set(frame["parent_code"].astype(str)) == {code}
-    name, slope, raw_p, q = EXPECTED[code]
-    assert set(frame["parent_name"].astype(str)) == {name}
-    assert frame["sen_slope"].nunique() == frame["raw_p"].nunique() == frame["bh_q"].nunique() == 1
-    assert float(frame["sen_slope"].iloc[0]) == pytest.approx(slope, abs=1e-15)
-    assert float(frame["raw_p"].iloc[0]) == pytest.approx(raw_p, abs=1e-15)
-    assert float(frame["bh_q"].iloc[0]) == pytest.approx(q, abs=1e-15)
-    assert float(frame["sen_slope"].iloc[0]) < 0.0
-    assert float(frame["bh_q"].iloc[0]) >= 0.05
+    authority = pd.read_csv(S4).loc[lambda x: x.parent_code.eq(code)]
+    columns = ["parent_code", "parent_name", "year", "annual_rate", "sen_slope", "raw_p", "bh_q"]
+    pd.testing.assert_frame_equal(frame[columns].reset_index(drop=True), authority[columns].reset_index(drop=True), check_dtype=False)
+    for field in ("sen_slope", "raw_p", "bh_q"):
+        assert frame[field].nunique() == 1
+    assert frame["raw_p"].between(0.0, 1.0).all()
+    assert frame["bh_q"].between(0.0, 1.0).all()
 
 
 @pytest.mark.parametrize("export_id", tuple(EXPORTS))
-def test_single_renderer_returns_valid_configured_png_pdf(export_id: str) -> None:
+def test_single_renderer_returns_valid_configured_png_pdf(export_id: str, monkeypatch) -> None:
     spec, context, source = _context_and_source(export_id)
     assert source.frame is not None
+    export = rq2.export_figure
+
+    def capture(fig, style):
+        ax, = fig.axes
+        assert ax.get_title() == spec.label
+        observed, slope = ax.lines
+        assert (observed.get_color(), observed.get_marker(), observed.get_linestyle()) == ("#0072B2", "o", "-")
+        assert (slope.get_color(), slope.get_linestyle()) == ("#D55E00", "--")
+        return export(fig, style)
+
+    monkeypatch.setattr(rq2, "export_figure", capture)
     rendered = render_rq2_single_trend(source.frame, spec=spec, context=context)
     assert rendered.png.startswith(b"\x89PNG\r\n\x1a\n")
     assert rendered.pdf.startswith(b"%PDF")
@@ -95,7 +103,9 @@ def test_single_renderer_fails_closed_on_wrong_year_support() -> None:
     spec, context, source = _context_and_source("rq2_coastal_trend")
     assert source.frame is not None
     broken = source.frame.iloc[:-1].copy()
-    with pytest.raises(FigureRenderError, match="exactly 24 annual rows"):
+    window = context.bundle.analysis.study["temporal_windows"]["long_run"]
+    annual_count = int(str(window["end"])[:4]) - int(str(window["start"])[:4]) + 1
+    with pytest.raises(FigureRenderError, match=f"exactly {annual_count} annual rows"):
         render_rq2_single_trend(broken, spec=spec, context=context)
 
 
@@ -111,8 +121,8 @@ def test_single_renderer_fails_closed_on_inconsistent_inference_authority() -> N
 def test_five_acz_comparison_is_approved_and_complete() -> None:
     spec, context, source = _context_and_source("rq2_five_acz_comparison")
     assert source.frame is not None
-    assert len(source.frame) == 120
-    assert set(source.frame["parent_code"].astype(str)) == set(EXPECTED)
+    assert len(source.frame) == len(pd.read_csv(S4))
+    assert set(source.frame["parent_code"].astype(str)) == set(EXPORTS.values())
     rendered = render_rq2_five_acz_comparison(source.frame, spec=spec, context=context)
     assert rendered.png.startswith(b"\x89PNG\r\n\x1a\n")
     assert rendered.pdf.startswith(b"%PDF")
@@ -130,6 +140,7 @@ def test_exporter_registry_implements_exactly_six_rq2_exports() -> None:
 
 @pytest.mark.parametrize("export_id", tuple(EXPORTS))
 def test_end_to_end_single_export_is_read_only_and_manifest_bound(export_id: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     run = pe.resolve_run_family(RUN_CLOSE, paths=paths, validate=False)
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
@@ -142,12 +153,13 @@ def test_end_to_end_single_export_is_read_only_and_manifest_bound(export_id: str
     assert report["source_run_unchanged"] is True
     manifest = json.loads((destination / "presentation_export_manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_run_read_only"] is True
-    assert {row["source_sha256"] for row in manifest["exports"]} == {EXPECTED_SOURCE_SHA}
+    assert {row["source_sha256"] for row in manifest["exports"]} == {_context_and_source(export_id)[2].sha256}
     assert (destination / f"{export_id}.png").read_bytes().startswith(b"\x89PNG")
     assert (destination / f"{export_id}.pdf").read_bytes().startswith(b"%PDF")
 
 
 def test_end_to_end_five_acz_comparison_is_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     run = pe.resolve_run_family(RUN_CLOSE, paths=paths, validate=False)
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
@@ -161,6 +173,7 @@ def test_end_to_end_five_acz_comparison_is_read_only(tmp_path: Path, monkeypatch
 
 
 def test_deterministic_repeat_rendering_for_all_six_exports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    require_selected_run(ROOT, RUN_BASE)
     paths = ProjectPaths(ROOT)
     run = pe.resolve_run_family(RUN_CLOSE, paths=paths, validate=False)
     monkeypatch.setattr(pe, "resolve_run_family", lambda *args, **kwargs: run)
@@ -171,3 +184,5 @@ def test_deterministic_repeat_rendering_for_all_six_exports(tmp_path: Path, monk
         pe.export_one_presentation_figure(run_dir=RUN_CLOSE, output_dir=second, export_id=export_id, paths=paths)
         assert (first / f"{export_id}.png").read_bytes() == (second / f"{export_id}.png").read_bytes()
         assert (first / f"{export_id}.pdf").read_bytes() == (second / f"{export_id}.pdf").read_bytes()
+
+

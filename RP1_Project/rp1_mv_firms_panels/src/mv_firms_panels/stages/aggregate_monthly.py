@@ -1,9 +1,9 @@
 # file: src/mv_firms_panels/stages/aggregate_monthly.py
-"""Stage: aggregate_monthly (fires_canonical → per-sensor monthly metrics).
+"""Stage: aggregate_monthly (annual detection streams → monthly metrics).
 
 Role in pipeline
 ----------------
-- Input: canonical per-detection table produced by `prepare_year` (stacked across levels).
+- Input: count canonical detections and, for VIIRS, independent FRP canonical detections.
 - Output: sensor-specific monthly metrics at (level, unit_id, yyyymm).
 
 This stage is intentionally *sensor-specific* so that:
@@ -53,6 +53,8 @@ in the run folder” unless explicitly requested.
 """
 
 from __future__ import annotations
+
+import json
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -137,7 +139,7 @@ def _annual_partition_paths(
     sensor-year.  Those files have disjoint calendar-month support, so they can
     be aggregated independently and concatenated without changing any monthly
     statistic.  Restricting the bounded-memory path to this naming contract
-    preserves the legacy behaviour for arbitrary caller-supplied path lists.
+    accepts arbitrary caller-supplied path lists.
     """
     out: list[tuple[int, Path]] = []
     seen: set[int] = set()
@@ -170,13 +172,43 @@ def _read_partition_required_columns(path: Path) -> pd.DataFrame:
         ) from exc
 
 
+def _validate_viirs_partitions(
+    *, repo_root: Path, cfg: AppConfig, run_dir: Path, run_id: str,
+    annual_paths: Sequence[tuple[int, Path]], explicit_paths: Sequence[Path] | None,
+    require_file_inputs: bool = True,
+) -> dict[int, Path]:
+    """Bind each paired partition to the original preparation receipt and source."""
+    years = {year for year, _ in annual_paths}
+    candidates = list(explicit_paths) if explicit_paths is not None else sorted(
+        (run_dir / "fires_frp_canonical" / "viirs").glob("fires_frp_canonical_viirs_*.csv")
+    )
+    frp_paths: dict[int, Path] = {}
+    for path in candidates:
+        path = Path(path)
+        match = re.fullmatch(r"fires_frp_canonical_viirs_(\d{4})\.csv", path.name)
+        if not match or int(match.group(1)) in frp_paths:
+            raise AggregateMonthlyError(f"Invalid or duplicate VIIRS FRP partition: {path}")
+        frp_paths[int(match.group(1))] = path
+    if set(frp_paths) != years:
+        raise AggregateMonthlyError("VIIRS count and FRP partition years do not match")
+    from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+    for year, count_path in annual_paths:
+        try:
+            validate_preparation_partition(repo_root=repo_root, cfg=cfg, run_dir=run_dir,
+                run_id=run_id, sensor="viirs", year=year, count_path=count_path,
+                frp_path=frp_paths[year], require_file_inputs=require_file_inputs)
+        except ValueError as exc:
+            raise AggregateMonthlyError(str(exc)) from exc
+    return frp_paths
+
+
 def _normalise_and_filter_partition(
     fires: pd.DataFrame,
     *,
     eff_start: int | None,
     eff_end: int | None,
 ) -> tuple[pd.DataFrame, int, int, set[int], set[int]]:
-    """Apply the same type coercion and time filtering as the legacy path."""
+    """Apply the configured type coercion and time filtering."""
     missing = [c for c in _REQUIRED_AGG_COLUMNS if c not in fires.columns]
     if missing:
         raise AggregateMonthlyError(
@@ -206,6 +238,7 @@ def _aggregate_partition_frame(
     *,
     cfg: AppConfig,
     sensor: SensorName,
+    frp_fires: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, dict[str, int | float]]:
     """Aggregate one disjoint annual partition with production algorithms."""
     group_cols = ["level", "unit_id", "yyyymm"]
@@ -213,8 +246,11 @@ def _aggregate_partition_frame(
     det = compute_monthly_detection_metrics(fires, sensor=sensor, group_cols=group_cols)
 
     min_frp_mw = float(getattr(cfg.processing.frp_policy, "min_frp_mw", 0.0))
+    # Match the confidence population used in det_nh, before the FRP gate.
+    # Detection counts retain all strata; missing/gated FRP can still make the
+    # eligible FRP subset smaller than the nominal/high detection population.
     daily = compute_daily_max_frp(
-        fires,
+        (fires if frp_fires is None else frp_fires).loc[lambda x: x["conf_cat"].isin(("n", "h"))],
         id_cols=["level", "unit_id"],
         min_frp_mw=min_frp_mw,
     )
@@ -239,13 +275,14 @@ def _aggregate_partition_frame(
 
 
 def _finalise_sensor_monthly_output(
-    out: pd.DataFrame, *, sensor: SensorName, run_id: str
+    out: pd.DataFrame, *, sensor: SensorName, run_id: str, allow_covered_empty: bool = False
 ) -> pd.DataFrame:
     """Apply the canonical post-aggregation typing and deterministic ordering."""
-    if len(out) == 0:
+    if len(out) == 0 and not allow_covered_empty:
         raise AggregateMonthlyError("fires_canonical is empty after aggregation")
 
     out = out.copy()
+    out["yyyymm"] = out["yyyymm"].astype("int64")
     out["year"] = (out["yyyymm"] // 100).astype("int64")
     out["month"] = (out["yyyymm"] % 100).astype("int64")
     out.insert(0, "run_id", run_id)
@@ -287,6 +324,51 @@ def _finalise_sensor_monthly_output(
         out[p95] = out[p95].astype("Float64")
 
     return stable_sort_df(out, ["level", "unit_id", "yyyymm"])
+
+
+def _validate_covered_empty_support(
+    *, cfg: AppConfig, repo_root: Path, run_id: str, sensor: SensorName,
+    annual_paths: Sequence[tuple[int, Path]], frp_paths: dict[int, Path] | None,
+    start_yyyymm: int | None, end_yyyymm: int | None,
+) -> dict[str, object]:
+    """Admit absence only with declared coverage and file-backed preparation.
+
+    An empty observation table is not a coverage statement. This exceptional
+    path therefore requires every annual partition in the bounded interval and
+    rechecks the complete preparation receipt chain, including the independent
+    VIIRS FRP stream, even for a read-only aggregation call.
+    """
+    if start_yyyymm is None or end_yyyymm is None:
+        raise AggregateMonthlyError("Covered-empty aggregation requires a bounded time window")
+    coverage = getattr(cfg.processing, "sensor_coverage", {}).get(sensor)
+    coverage_start = getattr(coverage, "start_yyyymm", None)
+    coverage_end = getattr(coverage, "end_yyyymm", None)
+    if (coverage_start is None or int(coverage_start) > start_yyyymm
+            or (coverage_end is not None and int(coverage_end) < end_yyyymm)):
+        raise AggregateMonthlyError("Empty annual partitions do not establish declared sensor coverage")
+    required_years = set(range(start_yyyymm // 100, end_yyyymm // 100 + 1))
+    if not required_years <= {year for year, _ in annual_paths}:
+        raise AggregateMonthlyError("Covered-empty aggregation is missing required annual partitions")
+    from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+    run_dir = build_run_dir(repo_root=repo_root, outputs_base_dir=cfg.outputs.base_dir, run_id=run_id)
+    for year, count_path in annual_paths:
+        try:
+            preparation = validate_preparation_partition(
+                repo_root=repo_root, cfg=cfg, run_dir=run_dir, run_id=run_id,
+                sensor=sensor, year=year, count_path=count_path,
+                frp_path=None if frp_paths is None else frp_paths[year], require_file_inputs=True,
+            )
+        except ValueError as exc:
+            raise AggregateMonthlyError(str(exc)) from exc
+        if getattr(cfg.io.inputs.firms_points[sensor], "input_profile", "native_firms_v1") == "ghana_firms_archive_sp_v1":
+            study = preparation.get("input_profile_evidence", {}).get("study", {})
+            study_start, study_end = study.get("start_yyyymm"), study.get("end_yyyymm")
+            if (type(study_start) is not int or type(study_end) is not int
+                    or study_start > start_yyyymm or study_end < end_yyyymm):
+                raise AggregateMonthlyError("Archive acceptance does not cover the empty aggregation window")
+    return {"status": "VERIFIED_COVERED_EMPTY", "start_yyyymm": start_yyyymm,
+            "end_yyyymm": end_yyyymm, "validated_annual_years": sorted(required_years),
+            "balancing": "unit_universe_and_declared_sensor_coverage_at_combine"}
 
 
 def _write_aggregate_outputs(
@@ -334,6 +416,7 @@ def _aggregate_annual_partitions(
     sensor: SensorName,
     run_id: str,
     annual_paths: Sequence[tuple[int, Path]],
+    frp_paths: dict[int, Path] | None,
     start_yyyymm: int | None,
     end_yyyymm: int | None,
     write_outputs: bool,
@@ -381,6 +464,7 @@ def _aggregate_annual_partitions(
         partition_rows.append(
             {
                 "year": int(year),
+                "sha256": sha256_file(path),
                 "path": path.relative_to(repo_root).as_posix()
                 if path.is_relative_to(repo_root)
                 else path.as_posix(),
@@ -388,9 +472,20 @@ def _aggregate_annual_partitions(
                 "n_rows_post": n_post,
             }
         )
-        if n_post == 0:
+        filtered_frp = None
+        if sensor == "viirs":
+            frp_path = frp_paths[year]
+            frp_raw = _read_partition_required_columns(frp_path)
+            filtered_frp, _, _, frp_months, _ = _normalise_and_filter_partition(
+                frp_raw, eff_start=eff_start, eff_end=eff_end
+            )
+            if {m // 100 for m in frp_months} - {year} or not frp_raw["conf_cat"].isin(("n", "h")).all():
+                raise AggregateMonthlyError(f"Invalid FRP annual partition: {frp_path}")
+            partition_rows[-1]["frp_path"] = frp_path.relative_to(repo_root).as_posix() if frp_path.is_relative_to(repo_root) else frp_path.as_posix()
+            partition_rows[-1]["frp_sha256"] = sha256_file(frp_path)
+        if n_post == 0 and (filtered_frp is None or filtered_frp.empty):
             continue
-        part, stats = _aggregate_partition_frame(filtered, cfg=cfg, sensor=sensor)
+        part, stats = _aggregate_partition_frame(filtered, cfg=cfg, sensor=sensor, frp_fires=filtered_frp)
         del filtered
         parts.append(part)
         det_groups += int(stats["det_groups"])
@@ -418,14 +513,26 @@ def _aggregate_annual_partitions(
         "start_yyyymm": None if eff_start is None else int(eff_start),
         "end_yyyymm": None if eff_end is None else int(eff_end),
     }
-    if n_rows_post == 0 or not parts:
-        raise AggregateMonthlyError(
-            "fires_canonical has 0 rows after applying time window filter "
-            f"(start_yyyymm={eff_start}, end_yyyymm={eff_end}, source={window_source})"
+    covered_empty = not parts
+    if covered_empty:
+        qa["steps"]["covered_empty"] = _validate_covered_empty_support(
+            cfg=cfg, repo_root=repo_root, run_id=run_id, sensor=sensor,
+            annual_paths=annual_paths, frp_paths=frp_paths,
+            start_yyyymm=eff_start, end_yyyymm=eff_end,
         )
+        # Keep this table sparse. The existing combine stage supplies the unit
+        # universe and monthly spine, fills only covered no-detection cells, and
+        # preserves structural missingness outside sensor coverage.
+        empty = pd.DataFrame({c: pd.Series(dtype="object") for c in _REQUIRED_AGG_COLUMNS})
+        part, _ = _aggregate_partition_frame(empty, cfg=cfg, sensor=sensor, frp_fires=empty)
+        parts.append(part)
 
     qa["steps"]["detections"] = {"n_groups": int(det_groups)}
     qa["steps"]["frp"] = {
+        "method_version": "viirs_frp_dual_stream_v1" if sensor == "viirs" else "modis_existing_v1",
+        "selection_stage": "before_independent_deduplication" if sensor == "viirs" else "after_count_deduplication",
+        "confidence_categories": ["n", "h"],
+        "aggregation": "mean_of_daily_maxima_over_eligible_utc_days",
         "min_frp_mw": min_frp_mw,
         "n_unit_days": int(frp_unit_days),
         "n_groups": int(frp_groups),
@@ -442,7 +549,9 @@ def _aggregate_annual_partitions(
             "Annual fires_canonical partitions produced overlapping monthly groups; "
             f"bounded-memory aggregation cannot safely concatenate them. Examples: {dup.to_dict('records')}"
         )
-    out = _finalise_sensor_monthly_output(out, sensor=sensor, run_id=run_id)
+    out = _finalise_sensor_monthly_output(
+        out, sensor=sensor, run_id=run_id, allow_covered_empty=covered_empty
+    )
 
     panel_path: Path | None = None
     qa_path: Path | None = None
@@ -523,6 +632,8 @@ def aggregate_monthly(
     end_yyyymm: int | None = None,
     fires_canonical_paths: Sequence[Path] | None = None,
     fires_canonical_df: pd.DataFrame | None = None,
+    fires_frp_canonical_paths: Sequence[Path] | None = None,
+    fires_frp_canonical_df: pd.DataFrame | None = None,
     write_outputs: bool = True,
 ) -> AggregateMonthlyResult:
     """Aggregate canonical detections into sensor-specific monthly metrics."""
@@ -530,6 +641,12 @@ def aggregate_monthly(
 
     if run_id is None:
         run_id = _derive_run_id(cfg)
+
+    is_archive = getattr(cfg.io.inputs.firms_points[sensor], "input_profile", "native_firms_v1") == "ghana_firms_archive_sp_v1"
+    if is_archive and write_outputs and (fires_canonical_df is not None or fires_frp_canonical_df is not None):
+        raise AggregateMonthlyError("In-memory Archive streams cannot produce governed outputs")
+    if sensor == "viirs" and fires_canonical_df is not None and write_outputs:
+        raise AggregateMonthlyError("In-memory VIIRS streams cannot produce governed outputs")
 
     qa: dict[str, object] = {
         "stage": "aggregate_monthly",
@@ -553,18 +670,53 @@ def aggregate_monthly(
             )
         annual_paths = _annual_partition_paths(candidate_paths, sensor=sensor)
         if annual_paths is not None:
+            frp_paths = None
+            if sensor == "viirs" or write_outputs or is_archive:
+                window_start, window_end, _ = _resolve_time_window(
+                    cfg, sensor=sensor, start_yyyymm=start_yyyymm, end_yyyymm=end_yyyymm
+                )
+                _validate_window(window_start, window_end)
+                if is_archive and (window_start is None or window_end is None):
+                    raise AggregateMonthlyError("Archive aggregation requires a bounded study window")
+                if window_start is not None and window_end is not None:
+                    required_years = set(range(window_start // 100, window_end // 100 + 1))
+                    missing_years = required_years - {year for year, _ in annual_paths}
+                    if missing_years:
+                        raise AggregateMonthlyError(f"Missing required {sensor.upper()} annual partitions: {sorted(missing_years)}")
+            if sensor == "viirs":
+                frp_paths = _validate_viirs_partitions(
+                    repo_root=repo_root, cfg=cfg, run_dir=run_dir, run_id=run_id,
+                    annual_paths=annual_paths, explicit_paths=fires_frp_canonical_paths,
+                    require_file_inputs=write_outputs,
+                )
+            elif write_outputs or getattr(cfg.io.inputs.firms_points[sensor], "input_profile", "native_firms_v1") == "ghana_firms_archive_sp_v1":
+                from mv_firms_panels.stages.preparation_evidence import validate_preparation_partition
+                try:
+                    for year, path in annual_paths:
+                        validate_preparation_partition(repo_root=repo_root, cfg=cfg, run_dir=run_dir,
+                            run_id=run_id, sensor=sensor, year=year, count_path=path,
+                            require_file_inputs=True)
+                except ValueError as exc:
+                    raise AggregateMonthlyError(str(exc)) from exc
             return _aggregate_annual_partitions(
                 cfg=cfg,
                 repo_root=repo_root,
                 sensor=sensor,
                 run_id=run_id,
                 annual_paths=annual_paths,
+                frp_paths=frp_paths,
                 start_yyyymm=start_yyyymm,
                 end_yyyymm=end_yyyymm,
                 write_outputs=write_outputs,
             )
+        if is_archive:
+            raise AggregateMonthlyError("Archive aggregation requires governed annual canonical partitions")
         fires_canonical_paths = candidate_paths
 
+    if sensor == "viirs" and fires_canonical_df is None:
+        raise AggregateMonthlyError("VIIRS requires governed annual count and FRP partitions")
+    if sensor == "viirs" and fires_frp_canonical_df is None:
+        raise AggregateMonthlyError("VIIRS aggregation requires an independent fires_frp_canonical dataframe")
     if fires_canonical_df is None:
         run_dir = build_run_dir(
             repo_root=repo_root, outputs_base_dir=cfg.outputs.base_dir, run_id=run_id
@@ -578,13 +730,14 @@ def aggregate_monthly(
         fires = _read_many_csv(fires_canonical_paths)
         qa["steps"]["read_fires_canonical"] = {
             "n_files": int(len(list(fires_canonical_paths))),
+            "files": [{"path": p.relative_to(repo_root).as_posix() if p.is_relative_to(repo_root) else p.as_posix(), "sha256": sha256_file(p)} for p in fires_canonical_paths],
             "n_rows": int(len(fires)),
         }
     else:
         fires = fires_canonical_df.copy()
         qa["steps"]["read_fires_canonical"] = {"source": "in-memory", "n_rows": int(len(fires))}
 
-    if len(fires) == 0:
+    if len(fires) == 0 and sensor != "viirs":
         raise AggregateMonthlyError("fires_canonical is empty; cannot aggregate.")
 
     required = ["level", "unit_id", "yyyymm", "date_utc", "conf_cat", "frp_mw"]
@@ -632,7 +785,7 @@ def aggregate_monthly(
         "end_yyyymm": None if eff_end is None else int(eff_end),
     }
 
-    if n_rows_post == 0:
+    if n_rows_post == 0 and sensor != "viirs":
         raise AggregateMonthlyError(
             "fires_canonical has 0 rows after applying time window filter "
             f"(start_yyyymm={eff_start}, end_yyyymm={eff_end}, source={window_source})"
@@ -643,17 +796,34 @@ def aggregate_monthly(
 
     group_cols = ["level", "unit_id", "yyyymm"]
 
+    frp_fires = fires
+    if sensor == "viirs":
+        frp_fires, _, _, _, _ = _normalise_and_filter_partition(
+            fires_frp_canonical_df, eff_start=eff_start, eff_end=eff_end
+        )
+        if not frp_fires["conf_cat"].isin(("n", "h")).all():
+            raise AggregateMonthlyError("VIIRS FRP stream contains non-nominal/high records")
+        if n_rows_post == 0 and frp_fires.empty:
+            raise AggregateMonthlyError("Both VIIRS streams are empty after the time window filter")
+
     det = compute_monthly_detection_metrics(fires, sensor=sensor, group_cols=group_cols)
     qa["steps"]["detections"] = {"n_groups": int(len(det))}
 
     min_frp_mw = float(getattr(cfg.processing.frp_policy, "min_frp_mw", 0.0))
+    # Match the confidence population used in det_nh, before the FRP gate.
+    # Detection counts retain all strata; missing/gated FRP can still make the
+    # eligible FRP subset smaller than the nominal/high detection population.
     daily = compute_daily_max_frp(
-        fires,
+        frp_fires.loc[frp_fires["conf_cat"].isin(("n", "h"))],
         id_cols=["level", "unit_id"],
         min_frp_mw=min_frp_mw,
     )
     frp = compute_monthly_frp_metrics_from_daily(daily, sensor=sensor, id_cols=["level", "unit_id"])
     qa["steps"]["frp"] = {
+        "method_version": "viirs_frp_dual_stream_v1" if sensor == "viirs" else "modis_existing_v1",
+        "selection_stage": "before_independent_deduplication" if sensor == "viirs" else "after_count_deduplication",
+        "confidence_categories": ["n", "h"],
+        "aggregation": "mean_of_daily_maxima_over_eligible_utc_days",
         "min_frp_mw": min_frp_mw,
         "n_unit_days": int(len(daily)),
         "n_groups": int(len(frp)),

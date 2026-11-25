@@ -917,6 +917,7 @@ class QualificationRepositoryContract:
     paths_must_be_repository_relative: bool
     forbid_parent_traversal: bool
     forbid_symlinks: bool
+    embedded_source_allowlists: tuple[tuple[str, str, str], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -924,6 +925,9 @@ class QualificationRepositoryContract:
             "paths_must_be_repository_relative": self.paths_must_be_repository_relative,
             "forbid_parent_traversal": self.forbid_parent_traversal,
             "forbid_symlinks": self.forbid_symlinks,
+            "embedded_source_allowlists": [
+                {"project_root": root, "path": path, "assignment": assignment}
+                for root, path, assignment in self.embedded_source_allowlists],
         }
 
 
@@ -949,6 +953,7 @@ class GeneratedArtifactContract:
     directory_suffixes: tuple[str, ...]
     file_suffixes: tuple[str, ...]
     file_names: tuple[str, ...]
+    relative_paths: tuple[str, ...]
     policy: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -957,6 +962,7 @@ class GeneratedArtifactContract:
             "directory_suffixes": list(self.directory_suffixes),
             "file_suffixes": list(self.file_suffixes),
             "file_names": list(self.file_names),
+            "relative_paths": list(self.relative_paths),
             "policy": self.policy,
         }
 

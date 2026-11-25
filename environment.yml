@@ -26,12 +26,17 @@ dependencies:
   - ipython
   - jupyterlab>=4,<5
   - pytest>=7,<10
+  - markdown-it-py>=3,<5  # Documentation-link collection in the full test suite.
+  - nodejs>=24,<25  # Pinned c3 source qualification; CSV processing is local.
   - pypdf>=5,<7
   - pillow>=10,<13
   - python-build>=1,<2
   - setuptools>=68
   - wheel
+  - requests>=2.31,<3
+  - pyshp>=2.3,<4
   - pip:
       - -e ./geo_data_prep
       - -e ./RP1_Project/rp1_mv_firms_panels
       - -e ./RP1_Project/rp1_analysis
+      - -e ./RP1_Project/rp1_firms_archive

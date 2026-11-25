@@ -1,0 +1,15 @@
+# Source representation and adopted zero policy
+
+The primary study design is a measured-burned-area-or-zero rule. Within the declared eligible domain, after successful source loading and the required technical checks, a pixel accepted as burned contributes its native pixel area; other eligible pixels contribute zero under the adopted scenario. An admitted zero therefore records no accepted mapped burned evidence, rather than verified physical absence of fire. This is the selected operational definition, not a claim that every original masked value has been identified.
+
+The binary evidence rule does not change the fixed eligibility domains or their denominators. Missing files, failed or incomplete reductions, unresolved domains, source anomalies and other guarded technical conditions retain their existing admission/error/null behavior. They must not be converted to ordinary scenario zeros. Preserve all original evidence fields, source identities and guarded nulls in the mandatory companion.
+
+A masked Earth Engine BurnDate does not by itself identify the original product value or prove absence of observation. `ba_supported_fraction` is accepted positive area divided by accepted positive plus qualifying visible explicit-zero area; it is not observation coverage. The existing QA/evidence fields remain traceability diagnostics and do not impose a requirement to validate every scenario or pixel before using the adopted study rule.
+
+Independent native-raster comparisons, source-value/mask investigations and evidence-stratified sensitivity exercises are deferred. They are not mandatory gates for this source-code revision or the adopted primary analysis. Existing offline tests, source-count/projection preflight, admission checks, schema/arithmetic checks and technical guards remain required. If a future study elects to interpret evidence as observation coverage or change the primary assumptions, specify its comparison/sampling rules prospectively and record changed observations, populations and estimands.
+
+Retain the selected source and asset identifiers, dates, native grid, geographic-selection rule and export/task identities with each delivery. Geography assets are uploaded manually from the generated bundles as described in the project geography handoff guide. Local Python admission uses retained files and receipts without recurring Python-to-GEE asset verification. Manual declarations record the upload procedure. Independent remote-asset checks require separate evidence.
+
+Sum monthly burned areas only as cumulative mapped monthly area: a pixel can recur across months. Do not sum the fixed union denominator across months, and interpret the annual mixed-domain ratio according to its separate numerator and denominator. Manuscript updates remain deferred.
+
+See `../METHOD_AND_OUTPUT_NOTES.md` and `../VERIFICATION.md`. Collection documentation: [MCD64A1.061 Earth Engine catalog](https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MCD64A1) and [MODIS burned area user guide](https://lpdaac.usgs.gov/documents/1006/MCD64_User_Guide_V61.pdf).

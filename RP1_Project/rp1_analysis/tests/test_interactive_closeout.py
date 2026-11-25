@@ -11,10 +11,10 @@ import pytest
 from rp1_analysis_v1.config import load_configuration_bundle
 from rp1_analysis_v1.integration import IntegrationError, finalise_interactive_run
 from rp1_analysis_v1.paths import ProjectPaths
+from _synthetic_run_fixtures import write_secondary_state
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config"
-FIXTURE_SEC = ROOT / "tests/fixtures/qualified_presentation_run/qualified_presentation_fixture_sec"
 
 
 def _sha(path: Path) -> str:
@@ -45,7 +45,7 @@ def _project(
     sec = root / "out/runs" / f"{run_id}_sec"
     close = root / "out/runs" / f"{run_id}_close"
     pub.mkdir(parents=True)
-    shutil.copytree(FIXTURE_SEC, sec)
+    write_secondary_state(sec, tuple(bundle.analysis.secondary_analysis["scenarios"]))
     (close / "99_closeout").mkdir(parents=True)
 
     if state == "EXTERNAL_RESULTS_REQUIRED":

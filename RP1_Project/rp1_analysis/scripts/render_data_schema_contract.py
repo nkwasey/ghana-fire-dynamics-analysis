@@ -18,11 +18,12 @@ def render(root: Path) -> str:
     ds=bundle.data_schema
     lines=[
         '# Data Schema Contract', '',
-        'This document is generated from `config/data_schema_contract.yml`. The YAML contract is the machine-readable authority; this file is a derived human-readable registry and must not be edited as an independent 111-field authority.', '',
+        f'This document is generated from `config/data_schema_contract.yml`. The YAML contract is the machine-readable authority; this file is a derived registry and must not be edited as an independent {ds.field_count}-field authority.', '',
         f'- Analysis schema: `{ds.schema_version}`',
         f'- Data schema: `{ds.data_schema_version}`',
         f'- Panel schema: `{ds.panel_schema_version}`',
         f'- Governed panel fields: **{ds.field_count}**', '',
+        'The `modis_burned_frac_annual_*` headers denote nonnegative ratios: their numerator is restricted to the family union mask, whereas their denominator is the year-specific burnable area. They are not fractions of the annual mask and may exceed one. The union-denominator fractions remain bounded by one.', '',
         '## Panel authorities', '',
         '| Panel | Path | Primary key | Rows | Units | Frequency | Start | End |',
         '|---|---|---|---:|---:|---|---|---|',
@@ -47,7 +48,15 @@ def render(root: Path) -> str:
         ]) + ' |')
     lines += ['', '## Additive reconciliation', '', 'District-to-ACZ reconciliation is governed by the YAML contract. The configured additive fields are:', '']
     for field in ds.additive_fields: lines.append(f'- `{field}`')
-    lines += ['', '## Structural missingness', '', 'A valid numerical zero is permitted only on product-supported unit-months. For fields tied to a structural-support rule, unsupported rows must remain null. Supported rows declared `required_when_supported: true` must be non-null. These semantics are validated from the machine-readable contract rather than from a second Python field list.', '']
+    lines += ['', '## Mandatory c3 evidence', '',
+        'The companion `ba_observation_support.csv` uses `rp1-ba-c3-evidence-v1`: all 69 original `rp1_ba_c3_extended_v2` fields plus `family`, `source_path`, `source_sha256` and 1-based data-record `source_row`. Original `run_id` remains the source task identity. The c3 policy is `c3_preserve_admission_v1`, pinned to `c3_methods_v1_schema_v2`.', '',
+        '## Auxiliary authorities', '', '| Role | Path |', '|---|---|']
+    for key,spec in ds.auxiliary_inputs.items():
+        lines.append(f'| `{key}` | `{spec["path"]}` |')
+    lines += ['', '## Structural missingness and result admission', '',
+        'Temporal flags describe calendar/domain membership. Outside that support, fields remain structurally null. Within support, c3 primary fields can be withheld by their own result guards; exact values/nulls must match the mandatory evidence companion. Positive annual denominator alone does not make a withheld primary numerator usable.', '',
+        'Admitted scenario zeros, including `NO_SUPPORTED_EVIDENCE`, are retained and are not physical absence observations. A resolved zero union has zero numerator/denominator and undefined union fraction/rate. Fixed denominators are never filled from known-union diagnostics. Complete-window analytical eligibility excludes withheld primary inputs without changing estimators.', '',
+        '`ba_supported_fraction` is accepted-positive divided by accepted-positive plus qualifying explicit-zero evidence, not geographic observation coverage. Five exclusive evidence-state areas form the known-union partition; reason areas overlap. District reconciliation never sums around missing constituent values.', '']
     return '\n'.join(lines)
 
 

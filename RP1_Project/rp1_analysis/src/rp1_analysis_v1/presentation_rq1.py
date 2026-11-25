@@ -17,20 +17,30 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import colors as mcolors
 
-from .contracts import PresentationExportSpecificationContract
-from .figures import FigureRenderError, RenderedFigure, export_figure
+from .contracts import FigureContract, PresentationExportSpecificationContract
+from .figures import (
+    FigureRenderError,
+    RenderedFigure,
+    draw_circular_mean_timing,
+    draw_district_seasonal_heatmap,
+    draw_resultant_length_by_group,
+    export_figure,
+    label_district_share_colorbar,
+    seasonality_lines,
+)
 from .mapping import (
     GhanaMapAuthority,
     MappingError,
     acz_categorical_context_map,
     acz_choropleth,
+    bounded_map_norm,
     categorical_map,
     choropleth,
     prepare_geography,
     support_acz_map,
 )
+from .presentation import get_figure_spec
 from .style import PublicationStyle
 
 
@@ -42,9 +52,14 @@ class _RegistryLike(Protocol):
     semantic_styles: Mapping[str, Any]
 
 
+class _BundleLike(Protocol):
+    figure: FigureContract
+
+
 class RenderContextLike(Protocol):
     geometry: _GeometryAuthorityLike
     registry: _RegistryLike
+    bundle: _BundleLike
     style: PublicationStyle
 
 
@@ -129,19 +144,6 @@ def _configured_colourbar_label(spec: PresentationExportSpecificationContract) -
             if label:
                 return label
     raise FigureRenderError(f"{spec.export_id} lacks its configured scientific colourbar label")
-
-
-def _signed_norm(frame: pd.DataFrame, *, value: str) -> mcolors.Normalize:
-    valid = frame.loc[~frame["support_status"].astype(str).eq("excluded"), value]
-    values = pd.to_numeric(valid, errors="raise").dropna().to_numpy(float)
-    if values.size == 0 or not np.isfinite(values).all():
-        raise FigureRenderError("Signed presentation map has no finite governed values")
-    vmin, vmax = float(values.min()), float(values.max())
-    if not (vmin < 0.0 < vmax):
-        raise FigureRenderError(
-            "Configured signed presentation map requires governed values on both sides of zero"
-        )
-    return mcolors.TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
 
 def _normalise_s1(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -290,6 +292,7 @@ def render_rq1_acz_long_run_rate(
     if len(frame) != len(order):
         raise FigureRenderError("ACZ long-run source does not contain the configured category count")
     authority = _map_authority(context)
+    opts = get_figure_spec("F2", context.bundle.figure).renderer_options
     return acz_choropleth(
         authority,
         frame,
@@ -297,7 +300,9 @@ def render_rq1_acz_long_run_rate(
         title=spec.label,
         colorbar_label=_configured_colourbar_label(spec),
         style=context.style,
-        cmap="viridis",
+        cmap=str(opts["panel_colormaps"][0]),
+        norm=bounded_map_norm(float(opts["rate_scale_max"])),
+        colorbar_ticks=tuple(opts["rate_scale_ticks"]),
     )
 
 
@@ -313,13 +318,23 @@ def render_rq1_district_choropleth(
         frame, ["unit_id", "support_status", "value"], context="District choropleth"
     )
     authority = _map_authority(context)
-    semantic = spec.colour_semantic.casefold()
-    norm: mcolors.Normalize | None = None
-    if "coolwarm" in semantic and "signed" in semantic:
-        cmap = "coolwarm"
-        norm = _signed_norm(frame, value="value")
-    elif "viridis" in semantic:
-        cmap = "viridis"
+    figure = context.bundle.figure
+    signed = spec.export_id == "rq1_district_departure"
+    show_percent = spec.export_id == "rq3_district_mismatch"
+    if spec.export_id == "rq1_district_long_run_rate":
+        opts = get_figure_spec("F2", figure).renderer_options
+        cmap = str(opts["panel_colormaps"][1])
+        norm = bounded_map_norm(float(opts["rate_scale_max"]))
+        ticks = tuple(opts["rate_scale_ticks"])
+    elif signed:
+        opts = get_figure_spec("F3", figure).renderer_options
+        cmap = str(opts["panel_colormaps"][0])
+        norm = bounded_map_norm(float(opts["departure_scale_limit"]), symmetric=True)
+        ticks = tuple(opts["departure_scale_ticks"])
+    elif show_percent:
+        opts = get_figure_spec("F5", figure).renderer_options
+        cmap = str(opts["panel_colormaps"][0])
+        norm = ticks = None
     else:
         raise FigureRenderError(
             f"{spec.export_id} has no supported configured continuous colour semantic"
@@ -333,6 +348,9 @@ def render_rq1_district_choropleth(
         style=context.style,
         cmap=cmap,
         norm=norm,
+        symmetric_about_zero=signed,
+        show_percent=show_percent,
+        colorbar_ticks=ticks,
     )
 
 
@@ -344,65 +362,15 @@ def render_rq1_acz_seasonality(
 ) -> RenderedFigure:
     if frame is None:
         raise FigureRenderError("ACZ seasonality renderer requires the governed tabular source")
-    required = [
-        "parent_code",
-        "unit_name",
-        "month",
-        "value",
-        "circular_mean_month",
-        "mean_resultant_length",
-    ]
-    _require_columns(frame, required, context="ACZ seasonality")
-    order = _explicit_values(spec)
-    palette = _acz_palette(context)
-    if set(frame["parent_code"].astype(str)) != set(order):
-        raise FigureRenderError("ACZ seasonality categories do not match configured order")
-    ylabel = spec.units.split(";", 1)[0].strip()
-    with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
-        fig, ax = plt.subplots(figsize=context.style.wide_single_panel)
-        for code in order:
-            group = frame.loc[frame["parent_code"].astype(str).eq(code)].copy()
-            if len(group) != 12 or group["month"].astype(int).nunique() != 12:
-                raise FigureRenderError(f"ACZ seasonality {code!r} does not contain exactly 12 months")
-            group = group.sort_values("month")
-            months = tuple(pd.to_numeric(group["month"], errors="raise").astype(int))
-            if months != tuple(range(1, 13)):
-                raise FigureRenderError(f"ACZ seasonality {code!r} month ordering is not 1-12")
-            mu = pd.to_numeric(group["circular_mean_month"], errors="raise").to_numpy(float)
-            resultant = pd.to_numeric(group["mean_resultant_length"], errors="raise").to_numpy(float)
-            if not (np.isfinite(mu).all() and np.isfinite(resultant).all()):
-                raise FigureRenderError("ACZ seasonality circular summaries contain non-finite values")
-            if not (np.allclose(mu, mu[0]) and np.allclose(resultant, resultant[0])):
-                raise FigureRenderError("ACZ seasonality circular summaries vary within an ACZ")
-            names = tuple(dict.fromkeys(group["unit_name"].astype(str)))
-            if len(names) != 1:
-                raise FigureRenderError("ACZ seasonality source has inconsistent zone names")
-            values = pd.to_numeric(group["value"], errors="raise").to_numpy(float)
-            if not np.isfinite(values).all():
-                raise FigureRenderError("ACZ seasonality source contains non-finite monthly values")
-            if code not in palette:
-                raise FigureRenderError(f"ACZ seasonality lacks configured colour for {code!r}")
-            ax.plot(
-                months,
-                values,
-                marker="o",
-                markersize=3.0,
-                linewidth=max(1.0, context.style.line_width),
-                color=palette[code],
-                label=f"{names[0]} (μ={mu[0]:.2f}, R={resultant[0]:.3f})",
-            )
-        ax.set_xticks(range(1, 13))
-        ax.set(xlabel="Month", ylabel=ylabel, title=spec.label)
-        ax.grid(alpha=context.style.grid_alpha)
-        ax.legend(
-            frameon=False,
-            fontsize=context.style.legend_font,
-            ncol=1,
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.14),
-        )
-        fig.tight_layout()
-        return export_figure(fig, context.style)
+    return seasonality_lines(
+        frame,
+        title=spec.label,
+        xlabel="Month",
+        ylabel=spec.units.split(";", 1)[0].strip(),
+        style=context.style,
+        zone_order=_explicit_values(spec),
+        zone_colours=_acz_palette(context),
+    )
 
 
 def render_rq1_local_moran(
@@ -445,17 +413,18 @@ def render_rq1_district_seasonal_heatmap(
     work, _, order = _ordered_s1(frame, context)
     pivot = work.pivot(index="unit_id", columns="month", values="monthly_share").reindex(order)
     pivot = pivot.reindex(columns=range(1, 13))
-    values = pivot.to_numpy(float)
-    with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
-        fig, ax = plt.subplots(figsize=context.style.single_panel)
-        image = ax.imshow(np.ma.masked_invalid(values), aspect="auto", interpolation="nearest", cmap="viridis")
-        ax.set_xticks(np.arange(12), [str(month) for month in range(1, 13)])
-        ax.set_yticks([])
-        ax.set(xlabel="Month", ylabel="Districts", title=spec.label)
-        colorbar = fig.colorbar(image, ax=ax, orientation="horizontal", fraction=0.06, pad=0.12)
-        colorbar.set_label("Share of district long-run burned area")
-        fig.tight_layout()
-        return export_figure(fig, context.style)
+    style = context.style
+    with plt.rc_context(matplotlib.RcParams(style.rc_params())):
+        fig, ax = plt.subplots(figsize=style.single_panel)
+        try:
+            image = draw_district_seasonal_heatmap(ax, pivot, xlabel="Month", ylabel="Districts")
+            ax.set_title(spec.label)
+            colorbar = fig.colorbar(image, ax=ax, orientation="horizontal", fraction=0.06, pad=0.12)
+            label_district_share_colorbar(colorbar, image)
+            fig.tight_layout()
+            return export_figure(fig, style)
+        finally:
+            plt.close(fig)
 
 
 def render_rq1_district_circular_mean_timing(
@@ -467,20 +436,16 @@ def render_rq1_district_circular_mean_timing(
     if frame is None:
         raise FigureRenderError("District circular timing renderer requires the governed tabular source")
     _, summary, _ = _ordered_s1(frame, context)
-    values = pd.to_numeric(summary["circular_mean_month"], errors="coerce")
-    finite = values.notna() & np.isfinite(values.to_numpy(float, na_value=np.nan))
-    y = np.arange(len(summary))
-    display = context.style.circular_mean_month_display
-    with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
-        fig, ax = plt.subplots(figsize=context.style.single_panel)
-        ax.scatter(values.loc[finite], y[finite.to_numpy()], s=10.0)
-        ax.set_xlim(display.axis_min, display.axis_max)
-        ax.set_xticks(display.ticks, display.tick_labels)
-        ax.set_yticks([])
-        ax.set(xlabel=display.axis_label, ylabel="Districts", title=spec.label)
-        ax.grid(axis="x", alpha=context.style.grid_alpha)
+    style = context.style
+    with plt.rc_context(matplotlib.RcParams(style.rc_params())):
+        fig, ax = plt.subplots(figsize=style.single_panel)
+        draw_circular_mean_timing(
+            ax, summary, xlabel=style.circular_mean_month_display.axis_label, ylabel="Districts", style=style,
+        )
+        ax.set_title(spec.label)
+        ax.grid(axis="x", alpha=style.grid_alpha)
         fig.tight_layout()
-        return export_figure(fig, context.style)
+        return export_figure(fig, style)
 
 
 def render_rq1_resultant_length_boxplot(
@@ -492,26 +457,19 @@ def render_rq1_resultant_length_boxplot(
     if frame is None:
         raise FigureRenderError("District resultant-length renderer requires the governed tabular source")
     _, summary, _ = _ordered_s1(frame, context)
-    order = _acz_order(context)
-    groups: list[np.ndarray] = []
-    for code in order:
-        values = pd.to_numeric(
-            summary.loc[summary["parent_code"].astype(str).eq(code), "mean_resultant_length"],
-            errors="coerce",
-        ).dropna().to_numpy(float)
-        if values.size == 0:
-            raise FigureRenderError(f"No finite governed resultant-length values for ACZ {code!r}")
-        if np.any((values < 0.0) | (values > 1.0)):
-            raise FigureRenderError("Governed mean resultant length must remain within 0-1")
-        groups.append(values)
-    with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
-        fig, ax = plt.subplots(figsize=context.style.single_panel)
-        ax.boxplot(groups, tick_labels=list(order), showfliers=False)
-        ax.set_ylim(0.0, 1.0)
-        ax.set(xlabel="ACZ", ylabel="Mean resultant length", title=spec.label)
-        ax.grid(axis="y", alpha=context.style.grid_alpha)
-        fig.tight_layout()
-        return export_figure(fig, context.style)
+    style = context.style
+    with plt.rc_context(matplotlib.RcParams(style.rc_params())):
+        fig, ax = plt.subplots(figsize=style.single_panel)
+        try:
+            draw_resultant_length_by_group(
+                ax, summary, xlabel="ACZ", ylabel="Mean resultant length", zone_order=_acz_order(context),
+            )
+            ax.set_title(spec.label)
+            ax.grid(axis="y", alpha=style.grid_alpha)
+            fig.tight_layout()
+            return export_figure(fig, style)
+        finally:
+            plt.close(fig)
 
 
 RQ1_PRESENTATION_RENDERERS = {

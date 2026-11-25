@@ -1,7 +1,7 @@
 """Regression tests for bounded-memory annual-partition aggregation.
 
 The production Ghana run writes one fires_canonical CSV per sensor-year.  The
-streaming path must be scientifically identical to the legacy in-memory path
+streaming path must be scientifically identical to the in-memory path
 while avoiding concatenation of every annual detection row at once.
 """
 from __future__ import annotations
@@ -50,24 +50,24 @@ def test_annual_partition_streaming_matches_in_memory_exactly(tmp_path: Path) ->
     all_rows = _rows()
     paths = []
     for year in (2023, 2024):
-        p = tmp_path / f"fires_canonical_viirs_{year}.csv"
+        p = tmp_path / f"fires_canonical_modis_{year}.csv"
         all_rows.loc[(all_rows["yyyymm"] // 100) == year].to_csv(p, index=False)
         paths.append(p)
 
     streamed = aggregate_monthly(
         cfg=cfg,
         repo_root=root,
-        sensor="viirs",
+        sensor="modis",
         run_id="streamed",
         fires_canonical_paths=paths,
         start_yyyymm=202312,
         end_yyyymm=202402,
         write_outputs=False,
     )
-    legacy = aggregate_monthly(
+    in_memory = aggregate_monthly(
         cfg=cfg,
         repo_root=root,
-        sensor="viirs",
+        sensor="modis",
         run_id="streamed",
         fires_canonical_df=all_rows,
         start_yyyymm=202312,
@@ -77,7 +77,7 @@ def test_annual_partition_streaming_matches_in_memory_exactly(tmp_path: Path) ->
 
     pdt.assert_frame_equal(
         streamed.panel_sensor_monthly.reset_index(drop=True),
-        legacy.panel_sensor_monthly.reset_index(drop=True),
+        in_memory.panel_sensor_monthly.reset_index(drop=True),
         check_dtype=True,
         check_exact=True,
     )
@@ -96,14 +96,14 @@ def test_annual_partition_streaming_respects_partial_window(tmp_path: Path) -> N
     all_rows = _rows()
     paths = []
     for year in (2023, 2024):
-        p = tmp_path / f"fires_canonical_viirs_{year}.csv"
+        p = tmp_path / f"fires_canonical_modis_{year}.csv"
         all_rows.loc[(all_rows["yyyymm"] // 100) == year].to_csv(p, index=False)
         paths.append(p)
 
     res = aggregate_monthly(
         cfg=cfg,
         repo_root=root,
-        sensor="viirs",
+        sensor="modis",
         run_id="streamed",
         fires_canonical_paths=paths,
         start_yyyymm=202401,

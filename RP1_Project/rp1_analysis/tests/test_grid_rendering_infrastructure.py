@@ -139,5 +139,5 @@ def test_generic_grid_module_contains_no_ghana_or_publication_number_authority()
     source = (ROOT / "src/rp1_analysis_v1/grid_rendering.py").read_text(encoding="utf-8")
     lower = source.casefold()
     assert "ghana" not in lower
-    for token in ("F2", "F3", "F4", "F5", "F6", "S1"):
+    for token in ("F2", "F3", "F4", "F5", "F6", "FS1", "FS2", "FS3", "FS4"):
         assert token not in source

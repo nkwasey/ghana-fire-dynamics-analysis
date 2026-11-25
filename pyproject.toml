@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghana-fire-rp1-analysis-workspace"
-version = "1.2.3"
+version = "1.3.1"
 description = "Workspace configuration for the Ghana Fire RP1 analysis and its governed preparation components."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -22,6 +22,7 @@ dependencies = []
 [project.optional-dependencies]
 test = [
   "pytest>=7,<10",
+  "markdown-it-py>=3,<5",
   "pypdf>=5,<7",
   "Pillow>=10,<13",
   "build>=1,<2",
@@ -30,6 +31,7 @@ test = [
 ]
 dev = [
   "pytest>=7,<10",
+  "markdown-it-py>=3,<5",
   "pypdf>=5,<7",
   "Pillow>=10,<13",
   "pytest-cov>=4,<7",
@@ -82,9 +84,12 @@ ignore = ["E501"]
 minversion = "7.0"
 addopts = "-q"
 testpaths = [
+  "tests",
+  "RP1_Project/tests",
   "geo_data_prep/tests",
   "RP1_Project/rp1_mv_firms_panels/tests",
   "RP1_Project/rp1_analysis/tests",
+  "RP1_Project/rp1_firms_archive/tests",
 ]
 norecursedirs = [
   ".git",

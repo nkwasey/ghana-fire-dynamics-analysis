@@ -59,7 +59,6 @@ def test_required_structure_exists() -> None:
         "scripts/validate_inputs.py",
         "scripts/execute_notebook.py",
         "scripts/validate_run.py",
-        "data/input_sha256.json",
     ]:
         assert (SUBPROJECT / rel).exists(), rel
 
@@ -69,7 +68,7 @@ def test_canonical_notebook_name_and_validity() -> None:
     assert notebooks == ["RP1_Analysis_v1.ipynb"]
     nb = nbformat.read(SUBPROJECT / "RP1_Analysis_v1.ipynb", as_version=4)
     assert nb.cells
-    assert "Ghana Fire RP1 Analysis v1" in nb.cells[0].source
+    assert nb.cells[0].source.startswith("# Ghana Fire Dynamics Analysis\n")
 
 
 def test_required_analytical_files_present() -> None:

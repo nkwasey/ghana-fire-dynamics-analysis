@@ -13,6 +13,7 @@ ROOT_PYPROJECT = ROOT / "pyproject.toml"
 ANALYSIS_PYPROJECT = ROOT / "RP1_Project/rp1_analysis/pyproject.toml"
 FIRMS_PYPROJECT = ROOT / "RP1_Project/rp1_mv_firms_panels/pyproject.toml"
 GEO_PYPROJECT = ROOT / "geo_data_prep/pyproject.toml"
+ARCHIVE_PYPROJECT = ROOT / "RP1_Project/rp1_firms_archive/pyproject.toml"
 
 
 def load_toml(path: Path) -> dict[str, object]:
@@ -40,6 +41,7 @@ def test_environment_name_python_and_required_tools() -> None:
     assert "python>=3.13,<3.14" in conda_deps
     for required in {
         "pytest",
+        "nodejs",
         "pypdf",
         "pillow",
         "pydantic",
@@ -54,6 +56,8 @@ def test_environment_name_python_and_required_tools() -> None:
         "ipython",
         "nbformat",
         "nbclient",
+        "requests",
+        "pyshp",
     }:
         assert required in names
     assert {"black", "ruff", "mypy", "types-pyyaml"}.isdisjoint(names)
@@ -111,6 +115,7 @@ def test_environment_covers_no_isolation_build_requirements() -> None:
         ANALYSIS_PYPROJECT,
         FIRMS_PYPROJECT,
         GEO_PYPROJECT,
+        ARCHIVE_PYPROJECT,
     ):
         build_requires = load_toml(path)["build-system"]["requires"]
         missing = dependency_names(build_requires) - environment_names
@@ -122,7 +127,7 @@ def test_environment_covers_all_package_runtime_dependencies() -> None:
     environment_names = dependency_names(
         [item for item in data["dependencies"] if isinstance(item, str)]
     )
-    for path in (ANALYSIS_PYPROJECT, FIRMS_PYPROJECT, GEO_PYPROJECT):
+    for path in (ANALYSIS_PYPROJECT, FIRMS_PYPROJECT, GEO_PYPROJECT, ARCHIVE_PYPROJECT):
         runtime = dependency_names(load_toml(path)["project"]["dependencies"])
         missing = runtime - environment_names
         assert not missing, (path, sorted(missing))
@@ -165,6 +170,7 @@ def test_environment_exact_editable_projects() -> None:
         "-e ./geo_data_prep",
         "-e ./RP1_Project/rp1_mv_firms_panels",
         "-e ./RP1_Project/rp1_analysis",
+        "-e ./RP1_Project/rp1_firms_archive",
     ]
 
 
@@ -173,12 +179,12 @@ def test_package_metadata_identities_and_readmes() -> None:
     firms = load_toml(FIRMS_PYPROJECT)["project"]
     geo = load_toml(GEO_PYPROJECT)["project"]
     assert analysis["name"] == "rp1-analysis-v1"
-    assert analysis["version"] == "1.2.3"
+    assert analysis["version"] == "1.3.1"
     assert firms["name"] == "mv-firms-panels"
     assert firms["readme"] == "MV-FIRMS_README.md"
     assert (FIRMS_PYPROJECT.parent / firms["readme"]).is_file()
     assert geo["name"] == "geo_data_prep_stage1"
-    assert geo["version"] == "0.1.1"
+    assert geo["version"] == "1.3.0"
     assert load_toml(ANALYSIS_PYPROJECT)["project"]["scripts"] == {
         "rp1-analysis": "rp1_analysis_v1.cli:main"
     }
@@ -186,7 +192,7 @@ def test_package_metadata_identities_and_readmes() -> None:
         "mv-firms-panels": "mv_firms_panels.cli.main:main"
     }
     assert load_toml(GEO_PYPROJECT)["project"]["scripts"] == {
-        "geo-prep": "geo_data_prep.cli.app:app"
+        "geo-prep": "geo_data_prep.cli:main"
     }
 
 
@@ -196,7 +202,7 @@ def test_supporting_runtime_dependencies_are_declared() -> None:
     firms_names = dependency_names(firms["dependencies"])
     geo_names = dependency_names(geo["dependencies"])
     assert {"numpy", "geopandas", "matplotlib", "shapely", "pyproj", "pyogrio"} <= firms_names
-    assert {"numpy", "pandas", "geopandas", "matplotlib", "pyproj"} <= geo_names
+    assert {"pandas", "geopandas", "matplotlib", "pyproj", "pyogrio"} <= geo_names
 
 
 def test_root_development_tool_configuration_has_no_broad_suppression_or_pythonpath() -> None:
@@ -233,8 +239,9 @@ def test_root_is_only_development_tool_configuration_authority() -> None:
 def test_installed_package_identity_and_checkout_origin() -> None:
     expected = {
         "rp1_analysis_v1": ("rp1-analysis-v1", load_toml(ANALYSIS_PYPROJECT)["project"]["version"]),
-        "mv_firms_panels": ("mv-firms-panels", "0.2.1"),
+        "mv_firms_panels": ("mv-firms-panels", "1.3.0"),
         "geo_data_prep": ("geo_data_prep_stage1", load_toml(GEO_PYPROJECT)["project"]["version"]),
+        "ghana_fire_archive": ("ghana-fire-archive", load_toml(ARCHIVE_PYPROJECT)["project"]["version"]),
     }
     root = ROOT.resolve()
     for module_name, (distribution, version) in expected.items():
@@ -252,15 +259,17 @@ def test_release_python_and_license_metadata_authorities() -> None:
     firms = load_toml(FIRMS_PYPROJECT)["project"]
     geo = load_toml(GEO_PYPROJECT)["project"]
 
-    assert root_project["version"] == "1.2.3"
-    for project in (root_project, analysis, firms, geo):
+    assert root_project["version"] == "1.3.1"
+    for project in (root_project, analysis, firms):
         assert project["requires-python"] == ">=3.13,<3.14"
+    assert geo["requires-python"] == ">=3.12,<3.14"
+    for project in (root_project, analysis, firms, geo):
         assert project["license"] == {"text": "BSD-3-Clause"}
 
-    assert analysis["version"] == "1.2.3"
-    assert geo["version"] == "0.1.1"
+    assert analysis["version"] == "1.3.1"
+    assert geo["version"] == "1.3.0"
 
-    for project in (root_project, analysis, firms, geo):
+    for project in (root_project, analysis, firms):
         classifiers = set(project.get("classifiers", []))
         assert "Programming Language :: Python :: 3.13" in classifiers
         assert "License :: OSI Approved :: BSD License" in classifiers

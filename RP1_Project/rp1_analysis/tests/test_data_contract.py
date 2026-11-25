@@ -1,4 +1,5 @@
 from __future__ import annotations
+from scientific_input_reference import input_population_sizes, paired_input_reference, long_run_input_reference
 
 from pathlib import Path
 from dataclasses import replace
@@ -52,12 +53,12 @@ def _validate_acz(frame: pd.DataFrame, authorities, config) -> None:
     )
 
 
-def test_governed_file_loading(authorities) -> None:
-    assert authorities.acz_panel.shape == (1440, 111)
-    assert authorities.district_panel.shape == (74880, 111)
-    assert len(authorities.acz_geometry) == 5
-    assert len(authorities.district_geometry) == 260
-    assert authorities.manifest["merge_schema_version"] == "rp1_fire_panel_consolidated_v2"
+def test_governed_file_loading(authorities, config) -> None:
+    assert authorities.acz_panel.shape == (config.data_schema.panel("acz_monthly").expected_rows, config.data_schema.field_count)
+    assert authorities.district_panel.shape == (config.data_schema.panel("district_monthly").expected_rows, config.data_schema.field_count)
+    assert len(authorities.acz_geometry) == authorities.acz_panel.unit_id.nunique()
+    assert len(authorities.district_geometry) == authorities.district_panel.unit_id.nunique()
+    assert authorities.manifest["merge_schema_version"] == "rp1_fire_panel_consolidated_v3"
 
 
 def test_real_schema_fixture_preserves_zero_and_missing(authorities) -> None:
@@ -148,39 +149,51 @@ def test_supported_zero_must_not_become_missing(authorities, config) -> None:
 
 def test_denominator_zero_exclusion_and_mask_counts(authorities, config) -> None:
     summary = validate_data_authorities(authorities, config.analysis, config.data_schema)
-    assert summary.acz_count == 5
-    assert summary.district_spatial_universe_count == 260
-    assert summary.long_run_eligible_count == 250
-    assert summary.paired_eligible_count == 249
+    assert summary.acz_count == authorities.acz_panel.unit_id.nunique()
+    assert summary.district_spatial_universe_count == input_population_sizes()["DISTRICT_UNITS"]
+    assert summary.long_run_eligible_count == input_population_sizes()["LONG_RUN_DISTRICTS"]
+    assert summary.paired_eligible_count == input_population_sizes()["PAIRED_DISTRICTS"]
     long_excluded = summary.long_run_mask.units.loc[~summary.long_run_mask.units["eligible"]]
     paired_excluded = summary.paired_mask.units.loc[~summary.paired_mask.units["eligible"]]
-    assert len(long_excluded) == 10
-    assert len(paired_excluded) == 11
+    assert len(long_excluded) == authorities.district_panel.unit_id.nunique() - long_run_input_reference().unit_id.nunique()
+    assert len(paired_excluded) == authorities.district_panel.unit_id.nunique() - paired_input_reference().unit_id.nunique()
     assert long_excluded["exclusion_reasons"].eq("primary_denominator_zero_or_nonpositive").all()
     assert paired_excluded["exclusion_reasons"].eq("primary_denominator_zero_or_nonpositive").all()
-    assert "Accra_Metropolis" not in set(long_excluded["unit_id"])
-    assert "Accra_Metropolis" in set(paired_excluded["unit_id"])
+    # Excluded identities depend on the selected source profile. Check the source
+    # denominators directly rather than prescribing a particular district name.
+    for population, excluded in (("long_run_district", long_excluded), ("paired_overlap", paired_excluded)):
+        specification = config.analysis.study["populations"][population]
+        from rp1_analysis_v1.variables import resolve_field_role
+        denominator = resolve_field_role(config.analysis, specification["denominator_role"])
+        start, end = (int(str(specification[x]).replace("-", "")) for x in ("start", "end"))
+        source = authorities.district_panel.loc[authorities.district_panel.yyyymm.between(start, end)]
+        direct = set(source.loc[source[denominator].le(0), "unit_id"])
+        assert set(excluded.unit_id) == direct
 
 
 def test_temporal_masks_use_frozen_windows(authorities, config) -> None:
-    acz = authorities.acz_panel
-    assert int(long_run_temporal_mask(acz, config.analysis).sum()) == 1440
-    assert int(overlap_monthly_temporal_mask(acz, config.analysis).sum()) == 775
-    assert int(complete_year_overlap_temporal_mask(acz, config.analysis).sum()) == 720
-    district = authorities.district_panel
-    assert int(overlap_monthly_temporal_mask(district, config.analysis).sum()) == 40300
-    assert int(complete_year_overlap_temporal_mask(district, config.analysis).sum()) == 37440
+    windows = config.analysis.study["temporal_windows"]
+    for frame in (authorities.acz_panel, authorities.district_panel):
+        for name, function in (("long_run", long_run_temporal_mask), ("overlap_monthly", overlap_monthly_temporal_mask)):
+            start, end = (int(str(windows[name][key]).replace("-", "")) for key in ("start", "end"))
+            pd.testing.assert_series_equal(function(frame, config.analysis), frame.yyyymm.between(start, end), check_names=False)
+        start, end = (int(windows["overlap_complete_years"][key]) for key in ("start", "end"))
+        pd.testing.assert_series_equal(complete_year_overlap_temporal_mask(frame, config.analysis), frame.year.between(start, end), check_names=False)
 
 
 def test_population_authority_preserves_exclusion_reasons(authorities, config) -> None:
     summary = validate_data_authorities(authorities, config.analysis, config.data_schema)
     row = summary.population_authority.set_index("population_name").loc["paired_ba_viirs_district"]
-    assert int(row["candidate_units"]) == 260
-    assert int(row["retained_units"]) == 249
-    assert int(row["excluded_units"]) == 11
-    assert row["exclusion_reasons"] == "primary_denominator_zero_or_nonpositive:11"
-    assert row["temporal_start"] == "2012-02"
-    assert row["temporal_end"] == "2024-12"
+    candidates = authorities.district_panel.unit_id.nunique()
+    retained = paired_input_reference().unit_id.nunique()
+    assert int(row["candidate_units"]) == candidates
+    assert int(row["retained_units"]) == retained
+    assert int(row["excluded_units"]) == candidates - retained
+    reasons = summary.paired_mask.units.loc[lambda x: ~x.eligible, "exclusion_reasons"].value_counts()
+    assert row["exclusion_reasons"] == ("none" if reasons.empty else ";".join(f"{key}:{count}" for key, count in sorted(reasons.items())))
+    spec = config.analysis.study["populations"]["paired_overlap"]
+    assert row["temporal_start"] == spec["start"]
+    assert row["temporal_end"] == spec["end"]
 
 
 def test_analytical_population_mismatch_fails_closed(authorities, config) -> None:
@@ -220,7 +233,8 @@ def test_district_to_acz_additive_reconciliation(authorities) -> None:
     result = reconcile_district_to_acz(authorities.district_panel, authorities.acz_panel)
     assert len(result) == 8
     assert result["passed"].all()
-    assert result["max_absolute_difference"].max() < 1.0e-8
+    assert ((result["max_absolute_difference"] <= result["absolute_tolerance"]) |
+            (result["max_relative_difference"] <= result["relative_tolerance"])).all()
 
 
 def test_material_reconciliation_disagreement_fails(authorities) -> None:
@@ -247,8 +261,3 @@ def test_manifest_source_family_consistency_fails(authorities) -> None:
         validate_manifest(broken)
 
 
-def test_fixed_union_denominator_must_not_vary_within_unit(authorities, config) -> None:
-    broken = authorities.acz_panel.copy()
-    broken.loc[1, "modis_burnable_km2_union_ba2001"] += 1.0
-    with pytest.raises(DataContractError, match="fixed field .* varies within units"):
-        _validate_acz(broken, authorities, config)

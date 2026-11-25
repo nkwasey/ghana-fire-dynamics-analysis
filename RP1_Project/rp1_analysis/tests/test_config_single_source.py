@@ -10,7 +10,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from rp1_analysis_v1.config import ConfigurationError, load_configuration_bundle
+from rp1_analysis_v1.config import (
+    ConfigurationError,
+    load_configuration_bundle,
+    validate_secondary_configuration,
+)
 
 SUBPROJECT = Path(__file__).resolve().parents[1]
 CONFIG = SUBPROJECT / "config"
@@ -57,6 +61,41 @@ def test_bundle_is_deeply_immutable() -> None:
         bundle.package_version = "other"  # type: ignore[misc]
     with pytest.raises(TypeError):
         bundle.analysis.study["acz_count"] = 999  # type: ignore[index]
+
+
+def test_secondary_configuration_preserves_the_prepared_identity(tmp_path: Path) -> None:
+    config = _copy_project_config(tmp_path)
+    prepared = load_configuration_bundle(config)
+    snapshot = json.loads(json.dumps(prepared.realised_dict()))
+    digest = prepared.configuration_sha256
+    assert validate_secondary_configuration(prepared, snapshot, digest)["decision"] == "EXACT"
+
+    _mutate(
+        config / "output_contract.yml",
+        lambda raw: raw["publication_outputs"]["tables"][0].update(title="ACZ summary"),
+    )
+    current = load_configuration_bundle(config)
+    assert validate_secondary_configuration(current, snapshot, digest) == {
+        "decision": "COMPATIBLE_PUBLICATION_ONLY",
+        "prepared_configuration_sha256": digest,
+        "current_configuration_sha256": current.configuration_sha256,
+        "changed_contract_files": ["output_contract.yml"],
+    }
+    with pytest.raises(ConfigurationError, match="identity differs"):
+        validate_secondary_configuration(current, snapshot, current.configuration_sha256)
+    snapshot["contracts"]["output_contract.yml"]["secondary_outputs"].pop()
+    with pytest.raises(ConfigurationError, match="scan-governing content"):
+        validate_secondary_configuration(current, snapshot, digest)
+
+
+def test_secondary_configuration_refuses_a_changed_scientific_authority(tmp_path: Path) -> None:
+    config = _copy_project_config(tmp_path)
+    prepared = load_configuration_bundle(config)
+    with (config / "analysis_contract.yml").open("a", encoding="utf-8") as stream:
+        stream.write("\n# Confirm changed scientific authority bytes are never silently accepted.\n")
+    current = load_configuration_bundle(config)
+    with pytest.raises(ConfigurationError, match="different scientific contracts"):
+        validate_secondary_configuration(current, prepared.realised_dict(), prepared.configuration_sha256)
 
 
 def test_unknown_method_and_invalid_field_are_rejected(tmp_path: Path) -> None:

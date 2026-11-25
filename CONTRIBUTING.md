@@ -1,35 +1,24 @@
 # Contributing
 
-Changes must preserve the governed RP1 Analysis v1 scientific contracts and fail-closed validation behaviour.
-
-## Tests
-
-From the repository root:
+Use the shared environment in `environment.yml`. It installs the geography, active-fire archive, monthly panels and analysis projects editably. From the repository root, check that those imports resolve to this checkout.
 
 ```bash
+python tools/qualify_source_checkout.py --origins-only
 python -m pytest
 ```
 
-The root test configuration includes the retained geography package, active-fire panel package and canonical v1 analysis package.
+Keep test fixtures self-contained and production inputs checksum-verified. Changes to acquisition or intake should preserve archive coverage, empty-year handling, source provenance and transactional validation. Changes to analysis should preserve the contracts under `RP1_Project/rp1_analysis/config/` unless the study design explicitly changes.
 
-## Release qualification
+## Input data
 
-Use the repository-owned qualifier with an evidence directory outside the checkout:
+The source includes the original Earth Engine CSVs, study boundary shapefiles and input checksums. See [source geography](docs/SOURCE_GEOGRAPHY.md) for the separately obtained FIRMS reference files. Keep local copies of those reference files, generated data, credentials, run outputs and executed notebooks out of Git.
 
-```bash
-python tools/qualify_environment.py --evidence-dir /path/to/external/rp1_qualification_evidence
-```
+## Source qualification
 
-The qualifier verifies the operational editable checkout, reconstructs the governed clean source projection defined by `RP1_Project/rp1_analysis/config/qualification_contract.yml`, runs the hard-gate pytest/input/reference checks from that projection, builds clean wheels and verifies a fresh isolated installation. Do not weaken repository-hygiene tests to accommodate generated editable/build metadata in the operational checkout.
-
-## Optional development quality checks
-
-Black, Ruff and mypy are optional contributor aids, not release acceptance gates. When the configured development tools are installed:
+Use an external evidence directory. The qualifier checks import origins, tests, the offline Earth Engine suite, independently specified method fixtures and the installed wheel interfaces.
 
 ```bash
-ruff check geo_data_prep/src geo_data_prep/tests RP1_Project/rp1_mv_firms_panels/src RP1_Project/rp1_mv_firms_panels/tests RP1_Project/rp1_analysis/src RP1_Project/rp1_analysis/tests RP1_Project/rp1_analysis/scripts
-black --check geo_data_prep/src geo_data_prep/tests RP1_Project/rp1_mv_firms_panels/src RP1_Project/rp1_mv_firms_panels/tests RP1_Project/rp1_analysis/src RP1_Project/rp1_analysis/tests RP1_Project/rp1_analysis/scripts
-mypy RP1_Project/rp1_analysis/src/rp1_analysis_v1
+python tools/qualify_environment.py --source-only --evidence-dir /path/to/qualification-evidence
 ```
 
-Do not change scientific configuration or data values merely to obtain a passing test or preferred result.
+Source qualification covers the code and available test inputs. The real notebook and SaTScan runs have their own [execution evidence](docs/EXECUTION_EVIDENCE.md) and output validation.

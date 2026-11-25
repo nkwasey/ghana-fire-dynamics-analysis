@@ -1,6 +1,6 @@
 schema_version: rp1-analysis-v1.1
-data_schema_version: rp1-data-schema-v1.1
-panel_schema_version: rp1_fire_panel_consolidated_v2
+data_schema_version: rp1-data-schema-v1.2
+panel_schema_version: rp1_fire_panel_consolidated_v3
 field_count: 111
 panels:
   acz_monthly:
@@ -33,6 +33,9 @@ panels:
     parent_id_field: parent_id
     parent_code_field: parent_code
 auxiliary_inputs:
+  ba_observation_support:
+    path: data/raw/ba_observation_support.csv
+    format: csv
   key_audit:
     path: data/raw/fire_panel_key_audit.csv
     format: csv
@@ -146,7 +149,7 @@ categorical_domains:
   - 2023
   - 2024
   panel_schema_version:
-  - rp1_fire_panel_consolidated_v2
+  - rp1_fire_panel_consolidated_v3
 fields:
 - name: run_id
   dtype: string
@@ -535,9 +538,9 @@ fields:
   dtype: number
   semantic_type: area_km2
   unit: km2
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -545,9 +548,9 @@ fields:
   dtype: integer
   semantic_type: count
   unit: count
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -555,9 +558,9 @@ fields:
   dtype: number
   semantic_type: numeric_measure
   unit: '1'
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -565,9 +568,9 @@ fields:
   dtype: number
   semantic_type: area_km2
   unit: km2
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -575,9 +578,9 @@ fields:
   dtype: number
   semantic_type: area_km2
   unit: km2
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -585,9 +588,9 @@ fields:
   dtype: number
   semantic_type: area_km2
   unit: km2
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -604,7 +607,7 @@ fields:
   maximum: 1
 - name: modis_burned_frac_annual_ba2001
   dtype: number
-  semantic_type: proportion
+  semantic_type: ratio
   unit: '1'
   nullable: true
   structural_support: ba2001_full
@@ -612,14 +615,13 @@ fields:
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
-  maximum: 1
 - name: modis_zero_union_den_flag_ba2001
   dtype: number
   semantic_type: numeric_measure
   unit: '1'
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -627,9 +629,9 @@ fields:
   dtype: number
   semantic_type: numeric_measure
   unit: '1'
-  nullable: false
+  nullable: true
   structural_support: ba2001_full
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -639,7 +641,7 @@ fields:
   unit: km2
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -649,7 +651,7 @@ fields:
   unit: count
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -659,7 +661,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -669,7 +671,7 @@ fields:
   unit: km2
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -679,7 +681,7 @@ fields:
   unit: km2
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -689,7 +691,7 @@ fields:
   unit: km2
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: true
   minimum: 0
@@ -706,7 +708,7 @@ fields:
   maximum: 1
 - name: modis_burned_frac_annual_ba2012
   dtype: number
-  semantic_type: proportion
+  semantic_type: ratio
   unit: '1'
   nullable: true
   structural_support: ba2012_native
@@ -714,14 +716,13 @@ fields:
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
-  maximum: 1
 - name: modis_zero_union_den_flag_ba2012
   dtype: number
   semantic_type: numeric_measure
   unit: '1'
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -731,7 +732,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: mcd64a1_burned_area
   additive: false
   minimum: 0
@@ -1098,7 +1099,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: viirs_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1109,7 +1110,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: full_overlap_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1118,9 +1119,9 @@ fields:
   dtype: integer
   semantic_type: binary_flag
   unit: '1'
-  nullable: false
+  nullable: true
   structural_support: canonical_spine
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1131,7 +1132,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: ba2012_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1142,7 +1143,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: viirs_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1153,7 +1154,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: full_overlap_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1164,7 +1165,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: viirs_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1175,7 +1176,7 @@ fields:
   unit: '1'
   nullable: true
   structural_support: full_overlap_native
-  required_when_supported: true
+  required_when_supported: false
   source_family: derived_multi_source
   additive: false
   minimum: 0
@@ -1400,6 +1401,12 @@ relationships:
   to_field: zone_id
   cardinality: many_to_one
 additive_reconciliation:
+  c3_evidence:
+    absolute_tolerance: 1.0e-08
+    relative_tolerance: 1.0e-10
+    known_union_absolute_tolerance: 1.0e-05
+    count_tolerance: exact
+    reason_partition: false
   district_to_acz:
     district_parent_field: parent_code
     acz_key_field: unit_code
@@ -1415,28 +1422,161 @@ additive_reconciliation:
     - viirs_det_primary
     absolute_tolerance: 1.0e-08
     relative_tolerance: 1.0e-10
+    field_tolerances:
+      modis_burnable_km2_union_ba2001:
+        absolute_tolerance: 1.0e-05
+        relative_tolerance: 0.0
+      modis_burnable_km2_union_ba2012:
+        absolute_tolerance: 1.0e-05
+        relative_tolerance: 0.0
 provenance:
   inventory_path: data/input_sha256.json
   inventory_schema: rp1-input-provenance-v2
-  expected_governed_files: 15
+  expected_governed_files: 18
 validation_rules:
+  binary_products:
+  - field: ba_any_ba2001_and_viirs_primary_any_flag
+    left: modis_ba_any_ba2001
+    right: viirs_det_primary_any
+    left_value: 1
+    right_value: 1
+  - field: ba_any_ba2001_and_modis_primary_any_flag
+    left: modis_ba_any_ba2001
+    right: modis_det_primary_any
+    left_value: 1
+    right_value: 1
+  - field: ba_any_ba2001_without_viirs_primary_flag
+    left: modis_ba_any_ba2001
+    right: viirs_det_primary_any
+    left_value: 1
+    right_value: 0
+  - field: viirs_primary_without_ba_any_ba2001_flag
+    left: viirs_det_primary_any
+    right: modis_ba_any_ba2001
+    left_value: 1
+    right_value: 0
+  - field: ba_any_ba2012_and_viirs_primary_any_flag
+    left: modis_ba_any_ba2012
+    right: viirs_det_primary_any
+    left_value: 1
+    right_value: 1
+  - field: ba_any_ba2012_and_modis_primary_any_flag
+    left: modis_ba_any_ba2012
+    right: modis_det_primary_any
+    left_value: 1
+    right_value: 1
+  - field: ba_any_ba2012_without_viirs_primary_flag
+    left: modis_ba_any_ba2012
+    right: viirs_det_primary_any
+    left_value: 1
+    right_value: 0
+  - field: viirs_primary_without_ba_any_ba2012_flag
+    left: viirs_det_primary_any
+    right: modis_ba_any_ba2012
+    left_value: 1
+    right_value: 0
+  normalizations:
+  - field: modis_ba_km2_per100km2_union_ba2001
+    numerator: modis_ba_km2_ba2001
+    denominator: modis_burnable_km2_union_ba2001
+    scale: 100
+  - field: modis_det_primary_per100km2_burnable_union_ba2001
+    numerator: modis_det_primary
+    denominator: modis_burnable_km2_union_ba2001
+    scale: 100
+  - field: modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001
+    numerator: modis_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_union_ba2001
+    scale: 1
+  - field: viirs_det_primary_per100km2_burnable_union_ba2001
+    numerator: viirs_det_primary
+    denominator: modis_burnable_km2_union_ba2001
+    scale: 100
+  - field: viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2001
+    numerator: viirs_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_union_ba2001
+    scale: 1
+  - field: modis_ba_km2_per100km2_annual_ba2001
+    numerator: modis_ba_km2_ba2001
+    denominator: modis_burnable_km2_annual_ba2001
+    scale: 100
+  - field: modis_det_primary_per100km2_burnable_annual_ba2001
+    numerator: modis_det_primary
+    denominator: modis_burnable_km2_annual_ba2001
+    scale: 100
+  - field: modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001
+    numerator: modis_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_annual_ba2001
+    scale: 1
+  - field: viirs_det_primary_per100km2_burnable_annual_ba2001
+    numerator: viirs_det_primary
+    denominator: modis_burnable_km2_annual_ba2001
+    scale: 100
+  - field: viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2001
+    numerator: viirs_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_annual_ba2001
+    scale: 1
+  - field: modis_ba_km2_per100km2_union_ba2012
+    numerator: modis_ba_km2_ba2012
+    denominator: modis_burnable_km2_union_ba2012
+    scale: 100
+  - field: modis_det_primary_per100km2_burnable_union_ba2012
+    numerator: modis_det_primary
+    denominator: modis_burnable_km2_union_ba2012
+    scale: 100
+  - field: modis_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012
+    numerator: modis_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_union_ba2012
+    scale: 1
+  - field: viirs_det_primary_per100km2_burnable_union_ba2012
+    numerator: viirs_det_primary
+    denominator: modis_burnable_km2_union_ba2012
+    scale: 100
+  - field: viirs_frp_sum_daily_max_mw_per_km2_burnable_union_ba2012
+    numerator: viirs_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_union_ba2012
+    scale: 1
+  - field: modis_ba_km2_per100km2_annual_ba2012
+    numerator: modis_ba_km2_ba2012
+    denominator: modis_burnable_km2_annual_ba2012
+    scale: 100
+  - field: modis_det_primary_per100km2_burnable_annual_ba2012
+    numerator: modis_det_primary
+    denominator: modis_burnable_km2_annual_ba2012
+    scale: 100
+  - field: modis_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012
+    numerator: modis_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_annual_ba2012
+    scale: 1
+  - field: viirs_det_primary_per100km2_burnable_annual_ba2012
+    numerator: viirs_det_primary
+    denominator: modis_burnable_km2_annual_ba2012
+    scale: 100
+  - field: viirs_frp_sum_daily_max_mw_per_km2_burnable_annual_ba2012
+    numerator: viirs_frp_sum_daily_max_mw
+    denominator: modis_burnable_km2_annual_ba2012
+    scale: 1
   denominators:
   - denominator: modis_burnable_km2_union_ba2001
+    numerator: modis_ba_km2_ba2001
     zero_flag: modis_zero_union_den_flag_ba2001
     derived_fields:
     - modis_ba_km2_per100km2_union_ba2001
     support: ba2001_full
   - denominator: modis_burnable_km2_annual_ba2001
+    numerator: modis_ba_km2_ba2001
     zero_flag: modis_zero_annual_den_flag_ba2001
     derived_fields:
     - modis_ba_km2_per100km2_annual_ba2001
     support: ba2001_full
   - denominator: modis_burnable_km2_union_ba2012
+    numerator: modis_ba_km2_ba2012
     zero_flag: modis_zero_union_den_flag_ba2012
     derived_fields:
     - modis_ba_km2_per100km2_union_ba2012
     support: ba2012_native
   - denominator: modis_burnable_km2_annual_ba2012
+    numerator: modis_ba_km2_ba2012
     zero_flag: modis_zero_annual_den_flag_ba2012
     derived_fields:
     - modis_ba_km2_per100km2_annual_ba2012

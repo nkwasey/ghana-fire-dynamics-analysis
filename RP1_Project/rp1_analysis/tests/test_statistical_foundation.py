@@ -18,8 +18,8 @@ from rp1_analysis_v1.inference import (
 )
 from rp1_analysis_v1.seasonality import (
     SeasonalityError,
-    circular_month_distance,
     circular_mean_month,
+    circular_month_distance,
     mean_resultant_length,
     month_angle,
     monthly_climatology,
@@ -55,7 +55,7 @@ def test_parse_yyyymm_and_calendar_conversion() -> None:
     assert month_ordinal(200102) - month_ordinal(200101) == 1
 
 
-@pytest.mark.parametrize("bad", [201200, 201213, "2012-13", "2012/01", 2012.01, True])
+@pytest.mark.parametrize("bad", [201200, 201213, "2012-13", "2012/01", "20120²", 2012.01, True])
 def test_invalid_yyyymm_fails_closed(bad) -> None:
     with pytest.raises(TemporalContractError):
         parse_yyyymm(bad)
@@ -71,8 +71,9 @@ def test_month_sequence_detects_incomplete_spine() -> None:
         validate_month_sequence([202001, 202003])
 
 
-def test_add_year_month_columns_rejects_conflicting_existing_calendar() -> None:
-    frame = pd.DataFrame({"yyyymm": [202001, 202002], "year": [2020, 2019]})
+@pytest.mark.parametrize("bad_year", [2019, 2020.1, pd.NA])
+def test_add_year_month_columns_rejects_conflicting_existing_calendar(bad_year) -> None:
+    frame = pd.DataFrame({"yyyymm": [202001, 202002], "year": pd.array([2020, bad_year], dtype="Float64")})
     with pytest.raises(TemporalContractError, match="conflicts"):
         add_year_month_columns(frame)
 
@@ -87,6 +88,12 @@ def test_complete_temporal_spine_by_unit() -> None:
     broken = frame.loc[~((frame["unit_id"] == "b") & (frame["yyyymm"] == 202006))]
     with pytest.raises(TemporalContractError, match="incomplete temporal spine"):
         assert_complete_temporal_spine(broken, unit_col="unit_id", start=202001, end=202012)
+
+
+def test_complete_temporal_spine_rejects_empty_input() -> None:
+    frame = pd.DataFrame(columns=["unit_id", "yyyymm"])
+    with pytest.raises(TemporalContractError, match="no rows"):
+        assert_complete_temporal_spine(frame, unit_col="unit_id", start=202001, end=202012)
 
 
 def test_annualisation_sums_complete_supported_months() -> None:
@@ -140,6 +147,14 @@ def test_annualisation_rejects_incomplete_calendar_year() -> None:
         }
     )
     with pytest.raises(TemporalContractError, match="incomplete calendar year"):
+        construct_grouped_annual_series(frame, value_col="value", group_cols=["unit_id"])
+
+
+def test_annualisation_rejects_non_finite_observations() -> None:
+    frame = pd.DataFrame({
+        "unit_id": ["a"] * 12, "yyyymm": range(202001, 202013), "value": [np.inf] + [1.0] * 11,
+    })
+    with pytest.raises(TemporalContractError, match="non-finite values"):
         construct_grouped_annual_series(frame, value_col="value", group_cols=["unit_id"])
 
 

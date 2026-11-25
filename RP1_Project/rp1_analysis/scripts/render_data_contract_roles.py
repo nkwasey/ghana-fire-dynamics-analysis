@@ -18,9 +18,6 @@ def _resolve_role(field_roles: dict, role: str) -> str:
 def render_projection(root: Path) -> str:
     analysis = yaml.safe_load((root / "config" / "analysis_contract.yml").read_text(encoding="utf-8"))
     output = yaml.safe_load((root / "config" / "output_contract.yml").read_text(encoding="utf-8"))
-    realised = yaml.safe_load(
-        (root / "data" / "authorities" / "rq3" / "realised_run_metadata.json").read_text(encoding="utf-8")
-    )
     figures = yaml.safe_load((root / "config" / "figure_contract.yml").read_text(encoding="utf-8"))
     fr = analysis["field_roles"]
     rq2 = analysis["research_questions"]["rq2"]
@@ -31,10 +28,6 @@ def render_projection(root: Path) -> str:
     adjustments = [p for p in rq3["predictors"] if p["role"] == "adjustment"]
     factors = rq3["factors"]
     scenarios = {s["scenario_id"]: s for s in sec["scenarios"]}
-    realised_design_columns = tuple(str(x) for x in realised["rq3_design_columns"])
-    if not realised_design_columns:
-        raise ValueError("RQ3 realised design authority contains no columns")
-
     pub_tables = output["publication_outputs"]["tables"]
     main_tables = [x["id"] for x in pub_tables if x["role"] == "manuscript"]
     supp_tables = [x["id"] for x in pub_tables if x["role"] == "supplementary"]
@@ -88,7 +81,7 @@ def render_projection(root: Path) -> str:
         f"| Year reference | `{factors[1]['reference_label']}` |",
         f"| ACZ reference | `{factors[2]['reference_label']}` (`{factors[2]['reference']}`) |",
         f"| Excluded predictor roles | {', '.join('`'+x+'`' for x in rq3['excluded_predictor_roles'])} |",
-        f"| Realised design | `{len(realised_design_columns)} columns` |",
+        "| Realised design | `derived from the admitted model population during execution` |",
         "",
         "### Secondary SaTScan executable authority",
         "",

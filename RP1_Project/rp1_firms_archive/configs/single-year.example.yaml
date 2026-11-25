@@ -1,0 +1,13 @@
+schema_version: 1
+years: 2024
+sources: [MODIS_SP, VIIRS_SNPP_SP, VIIRS_NOAA20_SP, VIIRS_NOAA21_SP]
+country: Ghana
+geography: ../data/reference/geography
+downloads: ../data/raw
+output_root: ../out/runs
+run_id: single-year-2024
+# Prefer FIRMS_MAP_KEY. An optional key_file must remain outside source releases.
+timeout_seconds: 120
+retries: 3
+api_batch_max_age_hours: 24
+refresh_api_batches: false

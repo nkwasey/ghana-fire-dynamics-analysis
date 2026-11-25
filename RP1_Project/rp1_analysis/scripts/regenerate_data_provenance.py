@@ -4,6 +4,8 @@
 This operation is intentionally metadata-only. It preserves scientific input bytes,
 records source/original locations as ``origin_path``, records current release locations
 as ``staged_path``, and rebuilds the exact staged-input hash inventory.
+In a portable checkout, ``--check`` verifies the staged inputs and retains the
+recorded producer geography identity if the producer handoff is absent.
 """
 
 from __future__ import annotations
@@ -11,8 +13,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
+
+from rp1_analysis_v1.provenance_paths import valid_origin_path
 
 
 PANEL_PROVENANCE_SCHEMA = "rp1-fire-panel-provenance-v2"
@@ -41,7 +45,10 @@ INPUT_PATH_SEMANTICS = {
 }
 
 CANONICAL_ANALYSIS_PREFIX = "RP1_Project/rp1_analysis/data/raw/"
-STAGE1_BOUNDARY_PREFIX = "geo_data_prep/out/example_acz/boundaries/"
+GEOGRAPHY_HANDOFF_PATH = "RP1_Project/geo_handoff_manifest.json"
+GEOGRAPHY_HANDOFF_NOTE = (
+    "Geometry inventory origins identify staged files; source-run evidence is in this handoff manifest."
+)
 
 
 def _stable_json(payload: Any) -> str:
@@ -67,10 +74,14 @@ def _require_relative(path: str, *, label: str) -> str:
     return path
 
 
-def _origin_path(record: dict[str, Any], *, label: str) -> str:
+def _origin_path(record: dict[str, Any], *, label: str, allow_external: bool = False) -> str:
     origin = record.get("origin_path")
     if not isinstance(origin, str):
         raise ValueError(f"{label} lacks required origin_path: {record!r}")
+    if allow_external:
+        if not valid_origin_path(origin):
+            raise ValueError(f"{label} origin_path is invalid: {origin!r}")
+        return origin
     return _require_relative(origin, label=f"{label} origin_path")
 
 
@@ -81,7 +92,14 @@ def normalise_panel_manifest(manifest: dict[str, Any], *, repo_root: Path) -> di
     # Preserve the original data-generation timestamp. This is a release metadata
     # operation and must not overwrite the recorded generation time with a volatile value.
     normalised["provenance_schema_version"] = PANEL_PROVENANCE_SCHEMA
-    normalised["path_semantics"] = PANEL_PATH_SEMANTICS
+    normalised["path_semantics"] = dict(PANEL_PATH_SEMANTICS)
+    if isinstance(normalised.get("outputs"), dict) and any(isinstance(r, dict) and isinstance(r.get("origin_path"), str) and
+           (PurePosixPath(r["origin_path"]).is_absolute() or PureWindowsPath(r["origin_path"]).is_absolute())
+           for r in normalised.get("outputs", {}).values()):
+        normalised["path_semantics"]["origin_path"] = (
+            "Repository-relative or host-specific absolute external source/original provenance path; "
+            "provenance only and never resolved as a runtime dependency."
+        )
 
     source_roots = normalised.get("source_roots")
     if not isinstance(source_roots, dict):
@@ -122,7 +140,7 @@ def normalise_panel_manifest(manifest: dict[str, Any], *, repo_root: Path) -> di
     for name, record in outputs.items():
         if not isinstance(record, dict):
             raise ValueError(f"Manifest output {name!r} must be an object")
-        origin = _origin_path(record, label=f"output {name}")
+        origin = _origin_path(record, label=f"output {name}", allow_external=True)
         filename = PurePosixPath(origin).name
         canonical = f"{CANONICAL_ANALYSIS_PREFIX}{filename}"
         if not (repo_root / PurePosixPath(canonical)).is_file():
@@ -160,8 +178,9 @@ def _origin_for_inventory_entry(staged_path: str, *, panel_manifest: dict[str, A
                     return origin
         raise ValueError(f"No manifest origin found for staged raw input: {staged_path}")
     if staged_path.startswith("data/geo/"):
-        filename = PurePosixPath(staged_path).name
-        return f"{STAGE1_BOUNDARY_PREFIX}{filename}"
+        return "RP1_Project/rp1_analysis/" + staged_path
+    if staged_path.startswith("data/reference/"):
+        return "RP1_Project/rp1_analysis/" + staged_path
     raise ValueError(f"No grounded origin rule for governed input: {staged_path}")
 
 
@@ -169,7 +188,7 @@ def rebuild_input_inventory(
     inventory: dict[str, Any], *, subproject_root: Path, panel_manifest: dict[str, Any]
 ) -> dict[str, Any]:
     """Rebuild exact staged-input hashes and explicit path provenance."""
-    from rp1_analysis_v1.config import load_configuration_bundle
+    from rp1_analysis_v1.config import governed_input_paths, load_configuration_bundle
 
     bundle = load_configuration_bundle(subproject_root / "config")
     analysis_schema = bundle.analysis.schema_version
@@ -178,6 +197,11 @@ def rebuild_input_inventory(
     files = inventory.get("files")
     if not isinstance(files, list) or not files:
         raise ValueError("Input inventory files must be a non-empty list")
+    supplied = [record.get('staged_path') if isinstance(record, dict) else None for record in files]
+    if (not all(isinstance(path, str) for path in supplied)
+            or len(supplied) != len(set(supplied))
+            or set(supplied) != set(governed_input_paths(bundle.data_schema))):
+        raise ValueError('Input inventory does not equal the exact configured c3 input set')
 
     rebuilt: list[dict[str, Any]] = []
     for record in files:
@@ -197,7 +221,8 @@ def rebuild_input_inventory(
         origin = record.get("origin_path")
         if not isinstance(origin, str):
             raise ValueError(f"Input inventory entry lacks required origin_path: {record!r}")
-        _require_relative(origin, label="input origin_path")
+        if not valid_origin_path(origin):
+            raise ValueError(f"input origin_path is invalid: {origin!r}")
         expected_origin = _origin_for_inventory_entry(staged, panel_manifest=panel_manifest)
         if origin != expected_origin:
             raise ValueError(
@@ -216,7 +241,13 @@ def rebuild_input_inventory(
     return {
         "schema_version": inventory["schema_version"],
         "provenance_schema_version": INPUT_PROVENANCE_SCHEMA,
-        "path_semantics": INPUT_PATH_SEMANTICS,
+        "path_semantics": {
+            **INPUT_PATH_SEMANTICS,
+            "origin_path": ("Repository-relative or host-specific absolute external source/original path; "
+                            "provenance only and never resolved as a runtime dependency.")
+            if any(PurePosixPath(r["origin_path"]).is_absolute() or PureWindowsPath(r["origin_path"]).is_absolute() for r in rebuilt)
+            else INPUT_PATH_SEMANTICS["origin_path"],
+        },
         "files": rebuilt,
     }
 
@@ -224,7 +255,7 @@ def rebuild_input_inventory(
 def _discover_subproject(start: Path) -> Path:
     candidate = start.resolve()
     for parent in (candidate, *candidate.parents):
-        if (parent / "data/input_sha256.json").is_file() and (
+        if (parent / "config/analysis_contract.yml").is_file() and (
             parent / "data/raw/fire_panel_manifest.json"
         ).is_file():
             return parent
@@ -237,7 +268,7 @@ def main() -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Verify that files already equal the deterministic regenerated representation.",
+        help="Verify staged provenance and hash any producer geography handoff available locally.",
     )
     args = parser.parse_args()
 
@@ -246,7 +277,7 @@ def main() -> int:
         if args.subproject_root is not None
         else _discover_subproject(Path(__file__))
     )
-    from rp1_analysis_v1.config import load_configuration_bundle
+    from rp1_analysis_v1.config import governed_input_paths, load_configuration_bundle
 
     bundle = load_configuration_bundle(subproject / "config")
     repo_root = subproject.parents[1]
@@ -258,19 +289,56 @@ def main() -> int:
     manifest_text = _stable_json(normalised_manifest)
 
     # The input inventory hashes the regenerated manifest, so derive its bytes first.
-    if not args.check:
-        manifest_path.write_text(manifest_text, encoding="utf-8", newline="\n")
-    elif manifest_path.read_text(encoding="utf-8") != manifest_text:
+    if args.check and manifest_path.read_text(encoding="utf-8") != manifest_text:
         raise RuntimeError("fire_panel_manifest.json is not in regenerated canonical form")
 
-    current_inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    if inventory_path.is_file():
+        current_inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    else:
+        if args.check:
+            raise FileNotFoundError("No generated input inventory exists; prepare analysis inputs first")
+        relative_files = set(governed_input_paths(bundle.data_schema))
+        current_inventory = {"schema_version": bundle.analysis.schema_version,
+            "files": [{"staged_path": rel,
+                "origin_path": _origin_for_inventory_entry(rel, panel_manifest=normalised_manifest)}
+                for rel in sorted(relative_files)]}
+
     rebuilt_inventory = rebuild_input_inventory(
         current_inventory,
         subproject_root=subproject,
         panel_manifest=normalised_manifest,
     )
+    # Hash the verified bytes about to be published, without mutating the
+    # manifest before inventory/geography admission has completed.
+    for record in rebuilt_inventory['files']:
+        if record['staged_path'] == str(bundle.data_schema.auxiliary_inputs['panel_manifest']['path']):
+            encoded = manifest_text.encode('utf-8')
+            record['sha256'] = hashlib.sha256(encoded).hexdigest()
+            record['size_bytes'] = len(encoded)
+    geo_handoff = repo_root / GEOGRAPHY_HANDOFF_PATH
+    if geo_handoff.is_file():
+        geography_hash = _sha256(geo_handoff)
+        geography_verification = "VERIFIED_FILE"
+    elif args.check and not geo_handoff.exists():
+        recorded = current_inventory.get("geography_handoff")
+        geography_hash = recorded.get("sha256") if isinstance(recorded, dict) else None
+        if (
+            not isinstance(geography_hash, str)
+            or len(geography_hash) != 64
+            or any(char not in "0123456789abcdef" for char in geography_hash)
+        ):
+            raise ValueError("Portable input inventory lacks a valid producer geography handoff hash")
+        geography_verification = "RECORDED_IDENTITY_ONLY"
+    else:
+        raise FileNotFoundError("Generated geography handoff manifest is required")
+    rebuilt_inventory["geography_handoff"] = {
+        "path": GEOGRAPHY_HANDOFF_PATH,
+        "sha256": geography_hash,
+        "note": GEOGRAPHY_HANDOFF_NOTE,
+    }
     inventory_text = _stable_json(rebuilt_inventory)
     if not args.check:
+        manifest_path.write_text(manifest_text, encoding="utf-8", newline="\n")
         inventory_path.write_text(inventory_text, encoding="utf-8", newline="\n")
     elif inventory_path.read_text(encoding="utf-8") != inventory_text:
         raise RuntimeError("input_sha256.json is not in regenerated canonical form")
@@ -278,6 +346,7 @@ def main() -> int:
     print(f"PANEL_PROVENANCE_SCHEMA={PANEL_PROVENANCE_SCHEMA}")
     print(f"INPUT_PROVENANCE_SCHEMA={INPUT_PROVENANCE_SCHEMA}")
     print(f"GOVERNED_INPUT_FILES={len(rebuilt_inventory['files'])}")
+    print(f"GEOGRAPHY_HANDOFF_VERIFICATION={geography_verification}")
     print(f"FIRE_PANEL_MANIFEST_SHA256={_sha256(manifest_path)}")
     print(f"INPUT_INVENTORY_SHA256={_sha256(inventory_path)}")
     print("RP1_DATA_PROVENANCE_REGENERATION=PASS")

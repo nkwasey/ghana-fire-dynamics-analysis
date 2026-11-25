@@ -1,46 +1,25 @@
-# `rp1_gee_ba_scripts` structure
+# c3 burned-area source
 
-`RP1_Project/rp1_gee_ba_scripts/` contains the Earth Engine source and the
-burned-area CSV export bundles used for RP1 data reconstruction. It is not a
-Python package and is not executed by the canonical analysis notebook.
+`rp1_gee_ba_scripts/c3/` is the pinned operational source. Its shared `src/`
+core and `build.py` generate the viewer, monthly exporter and synthetic fixture.
+Run `python tests/run_offline.py` from that directory with Python 3 and Node.js.
+The canonical source-qualification environment declares Node.js 24. These local
+checks do not run Earth Engine or qualify the full study delivery.
 
-## Canonical location
+The exporter writes one 69-field `rp1_ba_c3_extended_v2` table per year, level and
+selected zone. Use separate ACZ and district files for CZ, FZ, GS, SS and TZ,
+with names such as `rp1_ba_district_monthly_c3_TZ_BA2012_2024_ext.csv`. The full
+BA2001 (2001–2024) and BA2012 (2012–2024) delivery has 370 analytical files.
+There is no required base/extended pair. Keep downloads under
+`rp1_gee_ba_scripts/downloads/c3_release/` and preserve original bytes.
 
-```text
-ghana-fire-rp1-analysis-main/RP1_Project/rp1_gee_ba_scripts/
-```
+Upload the three combined geography layers and configure `C3.ghanaAsset`,
+`C3.zoneAsset`, and `C3.districtAsset`. The vector CRS is EPSG:32630; reductions
+retain the declared MODIS native grid. Asset paths do not freeze asset content.
 
-## Shipped structure
-
-```text
-rp1_gee_ba_scripts/
-├── 0-rp1_unified_modis_viewer_selectable_ba_mask_c1_viewer_commented.js
-├── 1-rp1_zone_monthly_2001-2024_panel_c1_commented.js
-├── 1-rp1_zone_monthly_2012-2024_panel_c1_commented.js
-├── 2-rp1_district_monthly_2001-2024_panel_c1_commented.js
-├── 2-rp1_district_monthly_2012-2024_panel_c1_commented.js
-├── RP1_Project_MODIS_BA_c1_2001/   # 25 governed CSV exports
-└── RP1_Project_MODIS_BA_c1_2012/   # 25 governed CSV exports
-```
-
-The BA-2001 family supports the long-run burned-area workflow. The BA-2012
-family supports the MODIS/VIIRS overlap-era workflow. The exported files retain
-ACZ and district base/extended products plus district QA summaries as defined
-by the Earth Engine scripts.
-
-## Merger roots
-
-```text
-RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2001
-RP1_Project/rp1_gee_ba_scripts/RP1_Project_MODIS_BA_c1_2012
-```
-
-The AF/BA merger interface can be inspected with:
-
-```bash
-python RP1_Project/merge_af_ba_panels.py --help
-```
-
-Regenerating the CSV exports requires external Earth Engine execution. The
-shipped export bundles are sufficient for repository-based reconstruction and
-do not create a network dependency for normal analysis or testing.
+`UPSTREAM_IDENTITY.json` records upstream source hashes and documented local
+adaptations. Checker tests use synthetic records, so the source distribution
+does not require prior research outputs. The c3 CSV
+dictionary and methods notes define guarded nulls, scenario zeros, shortened
+positives and the annual mixed-domain ratio; downstream preparation must retain
+all evidence and admit the complete requested inventory before merging.

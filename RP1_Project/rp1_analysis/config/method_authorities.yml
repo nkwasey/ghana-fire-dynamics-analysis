@@ -97,13 +97,13 @@ authorities:
   implementation_id: spatial.local_moran_conditional.v1
   family: spatial_autocorrelation
   status: implemented
-  qualification_status: frozen_conditional_convention_qualified
+  qualification_status: study_design_defined_implementation_reference_verified
   authority_scope: scientific_contract
   protocol_reference: 'Specification RQ1: Local Moran conditional randomisation authority'
   authoritative_reference: Anselin (1995); Castro and Singer (2006)
   doi: 10.1111/j.1538-4632.1995.tb00338.x
-  governed_variant: Conditional Local Moran with the frozen pseudo-p, tie, quadrant
-    and BH-family convention
+  governed_variant: Conditional Local Moran with inclusive two-tail plus-one p-values,
+    quadrant classification and BH-family convention
   parameter_provenance:
     permutations: study_design_defined
     random_seed: computational_reproducibility_only

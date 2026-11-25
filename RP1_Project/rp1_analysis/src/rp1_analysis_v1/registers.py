@@ -13,7 +13,7 @@ from .presentation import load_figure_specs
 EVIDENCE_CLASSES = frozenset({
     "DESCRIPTIVE", "PRIMARY_INFERENCE", "SENSITIVITY", "EXPLORATORY",
     "PRIMARY_AND_DESCRIPTIVE", "PRIMARY_INFERENCE_AND_DIAGNOSTIC",
-    "SECONDARY_INFERENCE", "DATA_AUTHORITY",
+    "SECONDARY_INFERENCE", "DATA_AUTHORITY", "DIAGNOSTIC",
 })
 OUTPUT_ROLES = frozenset({"manuscript", "supplementary", "internal_authority"})
 
@@ -143,7 +143,7 @@ def result_registry(
     # Result provenance is tied to the semantic presentation source that actually
     # contains the result, never to the first table/figure associated with an RQ.
     rq1_table = f"{_output_id_for_source_attribute(output_contract, 'supplement_s3_spatial')}.csv"
-    rq2_table = f"{_output_id_for_source_attribute(output_contract, 'table1_acz_summary')}.csv"
+    rq2_table = f"{_output_id_for_source_attribute(output_contract, 'supplement_s4_rq2')}.csv"
     rq3_table = (
         f"{_output_id_for_source_attribute(output_contract, 'table2_rq3_model')}.csv"
         if rq3_focal is not None else None

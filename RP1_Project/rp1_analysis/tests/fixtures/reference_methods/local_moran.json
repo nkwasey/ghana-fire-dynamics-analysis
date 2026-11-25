@@ -1,24 +1,24 @@
 {
   "expected": [
     {
+      "unit_id": "A",
       "local_morans_i": 0.6695652173913044,
-      "permutation_p": 0.26,
-      "unit_id": "A"
+      "permutation_p": 0.52
     },
     {
+      "unit_id": "B",
       "local_morans_i": 0.3043478260869565,
-      "permutation_p": 0.335,
-      "unit_id": "B"
+      "permutation_p": 0.67
     },
     {
+      "unit_id": "C",
       "local_morans_i": 0.04347826086956522,
-      "permutation_p": 0.33,
-      "unit_id": "C"
+      "permutation_p": 0.66
     },
     {
+      "unit_id": "D",
       "local_morans_i": 0.14782608695652175,
-      "permutation_p": 0.3,
-      "unit_id": "D"
+      "permutation_p": 0.6
     }
   ],
   "input": {
@@ -53,5 +53,5 @@
       8
     ]
   },
-  "provenance": "independent population-standardised Local Moran formula with deterministic conditional randomisation and smaller-tail pseudo p-values"
+  "provenance": "Independent direct-loop conditional sampling; inclusive both tails, plus one per tail, doubled smaller tail; deterministic reference stream. Monte Carlo comparisons require sampling tolerance."
 }

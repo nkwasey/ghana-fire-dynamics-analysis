@@ -30,6 +30,7 @@ import pandas as pd
 import pytest
 from mv_firms_panels.core.config import load_config
 from mv_firms_panels.core.schema import load_json_schema, validate_dataframe_against_schema
+from shapely.geometry import box
 
 
 def _repo_root() -> Path:
@@ -138,6 +139,12 @@ def test_prepare_year_viirs_dedup_schema_and_columns(monkeypatch):
     validate_dataframe_against_schema(
         df=fires, schema=schema, expected_columns=expected_cols, allow_reorder=True
     )
+    frp_schema = load_json_schema((repo_root / cfg.outputs.schemas["fires_frp_canonical"]).resolve())
+    invalid_frp = res.fires_frp_canonical.copy()
+    invalid_frp["conf_cat"] = "l"
+    with pytest.raises(ValueError, match="Schema validation failed"):
+        validate_dataframe_against_schema(df=invalid_frp, schema=frp_schema,
+            expected_columns=cfg.determinism.column_order["fires_frp_canonical"], allow_reorder=True)
 
 
 def test_prepare_year_modis_confidence_mapping(monkeypatch):
@@ -200,3 +207,49 @@ def test_prepare_year_missing_firms_file_reports_access_guidance(tmp_path: Path)
     assert "docs/data_access.md" in msg
     assert "README.md" in msg
     assert "Required by stage: rp1_mv_firms_panels prepare_year." in msg
+
+
+@pytest.mark.parametrize("boundary_kind", ["land mask", "reporting polygons"])
+def test_prepare_year_rejects_unlabelled_boundary_crs(boundary_kind):
+    cfg, repo_root = _load_cfg()
+    cfg.io.inputs.land_mask = None
+    cm = cfg.io.inputs.firms_points["viirs"].column_map
+    points = gpd.GeoDataFrame(
+        {
+            cm["latitude"]: [5.0],
+            cm["longitude"]: [-1.0],
+            cm["acq_date"]: ["2020-03-15"],
+            cm["acq_time"]: ["0130"],
+            cm["confidence"]: ["n"],
+            cm["frp"]: [10.0],
+            cm["type"]: [0],
+        },
+        geometry=gpd.points_from_xy([-1.0], [5.0]),
+        crs=4326,
+    )
+    polygons = {}
+    for level in cfg.io.inputs.polygons:
+        polygons[level.level] = gpd.GeoDataFrame(
+            {level.unit_id_field: ["A"], level.unit_name_field: ["Alpha"]},
+            geometry=[box(-1.5, 4.5, -0.5, 5.5)],
+            crs=4326,
+        )
+    first_level = next(iter(polygons))
+    unlabelled = polygons[first_level].to_crs(32630).set_crs(None, allow_override=True)
+    land_mask = None
+    if boundary_kind == "land mask":
+        land_mask = unlabelled
+    else:
+        polygons[first_level] = unlabelled
+
+    with pytest.raises(py_stage.PrepareYearError, match="(?i)" + boundary_kind + ".*no CRS"):
+        py_stage.prepare_year(
+            cfg=cfg,
+            repo_root=repo_root,
+            sensor="viirs",
+            year=2020,
+            points_gdf=points,
+            polygons_by_level=polygons,
+            land_mask_gdf=land_mask,
+            write_outputs=False,
+        )

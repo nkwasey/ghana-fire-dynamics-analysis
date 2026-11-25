@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 import json
+import math
 import os
 import subprocess
 import sys
@@ -10,6 +12,7 @@ import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -17,9 +20,11 @@ import nbformat
 import pandas as pd
 from nbclient import NotebookClient
 
-from .config import load_configuration_bundle, satscan_parameters
+from .config import governed_input_paths, load_configuration_bundle, satscan_parameters
+from .ba_support import c3_evidence_summary
 from .contracts import AnalysisContract, OutputContract
 from .data_io import load_data_authorities
+from .rq3_guard import require_rq3_inputs_acknowledged
 from .execution_contract import (
     ExecutionContractError,
     canonical_section_gates,
@@ -29,8 +34,10 @@ from .execution_contract import (
     validate_secondary_completion_state,
 )
 from .outputs import OutputWriter
+from .notebook_runtime import execute_notebook_client
 from .paths import ProjectPaths
 from .provenance import sha256_file, utc_now_iso
+from .provenance_paths import valid_origin_path
 from .registers import EVIDENCE_CLASSES, figure_specs, table_specs
 from .inference import _rq2_bandwidth
 from .gee import mean_model_column_provenance
@@ -164,9 +171,9 @@ def validate_canonical_integration(
         rq1.spatial_statistics_authority["record_type"].astype(str).eq("local_moran")
     ]
     require("rq1_acz_count", int(data_contract.acz_count) == int(populations["acz_monthly"]["units"]), int(data_contract.acz_count))
-    require("rq1_eligible_districts", int(rq1_meta["population"]["district_units"]) == int(populations["long_run_district"]["units"]), int(rq1_meta["population"]["district_units"]))
+    require("rq1_eligible_districts", int(rq1_meta["population"]["district_units"]) == int(data_contract.long_run_eligible_count), int(rq1_meta["population"]["district_units"]))
     require("rq1_global_moran_singleton", len(global_rows) == 1, len(global_rows))
-    require("rq1_local_moran_authority", len(local_rows) == int(populations["long_run_district"]["units"]), len(local_rows))
+    require("rq1_local_moran_authority", len(local_rows) == int(data_contract.long_run_eligible_count), len(local_rows))
 
     # RQ2 realised authority.
     rq2_cfg = analysis.research_questions["rq2"]
@@ -199,9 +206,9 @@ def validate_canonical_integration(
     model_spec = populations[rq3_cfg["model_population"]]
     configured_terms = tuple(str(item["term_name"]) for item in rq3_cfg["predictors"])
     design_terms = tuple(str(x) for x in rq3.gee_design.term_order)
-    require("rq3_paired_rows", len(rq3.paired_panel) == int(paired_spec["rows"]), len(rq3.paired_panel))
-    require("rq3_model_rows", len(rq3.model_population) == int(model_spec["rows"]), len(rq3.model_population))
-    require("rq3_clusters", int(rq3.gee_design.n_clusters) == int(model_spec["units"]), int(rq3.gee_design.n_clusters))
+    require("rq3_paired_rows", len(rq3.paired_panel) == int(data_contract.paired_rows), len(rq3.paired_panel))
+    require("rq3_model_rows", len(rq3.model_population) == int(data_contract.rq3_gee_rows), len(rq3.model_population))
+    require("rq3_clusters", int(rq3.gee_design.n_clusters) == int(data_contract.rq3_gee_units), int(rq3.gee_design.n_clusters))
     require("rq3_predictor_identities", tuple(design_terms[1:1+len(configured_terms)]) == configured_terms, tuple(design_terms[1:1+len(configured_terms)]))
     design_authority = mean_model_column_provenance(rq3.gee_design, analysis)
     design_dimensions = pd.to_numeric(
@@ -239,7 +246,7 @@ def validate_canonical_integration(
             "supplementary_figures": supp_figures,
         },
     )
-    require("publication_table_registry", set(publication_run.table_registry["table_id"].astype(str)) == set(main_tables + supp_tables), len(publication_run.table_registry))
+    require("publication_table_registry", set(publication_run.table_registry["table_id"].astype(str)) == {item.output_id for item in bundle.output.tables}, len(publication_run.table_registry))
     require("publication_figure_registry", set(publication_run.figure_registry["figure_id"].astype(str)) == set(main_figures + supp_figures), len(publication_run.figure_registry))
 
     # External SaTScan boundary must be explicit in both interface and publication state.
@@ -337,20 +344,6 @@ def build_publication_run_isolated(
 
     governed = paths or ProjectPaths.discover()
     run_dir = governed.resolve_inside(f"out/runs/{run_id}")
-    if run_dir.exists():
-        _validate_publication_run(run_dir)
-        integrated = run_dir / "90_integrated"
-        return PublicationRunSummary(
-            run_id=run_id,
-            run_dir=run_dir,
-            table_registry=_read_csv(integrated / "T_TABLE_REGISTRY.csv", "table registry"),
-            figure_registry=_read_csv(integrated / "T_FIGURE_REGISTRY.csv", "figure registry"),
-            result_registry=_read_csv(integrated / "T_RESULT_REGISTRY.csv", "result registry"),
-            artefact_registry=_read_csv(
-                integrated / "T_ARTEFACT_REGISTRY.csv", "artefact registry"
-            ),
-        )
-
     secondary_state: str | None = None
     if secondary_run_id is not None:
         bundle = load_configuration_bundle(governed.root / "config")
@@ -363,26 +356,49 @@ def build_publication_run_isolated(
             secondary_dir, bundle.analysis, bundle.output
         )
 
+    if run_dir.exists():
+        from .publication_sources import verify_primary_publication_sources
+        verify_primary_publication_sources(governed, run_id)
+        _validate_publication_run(run_dir)
+        if secondary_run_id is not None:
+            _validate_publication_secondary_sources(
+                run_dir, secondary_dir, secondary_state, output=bundle.output
+            )
+        integrated = run_dir / "90_integrated"
+        return PublicationRunSummary(
+            run_id=run_id,
+            run_dir=run_dir,
+            table_registry=_read_csv(integrated / "T_TABLE_REGISTRY.csv", "table registry"),
+            figure_registry=_read_csv(integrated / "T_FIGURE_REGISTRY.csv", "figure registry"),
+            result_registry=_read_csv(integrated / "T_RESULT_REGISTRY.csv", "result registry"),
+            artefact_registry=_read_csv(integrated / "T_ARTEFACT_REGISTRY.csv", "artefact registry"),
+        )
+
     child_code = """
 import os
 from pathlib import Path
 from types import SimpleNamespace
 from rp1_analysis_v1.paths import ProjectPaths
 from rp1_analysis_v1.publication import build_publication_run
+from rp1_analysis_v1.publication_sources import materialise_publication_authorities
 
 paths = ProjectPaths.discover()
 secondary_state = os.environ.get("RP1_ANALYSIS_V1_SECONDARY_STATE", "")
 source_dir = os.environ.get("RP1_ANALYSIS_V1_RUN_LOCAL_PUBLICATION_SOURCES", "")
+secondary_dir = os.environ.get("RP1_ANALYSIS_V1_SELECTED_SECONDARY_DIRECTORY", "")
 secondary = (
     None
     if not secondary_state
     else SimpleNamespace(execution_state=secondary_state)
 )
+materialise_publication_authorities(paths=paths, run_id=os.environ["RP1_ANALYSIS_V1_PUBLICATION_RUN_ID"])
 result = build_publication_run(
+    primary_source_run_id=os.environ["RP1_ANALYSIS_V1_PUBLICATION_RUN_ID"],
     paths=paths,
     run_id=os.environ["RP1_ANALYSIS_V1_PUBLICATION_RUN_ID"],
     secondary_run=secondary,
     run_local_publication_sources=None if not source_dir else Path(source_dir),
+    secondary_run_dir=None if not secondary_dir else Path(secondary_dir),
 )
 if not result.run_dir.is_dir():
     raise RuntimeError("Publication builder did not create its run directory")
@@ -393,6 +409,7 @@ if not result.run_dir.is_dir():
             "RP1_ANALYSIS_V1_ROOT": str(governed.root),
             "RP1_ANALYSIS_V1_PUBLICATION_RUN_ID": run_id,
             "RP1_ANALYSIS_V1_SECONDARY_STATE": secondary_state or "",
+            "RP1_ANALYSIS_V1_SELECTED_SECONDARY_DIRECTORY": str(secondary_dir) if secondary_run_id is not None else "",
             "RP1_ANALYSIS_V1_RUN_LOCAL_PUBLICATION_SOURCES": (
                 str(secondary_dir / "04_secondary_concentration" / "publication_sources")
                 if secondary_run_id is not None and secondary_state == "RESULTS_VALIDATED"
@@ -421,6 +438,17 @@ if not result.run_dir.is_dir():
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout or "unknown child-process failure").strip()
         raise IntegrationError(f"Publication build failed: {detail}")
+
+    from .publication_sources import verify_primary_publication_sources
+    verify_primary_publication_sources(governed, run_id)
+    _validate_publication_run(run_dir)
+    if secondary_run_id is not None:
+        final_state, _, _ = _validate_secondary_run(secondary_dir, bundle.analysis, bundle.output)
+        if final_state != secondary_state:
+            raise IntegrationError("Secondary execution state changed during publication build")
+        _validate_publication_secondary_sources(
+            run_dir, secondary_dir, secondary_state, output=bundle.output
+        )
 
     integrated = run_dir / "90_integrated"
     table_registry = _read_csv(integrated / "T_TABLE_REGISTRY.csv", "table registry")
@@ -588,7 +616,7 @@ def validate_governed_inputs(
 ) -> dict[str, Any]:
     """Validate current inputs scientifically and report canonical byte identity separately.
 
-    ``data/input_sha256.json`` remains the immutable canonical-release byte inventory.
+    ``data/input_sha256.json`` records the selected handoff's staged byte identities.
     A hash/size difference is recorded as ``canonical_input_identity=DIFFERENT`` but is
     not, by itself, a runtime scientific failure.  Current inputs are admitted only when
     the complete package-owned scientific/data validators pass.
@@ -609,9 +637,9 @@ def validate_governed_inputs(
     files = inventory.get("files")
     if not isinstance(files, list) or not files:
         raise IntegrationError("Input-hash inventory contains no governed files")
-
-    hash_rows: list[dict[str, Any]] = []
-    access_errors: list[str] = []
+    # Validate every identity before checking membership or accessing any
+    # files. This distinguishes malformed metadata from an incomplete but
+    # otherwise well-formed inventory while keeping both failures closed.
     seen_staged_paths: set[str] = set()
     for item in files:
         if not isinstance(item, dict):
@@ -620,12 +648,7 @@ def validate_governed_inputs(
         staged_path = item.get("staged_path")
         expected_hash = item.get("sha256")
         expected_size = item.get("size_bytes")
-        if (
-            not isinstance(origin_path, str)
-            or not origin_path
-            or PurePosixPath(origin_path).is_absolute()
-            or ".." in PurePosixPath(origin_path).parts
-        ):
+        if not valid_origin_path(origin_path):
             raise IntegrationError("Malformed input-hash inventory origin_path")
         if (
             not isinstance(staged_path, str)
@@ -643,7 +666,6 @@ def validate_governed_inputs(
             or any(char not in "0123456789abcdefABCDEF" for char in expected_hash)
         ):
             raise IntegrationError("Malformed input-hash inventory SHA-256")
-        expected_hash = expected_hash.lower()
         if (
             isinstance(expected_size, bool)
             or not isinstance(expected_size, int)
@@ -651,8 +673,19 @@ def validate_governed_inputs(
         ):
             raise IntegrationError("Malformed input-hash inventory size_bytes")
 
+    expected_paths = set(governed_input_paths(bundle.data_schema))
+    if seen_staged_paths != expected_paths:
+        raise IntegrationError("Input-hash inventory does not equal the exact configured c3 input set")
+
+    hash_rows: list[dict[str, Any]] = []
+    access_errors: list[str] = []
+    for item in files:
+        origin_path = item["origin_path"]
+        staged_path = item["staged_path"]
+        expected_hash = item["sha256"].lower()
+        expected_size = item["size_bytes"]
         # Runtime access is deliberately staged_path-only. origin_path is provenance
-        # and may legitimately name a historical source location that is no longer present.
+        # and may name a source location that is no longer present.
         source = governed.resolve_inside(staged_path)
         actual_hash: str | None = None
         actual_size: int | None = None
@@ -704,7 +737,7 @@ def validate_governed_inputs(
         },
         "governed_file_count": len(hash_rows),
         "current_input_identities": hash_rows,
-        # Backwards-compatible name retained for consumers of the v1.2.2 report.
+        # Canonical report field used by input-validation consumers.
         "hashes": hash_rows,
         "panel_schema_validation": {
             "status": "NOT_RUN",
@@ -720,6 +753,8 @@ def validate_governed_inputs(
         "reconciliation": [],
         "reconciliation_summary": {"status": "NOT_RUN"},
         "rq3_mcd64a1_support_by_month": [],
+        "c3_evidence_summary": [],
+        "c3_diagnostic_reconciliation": [],
         "validation_error": None,
     }
 
@@ -740,6 +775,8 @@ def validate_governed_inputs(
 
     if access_errors:
         return fail("; ".join(access_errors))
+    if canonical_identity != "MATCH":
+        return fail("Current analysis input bytes differ from the generated handoff inventory; rebuild or investigate the handoff.")
 
     try:
         authorities = load_data_authorities(governed, bundle.data_schema)
@@ -748,27 +785,23 @@ def validate_governed_inputs(
         if not bool(reconciliation["passed"].all()):
             raise IntegrationError("District-to-ACZ reconciliation failed")
 
-        # RQ3 source-support audit: preserve supported zeroes as numerical zeroes and
-        # fail if any paired MCD64A1 observation is structurally/numerically missing.
+        # Audit temporal support and observation quality separately; retain the
+        # analytical zeros under the configured unknown-area assumption.
         # Construct only the governed paired slice needed by the support audit; input
         # validation must not import or execute the RQ3 estimator stack.
         from .validation import rq3_mcd64a1_support_audit
 
-        paired_ids = set(
-            summary.paired_mask.units.loc[
-                summary.paired_mask.units["eligible"], "unit_id"
-            ].astype(str)
-        )
         paired_spec = bundle.analysis.study["populations"]["paired_overlap"]
         start_year, start_month = (int(value) for value in str(paired_spec["start"]).split("-"))
         end_year, end_month = (int(value) for value in str(paired_spec["end"]).split("-"))
         start_yyyymm = start_year * 100 + start_month
         end_yyyymm = end_year * 100 + end_month
         rq3_paired = authorities.district_panel.loc[
-            authorities.district_panel["unit_id"].astype(str).isin(paired_ids)
-            & authorities.district_panel["yyyymm"].between(start_yyyymm, end_yyyymm)
+            authorities.district_panel["yyyymm"].between(start_yyyymm, end_yyyymm)
         ].copy()
-        rq3_support = rq3_mcd64a1_support_audit(rq3_paired)
+        rq3_support = rq3_mcd64a1_support_audit(
+            rq3_paired, observation_support=authorities.ba_observation_support
+        )
     except Exception as exc:
         return fail(exc)
 
@@ -819,10 +852,13 @@ def validate_governed_inputs(
                 "status": "PASS",
                 "rows": int(len(reconciliation)),
                 "all_passed": True,
-                "absolute_tolerance": float(summary.reconciliation_absolute_tolerance),
-                "relative_tolerance": float(summary.reconciliation_relative_tolerance),
+                "default_absolute_tolerance": float(summary.reconciliation_absolute_tolerance),
+                "default_relative_tolerance": float(summary.reconciliation_relative_tolerance),
+                "tolerance_note": "Field-specific applied tolerances are recorded in each reconciliation row.",
             },
             "rq3_mcd64a1_support_by_month": rq3_support.to_dict(orient="records"),
+            "c3_evidence_summary": c3_evidence_summary(authorities.ba_observation_support).to_dict(orient="records"),
+            "c3_diagnostic_reconciliation": summary.c3_reconciliation.to_dict(orient="records"),
             "validation_error": None,
         }
     )
@@ -1184,6 +1220,10 @@ def execute_canonical_notebook(
     print("[rp1-analysis-v1] starting canonical notebook kernel", flush=True)
 
     nb = nbformat.read(notebook_path, as_version=4)
+    from .publication_sources import _notebook_payload_digest, _notebook_source_digest
+    notebook_source_identity = _notebook_payload_digest(nb)
+    if notebook_source_identity != _notebook_source_digest(notebook_path):
+        raise IntegrationError("Notebook source changed while the controlled execution was starting")
     code_cells = sum(cell.cell_type == "code" for cell in nb.cells)
     bundle = load_configuration_bundle(governed.root / "config")
     controlled_mode_spec = bundle.execution.mode("controlled_nbclient")
@@ -1213,9 +1253,13 @@ def execute_canonical_notebook(
                 ),
             )
             try:
-                executed = client.execute()
+                executed = execute_notebook_client(client)
             except Exception as exc:  # nbclient exposes several execution-specific exception types
                 raise IntegrationError(f"Canonical notebook execution failed: {exc}") from exc
+
+    if (_notebook_payload_digest(executed) != notebook_source_identity or
+            _notebook_source_digest(notebook_path) != notebook_source_identity):
+        raise IntegrationError("Notebook source changed during controlled execution; retain the incomplete run and restart with a fresh run ID")
 
     if not closeout_run_dir.is_dir():
         raise IntegrationError("Notebook did not create the governed closeout run directory")
@@ -1350,7 +1394,140 @@ def _verify_hash(path: Path, expected: str, context: str) -> None:
         raise IntegrationError(f"SHA-256 mismatch for {context}: {path}")
 
 
+def _validate_satscan_table_model_fields(path: Path, table_id: str) -> None:
+    """Reject model-incompatible statistics in resumed publication tables.
+
+    This verifies semantics of reported fields, not provenance or equality to
+    the external result family. Non-cluster S6 rows have different contracts.
+    """
+    def missing(value: object) -> bool:
+        return value is None or str(value).strip().lower() in {"", "nan", "null", "none"}
+
+    def finite(value: object, field: str, line: int, *, nonnegative: bool = True) -> None:
+        try:
+            number = float(str(value))
+        except (TypeError, ValueError) as exc:
+            raise IntegrationError(f"{table_id} row {line} has invalid {field}") from exc
+        if not math.isfinite(number) or (nonnegative and number < 0):
+            raise IntegrationError(f"{table_id} row {line} has invalid {field}")
+
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for line, row in enumerate(reader, 2):
+            if table_id == "S6":
+                kind = row.get("record_type")
+                if kind not in {"cluster", "membership", "coordinate", "parameter", "file"}:
+                    raise IntegrationError(f"{table_id} row {line}: unknown record type {kind!r}")
+                if kind != "cluster":
+                    for field in ("expected", "conditional_expected", "observed_expected_ratio",
+                                  "relative_risk", "log_likelihood_ratio", "test_statistic",
+                                  "test_statistic_type"):
+                        if not missing(row.get(field)):
+                            raise IntegrationError(f"{table_id} row {line}: non-cluster row reports {field}")
+                    continue
+            model = row.get("model")
+            if model == "space_time_permutation":
+                for field in ("expected", "relative_risk", "log_likelihood_ratio"):
+                    if not missing(row.get(field)):
+                        raise IntegrationError(f"{table_id} row {line}: STP must not report {field}")
+                finite(row.get("conditional_expected"), "conditional_expected", line)
+                if row.get("test_statistic_type") != "TEST_STAT":
+                    raise IntegrationError(f"{table_id} row {line}: STP statistic type mismatch")
+            elif model == "discrete_poisson":
+                if not missing(row.get("conditional_expected")):
+                    raise IntegrationError(f"{table_id} row {line}: Poisson must not report conditional_expected")
+                for field in ("expected", "relative_risk", "log_likelihood_ratio"):
+                    finite(row.get(field), field, line)
+                if row.get("test_statistic_type") != "LLR":
+                    raise IntegrationError(f"{table_id} row {line}: Poisson statistic type mismatch")
+            else:
+                raise IntegrationError(f"{table_id} row {line}: unknown scan model {model!r}")
+            finite(row.get("observed_expected_ratio"), "observed_expected_ratio", line)
+            finite(row.get("test_statistic"), "test_statistic", line, nonnegative=False)
+
+
+def _validate_publication_secondary_sources(
+    run_dir: Path, secondary_dir: Path, state: str | None, *, output: OutputContract
+) -> None:
+    """Reconcile result-dependent output values to the selected validated run.
+
+    The caller validates the secondary run (including raw result reconstruction)
+    before calling this function. Registry hashes alone cannot establish linkage.
+    """
+    tables = _read_csv(run_dir / "90_integrated/T_TABLE_REGISTRY.csv", "table registry")
+    figures = _read_csv(run_dir / "90_integrated/T_FIGURE_REGISTRY.csv", "figure registry")
+    table_rows = {str(row['table_id']): row for row in tables.to_dict(orient='records')}
+    figure_rows = {str(row['figure_id']): row for row in figures.to_dict(orient='records')}
+    try:
+        selected = [table_rows['T3'], table_rows['S6'], figure_rows['F6']]
+    except KeyError as exc:
+        raise IntegrationError(f"Missing SaTScan-dependent publication registry entry: {exc}") from exc
+    expected_availability = "AVAILABLE" if state == "RESULTS_VALIDATED" else "EXTERNAL_RESULTS_REQUIRED"
+    if state not in {"RESULTS_VALIDATED", "EXTERNAL_RESULTS_REQUIRED"}:
+        raise IntegrationError(f"Unsupported secondary state for publication linkage: {state}")
+    if any(str(row['availability']) != expected_availability for row in selected):
+        raise IntegrationError("Publication SaTScan availability differs from the selected secondary run")
+    from .publication import RESTRICTED_SCAN_RESULTS_REQUIRED, load_restricted_scan_sources
+    restricted = load_restricted_scan_sources(secondary_dir)
+    for spec in output.tables:
+        if not spec.builder_options.get("requires_restricted_scan"):
+            continue
+        row = table_rows.get(spec.output_id)
+        if row is None:
+            raise IntegrationError(f"Missing restricted scan table registry entry: {spec.output_id}")
+        if not restricted:
+            if row["availability"] != RESTRICTED_SCAN_RESULTS_REQUIRED:
+                raise IntegrationError(f"Restricted scan table {spec.output_id} lacks selected-run evidence")
+            continue
+        if state != "RESULTS_VALIDATED" or row["availability"] != "AVAILABLE":
+            raise IntegrationError(f"Restricted scan table {spec.output_id} is inconsistent with selected-run evidence")
+        table_path = (run_dir / str(row["path"])).resolve()
+        if not table_path.is_relative_to(run_dir.resolve()):
+            raise IntegrationError(f"Restricted scan table path escapes the publication run: {spec.output_id}")
+        actual = _read_csv(table_path, spec.output_id)
+        columns = list(spec.required_columns)
+        expected = pd.read_csv(StringIO(restricted[spec.source_attribute][columns].to_csv(index=False)))
+        try:
+            pd.testing.assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=1e-14, atol=0)
+        except AssertionError as exc:
+            raise IntegrationError(f"Restricted scan table {spec.output_id} disagrees with selected-run evidence") from exc
+    if state != "RESULTS_VALIDATED":
+        return
+    manifest_path = secondary_dir / "04_secondary_concentration/publication_sources/M_SATSCAN_PUBLICATION_SOURCE_MANIFEST.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        if manifest['secondary_run_id'] != secondary_dir.name:
+            raise IntegrationError("SaTScan source manifest secondary run identity mismatch")
+        entries = manifest['sources']
+        figure_manifest = json.loads((run_dir / str(figure_rows['F6']['manifest_path'])).read_text(encoding='utf-8'))
+        targets = {
+            'table3_satscan_clusters': run_dir / str(table_rows['T3']['path']),
+            'supplement_s6_satscan': run_dir / str(table_rows['S6']['path']),
+            'cluster_recurrence_source': run_dir / str(figure_manifest['figure_data']['path']),
+        }
+        for name, target in targets.items():
+            entry = entries[name]
+            source = (secondary_dir / entry['path']).resolve()
+            if not source.is_relative_to(secondary_dir.resolve()) or not target.resolve().is_relative_to(run_dir.resolve()):
+                raise IntegrationError(f"Unsafe publication or secondary source path: {name}")
+            _verify_hash(source, str(entry['sha256']), f"run-local SaTScan source {name}")
+            actual = pd.read_csv(target)
+            expected = pd.read_csv(source)
+            if not set(actual.columns).issubset(expected.columns):
+                raise IntegrationError(f"Publication columns differ from SaTScan source: {name}")
+            expected = expected.loc[:, list(actual.columns)]
+            try:
+                pd.testing.assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=1e-14, atol=0)
+            except AssertionError as exc:
+                raise IntegrationError(f"Publication values differ from selected validated SaTScan source: {name}") from exc
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise IntegrationError("Cannot reconcile publication outputs to selected SaTScan sources") from exc
+
+
 def _validate_publication_run(run_dir: Path) -> tuple[int, int, list[dict[str, Any]]]:
+    # Table hashes alone do not establish which FRP inputs produced the table.
+    # This is an operator assertion, not automatic verification of lineage.
+    require_rq3_inputs_acknowledged()
     checks: list[dict[str, Any]] = []
     integrated = run_dir / "90_integrated"
     table_reg = _read_csv(integrated / "T_TABLE_REGISTRY.csv", "table registry")
@@ -1386,8 +1563,27 @@ def _validate_publication_run(run_dir: Path) -> tuple[int, int, list[dict[str, A
             _verify_hash(target, str(row["sha256"]), f"table {table_id}")
             if target.stat().st_size != int(row["size_bytes"]):
                 raise IntegrationError(f"Size mismatch for table {table_id}")
+            # Hash consistency does not establish model-specific O/E and RR
+            # semantics. Require the configured fields and validate their
+            # meaning before admitting a table for resumed publication.
+            if table_id in {"T3", "S6"}:
+                try:
+                    with target.open("r", encoding="utf-8", newline="") as handle:
+                        header = next(csv.reader(handle))
+                except (OSError, UnicodeError, StopIteration, csv.Error) as exc:
+                    raise IntegrationError(f"Unable to read table header for {table_id}") from exc
+                if header != list(spec.required_columns):
+                    raise IntegrationError(
+                        f"Publication table {table_id} header differs from the current SaTScan output contract; "
+                        "regenerate from validated raw results"
+                    )
+                _validate_satscan_table_model_fields(target, table_id)
             continue
-        if availability != "EXTERNAL_RESULTS_REQUIRED" or not spec.requires_results_validated:
+        expected_deferred = (
+            "RESTRICTED_SCAN_RESULTS_REQUIRED" if spec.builder_options.get("requires_restricted_scan")
+            else "EXTERNAL_RESULTS_REQUIRED"
+        )
+        if availability != expected_deferred or not spec.requires_results_validated:
             raise IntegrationError(
                 f"Unsupported deferred publication-table state for {table_id}: {availability}"
             )
@@ -1585,7 +1781,7 @@ def _validate_secondary_run(
         if result_ids.intersection(generated):
             raise IntegrationError("Result-dependent secondary outputs exist without validated external results")
         awaiting = outputs.loc[outputs["requires_results_validated"].astype(bool), "availability"].astype(str)
-        if awaiting.empty or set(awaiting) != {"AWAITING_EXTERNAL_RESULTS"}:
+        if (result_ids and awaiting.empty) or not awaiting.eq("AWAITING_EXTERNAL_RESULTS").all():
             raise IntegrationError("Secondary output registry does not preserve the external-results boundary")
     elif state == "RESULTS_VALIDATED":
         source_root = section / "publication_sources"
@@ -1596,7 +1792,7 @@ def _validate_secondary_run(
             payload = json.loads(source_manifest.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise IntegrationError("Run-local SaTScan source manifest is malformed") from exc
-        if payload.get("schema") != "rp1-satscan-run-local-publication-sources-v1":
+        if payload.get("schema") != "rp1-satscan-run-local-publication-sources-v2":
             raise IntegrationError("Run-local SaTScan source manifest schema is invalid")
         if payload.get("external_execution_state") != "RESULTS_VALIDATED":
             raise IntegrationError("Run-local SaTScan source manifest state is inconsistent")
@@ -1666,6 +1862,7 @@ def _validate_secondary_run(
     checks.extend([
         {"check": "secondary_execution_state", "status": "PASS", "observed": state},
         {"check": "secondary_scan_config_projection", "status": "PASS", "observed": len(scenario)},
+        {"check": "secondary_configuration_binding", "status": "PASS", "observed": dict(inspection.configuration_binding)},
         {"check": "secondary_result_family_provenance", "status": "PASS", "observed": inspection.integration_state},
     ])
     return state, checks, details
@@ -1732,6 +1929,10 @@ def validate_run_authority(
     secondary_state, secondary_checks, secondary_details = _validate_secondary_run(
         secondary_run, bundle.analysis, bundle.output
     )
+    _validate_publication_secondary_sources(
+        publication_run, secondary_run, secondary_state, output=bundle.output
+    )
+    publication_checks.append({"check": "publication_satscan_source_linkage", "status": "PASS", "observed": secondary_state})
     closeout_checks = _validate_closeout_run(
         closeout_run,
         run_id,

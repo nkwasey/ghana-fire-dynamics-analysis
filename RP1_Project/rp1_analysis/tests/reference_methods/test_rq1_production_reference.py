@@ -114,27 +114,43 @@ def test_d_gini_uses_rates_not_absolute_burden() -> None:
     assert gini_coefficient(district["mean_annual_ba_km2"]) > 0.0
 
 
-def test_e_maximum_overlap_parent_assignment_is_deterministic() -> None:
-    from geo_data_prep.spatial.overlay import assign_districts_to_zones_by_max_share
+def test_e_maximum_overlap_parent_assignment_is_deterministic(tmp_path: Path) -> None:
+    """Exercise the installed Stage 1 input contract without research outputs."""
+    import yaml
+    from geo_data_prep.pipeline import prepare
 
+    source_geometry = box(500000.0, 1000000.0, 510000.0, 1001000.0)
     districts = gpd.GeoDataFrame(
-        [{"district_id": "d", "geometry": box(0.0, 0.0, 10.0, 1.0)}],
-        geometry="geometry",
-        crs="EPSG:32630",
+        [{"district_id": "d", "district_name": "District D", "geometry": source_geometry}],
+        geometry="geometry", crs="EPSG:32630",
     )
     zones = gpd.GeoDataFrame(
         [
-            {"zone_id": "left", "zone_name": "LEFT", "zone_code": "L", "geometry": box(0.0, 0.0, 4.0, 1.0)},
-            {"zone_id": "right", "zone_name": "RIGHT", "zone_code": "R", "geometry": box(4.0, 0.0, 10.0, 1.0)},
-        ],
-        geometry="geometry",
-        crs="EPSG:32630",
+            {"zone_id": "left", "zone_name": "LEFT", "zone_code": "L", "geometry": box(500000.0, 1000000.0, 504000.0, 1001000.0)},
+            {"zone_id": "right", "zone_name": "RIGHT", "zone_code": "R", "geometry": box(504000.0, 1000000.0, 510000.0, 1001000.0)},
+        ], geometry="geometry", crs=districts.crs,
     )
-    first = assign_districts_to_zones_by_max_share(districts, zones, working_crs="EPSG:32630")
-    second = assign_districts_to_zones_by_max_share(districts, zones, working_crs="EPSG:32630")
-    assert first.districts_enriched.iloc[0]["zone_id"] == "right"
-    assert first.districts_enriched.iloc[0]["zone_id"] == second.districts_enriched.iloc[0]["zone_id"]
-    assert float(first.districts_enriched.iloc[0]["ovl_share"]) == pytest.approx(0.6)
+    districts.to_file(tmp_path / "districts.gpkg", driver="GPKG", index=False)
+    zones.to_file(tmp_path / "zones.gpkg", driver="GPKG", index=False)
+    config = {
+        "project_root": ".",
+        "inputs": {
+            "districts": {"path": "districts.gpkg", "id_field": "district_id", "name_field": "district_name"},
+            "zones": {"path": "zones.gpkg", "id_field": "zone_id", "name_field": "zone_name", "code_field": "zone_code"},
+        },
+        "crs": {"working": "EPSG:32630", "area": "EPSG:32630", "output": "EPSG:32630"},
+        "outputs": {"root": "out", "splits": False, "plots": False},
+    }
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    first = prepare(config_path)
+    second = prepare(config_path)
+    assert first[2].iloc[0]["zone_id"] == "right"
+    pd.testing.assert_frame_equal(first[2], second[2])
+    assert float(first[2].iloc[0]["dominant_overlap_share"]) == pytest.approx(0.6)
+    assert first[1].crs == districts.crs
+    assert first[1].geometry.iloc[0].equals_exact(source_geometry, tolerance=0)
+    assert not (tmp_path / "out").exists()
 
 
 def test_f_departure_is_raw_district_minus_direct_parent_rate() -> None:
@@ -216,6 +232,10 @@ def test_k_local_statistic_p_rule_and_bh_family_are_independent() -> None:
     manual_i2 = z[2] * np.mean([z[1], z[3]])
     assert local.set_index("unit_id").loc["2", "local_morans_i"] == pytest.approx(manual_i2)
     simulated = np.array([-2.0, -1.0, 0.0, 1.0, 1.0, 3.0])
+    # This low-level compatibility case deliberately exercises the legacy
+    # undoubled convention. The production calls above use current configured
+    # arguments from _local_kwargs(); independent current-convention parity is
+    # checked in test_reference_methods.py.
     p = local_moran_smaller_tail_plus_one(
         simulated, 1.0,
         upper_tail_comparison="greater_than_or_equal", tie_allocation="upper_tail",

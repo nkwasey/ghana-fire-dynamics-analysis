@@ -87,6 +87,10 @@ def _run_prepare_year_qa_exports_smoke(
         repo_root / "configs" / "schemas" / "fires_canonical.schema.json",
     )
     shutil.copy(
+        repo_src / "configs" / "schemas" / "fires_frp_canonical.schema.json",
+        repo_root / "configs" / "schemas" / "fires_frp_canonical.schema.json",
+    )
+    shutil.copy(
         repo_src / "configs" / "schemas" / "panel_monthly.schema.json",
         repo_root / "configs" / "schemas" / "panel_monthly.schema.json",
     )

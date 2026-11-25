@@ -16,6 +16,7 @@ import pandas as pd
 from .contracts import AnalysisContract, ConfigurationBundle, MethodAuthorityContract, OutputContract
 from .config import build_realised_run_metadata
 from .data_io import DataAuthorities
+from .rq3_guard import require_rq3_inputs_acknowledged
 from .design import assert_execution_ready
 from .gee import (
     GEEMeanModelDesign,
@@ -234,9 +235,9 @@ def build_paired_overlap_panel(
         district_panel[unit].astype(str).isin(ids) & district_panel[yyyymm].isin(months)
     ].copy().sort_values([unit, yyyymm]).reset_index(drop=True)
     if enforce_governed_counts:
-        if len(selected) != int(pop["rows"]):
+        if pop.get("rows") is not None and len(selected) != int(pop["rows"]):
             raise ObservabilityError(f"Paired overlap has {len(selected)} rows; expected {int(pop['rows'])}")
-        if int(selected[unit].nunique()) != int(pop["units"]):
+        if pop.get("units") is not None and int(selected[unit].nunique()) != int(pop["units"]):
             raise ObservabilityError("Paired overlap unit count disagrees with configured population authority")
     if selected[[unit, yyyymm]].duplicated().any():
         raise ObservabilityError("Paired overlap contains duplicate unit-month keys")
@@ -644,6 +645,7 @@ def build_rq3_tables(
     *,
     configuration_sha256: str | None = None,
 ) -> RQ3Tables:
+    require_rq3_inputs_acknowledged(authorities.manifest)
     paired = build_paired_overlap_panel(authorities.district_panel, analysis, methods, data_contract.paired_mask)
     design = build_gee_mean_model_design(paired, analysis, enforce_governed_counts=True)
     correspondence = summarise_correspondence(paired, analysis)

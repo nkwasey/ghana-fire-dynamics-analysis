@@ -16,16 +16,18 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
 
 from .contracts import FigureSpecificationContract, PresentationExportSpecificationContract
-from .figures import FigureRenderError, RenderedFigure, draw_trajectory_panel, export_figure
-from .grid_rendering import apply_axis_label_padding, apply_grid_spacing, build_grid_figure
+from .figures import (
+    FigureRenderError,
+    RenderedFigure,
+    common_trajectory_y_limits,
+    draw_shared_trajectory_key,
+    draw_trajectory_panel,
+    export_figure,
+)
+from .grid_rendering import add_panel_labels, apply_axis_label_padding, apply_grid_spacing, build_grid_figure
 from .style import PublicationStyle
-
-
-class _RegistryLike(Protocol):
-    semantic_styles: Mapping[str, Any]
 
 
 class _BundleLike(Protocol):
@@ -34,7 +36,6 @@ class _BundleLike(Protocol):
 
 
 class RenderContextLike(Protocol):
-    registry: _RegistryLike
     bundle: _BundleLike
     style: PublicationStyle
 
@@ -48,7 +49,19 @@ _RQ2_COLUMNS = (
     "raw_p",
     "bh_q",
 )
-_EXPECTED_YEARS = tuple(range(2001, 2025))
+
+
+def _configured_years(context: RenderContextLike) -> tuple[int, ...]:
+    """Resolve the declared complete-year analysis period, independently of the data."""
+    try:
+        window = context.bundle.analysis.study["temporal_windows"]["long_run"]
+        start = pd.Period(str(window["start"]), freq="M")
+        end = pd.Period(str(window["end"]), freq="M")
+    except (AttributeError, KeyError, TypeError, ValueError) as exc:
+        raise FigureRenderError("Configured RQ2 analysis period is unavailable or invalid") from exc
+    if pd.isna(start) or pd.isna(end) or start > end or start.month != 1 or end.month != 12:
+        raise FigureRenderError("RQ2 presentation requires a declared period of complete calendar years")
+    return tuple(range(start.year, end.year + 1))
 
 
 def _require_columns(frame: pd.DataFrame, required: Sequence[str], *, context: str) -> None:
@@ -69,42 +82,33 @@ def _f4_spec(context: RenderContextLike) -> FigureSpecificationContract:
     return spec
 
 
-def _acz_palette(context: RenderContextLike) -> dict[str, str]:
-    raw = context.registry.semantic_styles.get("acz_categories")
-    if not isinstance(raw, Mapping) or not raw:
-        raise FigureRenderError("Presentation registry lacks governed ACZ colour semantics")
-    return {str(key): str(value) for key, value in raw.items()}
-
-
-def _trajectory_styles(context: RenderContextLike, code: str) -> dict[str, dict[str, object]]:
-    f4 = _f4_spec(context)
-    raw = f4.renderer_options.get("trajectory_styles", {})
-    if not isinstance(raw, Mapping):
+def _trajectory_styles(f4: FigureSpecificationContract) -> Mapping[str, Mapping[str, object]]:
+    styles = f4.renderer_options.get("trajectory_styles", {})
+    if not isinstance(styles, Mapping):
         raise FigureRenderError("Governed F4 trajectory styles are malformed")
-    observed = dict(raw.get("observed_series", {}))
-    slope = dict(raw.get("sen_slope", {}))
-    palette = _acz_palette(context)
-    if code not in palette:
-        raise FigureRenderError(f"No configured ACZ colour is available for {code!r}")
-    # The phase requires ACZ identity to be carried by the observed series.
-    # The Sen line keeps its separate governed presentation style so direction
-    # is not confused with the BH inferential decision.
-    observed["color"] = palette[code]
-    return {"observed_series": observed, "sen_slope": slope}
+    return styles
 
 
-def _normalise_group(frame: pd.DataFrame, *, context: str) -> tuple[pd.DataFrame, str, str, float, float, float]:
+def _normalise_group(
+    frame: pd.DataFrame, *, expected_years: tuple[int, ...], context: str,
+) -> tuple[pd.DataFrame, str, str, float, float, float]:
     _require_columns(frame, _RQ2_COLUMNS, context=context)
     work = frame.loc[:, _RQ2_COLUMNS].copy()
-    if len(work) != 24:
-        raise FigureRenderError(f"{context} requires exactly 24 annual rows; got {len(work)}")
+    expected_count = len(expected_years)
+    if len(work) != expected_count:
+        raise FigureRenderError(f"{context} requires exactly {expected_count} annual rows; got {len(work)}")
     codes = tuple(dict.fromkeys(work["parent_code"].astype(str)))
     names = tuple(dict.fromkeys(work["parent_name"].astype(str)))
     if len(codes) != 1 or len(names) != 1:
         raise FigureRenderError(f"{context} must contain exactly one ACZ")
-    years = pd.to_numeric(work["year"], errors="raise").astype(int)
-    if tuple(sorted(years.tolist())) != _EXPECTED_YEARS or years.nunique() != 24:
-        raise FigureRenderError(f"{context} must contain each governed year 2001-2024 exactly once")
+    numeric_years = pd.to_numeric(work["year"], errors="raise")
+    if not np.isfinite(numeric_years).all() or not numeric_years.eq(np.floor(numeric_years)).all():
+        raise FigureRenderError(f"{context} years must be finite whole calendar years")
+    years = numeric_years.astype(int)
+    if tuple(sorted(years.tolist())) != expected_years or years.nunique() != expected_count:
+        raise FigureRenderError(
+            f"{context} must contain each governed year {expected_years[0]}-{expected_years[-1]} exactly once"
+        )
     work["year"] = years
     work = work.sort_values("year", kind="mergesort").reset_index(drop=True)
     for column in ("annual_rate", "sen_slope", "raw_p", "bh_q"):
@@ -122,7 +126,7 @@ def _normalise_group(frame: pd.DataFrame, *, context: str) -> tuple[pd.DataFrame
     for column in ("sen_slope", "raw_p", "bh_q"):
         values = work[column].to_numpy(float)
         if not np.allclose(values, values[0], rtol=0.0, atol=1e-15):
-            raise FigureRenderError(f"{context} must carry one governed {column} value across all 24 years")
+            raise FigureRenderError(f"{context} must carry one governed {column} value across all {expected_count} years")
         stable[column] = float(values[0])
     return work, codes[0], names[0], stable["sen_slope"], stable["raw_p"], stable["bh_q"]
 
@@ -138,9 +142,22 @@ def _configured_alpha(context: RenderContextLike) -> float:
     return alpha
 
 
-def _apply_temporal_axis(ax: Any) -> None:
-    ax.set_xlim(2001.0, 2024.0)
-    ax.set_xticks([2001, 2005, 2010, 2015, 2020, 2024])
+def _apply_temporal_axis(ax: Any, years: tuple[int, ...]) -> None:
+    first, last = years[0], years[-1]
+    span = last - first
+    if span == 0:
+        ax.set_xlim(float(first) - 0.5, float(first) + 0.5)
+        ax.set_xticks([first])
+        return
+    target_step = span / 5.0
+    magnitude = 1
+    while magnitude * 10 < target_step:
+        magnitude *= 10
+    step = next(multiplier * magnitude for multiplier in (1, 2, 5, 10)
+                if multiplier * magnitude >= target_step)
+    interior = range((first // step + 1) * step, last, step)
+    ax.set_xlim(float(first), float(last))
+    ax.set_xticks(sorted({first, last, *interior}))
 
 
 def _add_inference_status(ax: Any, *, q: float, alpha: float, style: PublicationStyle) -> None:
@@ -170,7 +187,10 @@ def render_rq2_single_trend(
     """Render one selected ACZ trend from governed annual values and inference."""
     if frame is None:
         raise FigureRenderError("RQ2 single-ACZ renderer requires the governed annual trend source")
-    work, code, name, _slope, _raw_p, q = _normalise_group(frame, context=spec.export_id)
+    expected_years = _configured_years(context)
+    work, code, name, _slope, _raw_p, q = _normalise_group(
+        frame, expected_years=expected_years, context=spec.export_id,
+    )
     selector_column = str(spec.selector.get("column", ""))
     selector_value = str(spec.selector.get("equals", ""))
     if selector_column != "parent_code" or selector_value != code:
@@ -178,7 +198,7 @@ def render_rq2_single_trend(
             f"{spec.export_id} selected ACZ {code!r} does not match its configured selector"
         )
     f4 = _f4_spec(context)
-    styles = _trajectory_styles(context, code)
+    styles = _trajectory_styles(f4)
     alpha = _configured_alpha(context)
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         fig, ax = plt.subplots(figsize=context.style.single_panel)
@@ -195,34 +215,11 @@ def render_rq2_single_trend(
             style=context.style,
             trajectory_styles=styles,
         )
-        _apply_temporal_axis(ax)
+        _apply_temporal_axis(ax, expected_years)
         _add_inference_status(ax, q=q, alpha=alpha, style=context.style)
         ax.set_title(spec.label)
         fig.tight_layout()
         return export_figure(fig, context.style)
-
-
-def _draw_comparison_key(
-    ax: Any,
-    *,
-    order: Sequence[str],
-    code_by_name: Mapping[str, str],
-    palette: Mapping[str, str],
-    slope_style: Mapping[str, object],
-    style: PublicationStyle,
-) -> None:
-    handles: list[Line2D] = []
-    labels: list[str] = []
-    for name in order:
-        code = code_by_name[name]
-        handles.append(Line2D([], [], color=palette[code], marker="o", markersize=3.0, linewidth=0.9))
-        labels.append(name.title())
-    slope_kwargs = dict(slope_style)
-    slope_kwargs.setdefault("linewidth", 1.2)
-    handles.append(Line2D([], [], **slope_kwargs))
-    labels.append("Governed Sen slope")
-    ax.set_axis_off()
-    ax.legend(handles, labels, loc="center", frameon=False, fontsize=style.legend_font, ncol=1)
 
 
 def render_rq2_five_acz_comparison(
@@ -235,68 +232,71 @@ def render_rq2_five_acz_comparison(
     if frame is None:
         raise FigureRenderError("RQ2 five-ACZ comparison requires the governed annual trend source")
     _require_columns(frame, _RQ2_COLUMNS, context=spec.export_id)
-    if len(frame) != 120:
-        raise FigureRenderError(f"{spec.export_id} requires exactly 120 governed rows; got {len(frame)}")
+    expected_years = _configured_years(context)
     f4 = _f4_spec(context)
     configured_order = tuple(str(value) for value in spec.category_order.get("values", ()))
     f4_order = tuple(str(value) for value in f4.renderer_options.get("panel_order", ()))
     if not configured_order or configured_order != f4_order or len(configured_order) != 5:
         raise FigureRenderError("RQ2 comparison panel order is not concordant with the governed F4 contract")
+    expected_rows = len(configured_order) * len(expected_years)
+    if len(frame) != expected_rows:
+        raise FigureRenderError(f"{spec.export_id} requires exactly {expected_rows} governed rows; got {len(frame)}")
 
-    groups: dict[str, tuple[pd.DataFrame, str, float]] = {}
-    code_by_name: dict[str, str] = {}
+    groups: dict[str, pd.DataFrame] = {}
     observed_codes: list[str] = []
-    alpha = _configured_alpha(context)
     for name in configured_order:
         selected = frame.loc[frame["parent_name"].astype(str).eq(name)].copy()
-        work, code, observed_name, _slope, _raw_p, q = _normalise_group(selected, context=f"{spec.export_id}:{name}")
+        work, code, observed_name, _slope, _raw_p, _q = _normalise_group(
+            selected, expected_years=expected_years, context=f"{spec.export_id}:{name}",
+        )
         if observed_name != name:
             raise FigureRenderError("RQ2 comparison source has a parent-name mismatch")
-        groups[name] = (work, code, q)
-        code_by_name[name] = code
+        groups[name] = work
         observed_codes.append(code)
     if len(set(observed_codes)) != 5:
         raise FigureRenderError("RQ2 comparison duplicates or omits an ACZ")
     if set(frame["parent_name"].astype(str)) != set(configured_order):
         raise FigureRenderError("RQ2 comparison source contains an unconfigured ACZ")
 
-    palette = _acz_palette(context)
     layout = context.style.grid_for(f4.layout_role)
-    raw_trajectory_styles = f4.renderer_options.get("trajectory_styles", {})
-    slope_style = dict(raw_trajectory_styles.get("sen_slope", {})) if isinstance(raw_trajectory_styles, Mapping) else {}
+    trajectory_styles = _trajectory_styles(f4)
+    y_limits = common_trajectory_y_limits(frame, group="parent_name", x="year", y="annual_rate", slope="sen_slope")
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         grid = build_grid_figure(layout, figure_size=context.style.single_panel)
         apply_grid_spacing(grid.figure, layout, style=context.style)
+        title_band = (2.0 * context.style.base_font) / (72.0 * grid.figure.get_figheight())
+        grid.figure.subplots_adjust(top=grid.figure.subplotpars.top - title_band)
+        statistics = []
         for idx, (ax, name) in enumerate(zip(grid.data_axes, configured_order, strict=True)):
-            work, code, q = groups[name]
-            draw_trajectory_panel(
+            values = draw_trajectory_panel(
                 ax,
-                work,
+                groups[name],
                 x="year",
                 y="annual_rate",
                 slope="sen_slope",
                 annotation_fields=("sen_slope", "raw_p", "bh_q"),
                 group_label=name,
-                xlabel=str(f4.panel_xlabels[idx] or f4.xlabel or "Year"),
+                xlabel=str(f4.panel_xlabels[idx] or ""),
                 ylabel=str(f4.panel_ylabels[idx] or ""),
                 style=context.style,
-                trajectory_styles=_trajectory_styles(context, code),
+                trajectory_styles=trajectory_styles,
+                common_y_limits=y_limits,
+                show_group_title=False,
             )
-            _apply_temporal_axis(ax)
-            _add_inference_status(ax, q=q, alpha=alpha, style=context.style)
+            statistics.append((name, values))
+            _apply_temporal_axis(ax, expected_years)
         auxiliary = f4.renderer_options.get("auxiliary_key")
         if not isinstance(auxiliary, Mapping):
             raise FigureRenderError("Governed F4 shared graphical key is unavailable")
         cell_id = str(auxiliary.get("cell_id", ""))
         if cell_id not in grid.auxiliary_axes:
             raise FigureRenderError("Governed F4 shared graphical key cell is unavailable")
-        _draw_comparison_key(
+        draw_shared_trajectory_key(
             grid.auxiliary_axes[cell_id],
-            order=configured_order,
-            code_by_name=code_by_name,
-            palette=palette,
-            slope_style=slope_style,
+            entries=auxiliary["entries"],
             style=context.style,
+            trajectory_styles=trajectory_styles,
+            statistics=statistics,
         )
         if f4.ylabel:
             grid.figure.text(
@@ -310,9 +310,7 @@ def render_rq2_five_acz_comparison(
                 gid="rq2-shared-ylabel",
             )
         grid.figure.suptitle(spec.label)
-        # Standalone comparison panels are identified by their ACZ annotations;
-        # panel letters are intentionally omitted because the presentation-export
-        # contract does not require them and they would compete with the shared title.
+        add_panel_labels(grid.data_axes, style=context.style)
         apply_axis_label_padding(grid.data_axes, style=context.style)
         return export_figure(grid.figure, context.style)
 

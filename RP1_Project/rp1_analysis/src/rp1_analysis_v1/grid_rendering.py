@@ -155,6 +155,52 @@ def ensure_axis_labels_inside_canvas(
     fig.canvas.draw()
 
 
+def ensure_axis_titles_inside_canvas(fig: Figure, axes: tuple[Axes, ...]) -> None:
+    """Reserve measured title clearance within the unchanged physical canvas.
+
+    A title sits above its axes and is not included in an axes position.  When
+    its rendered bounds exceed the page, reduce only that axes' top edge.
+    The title therefore keeps its separation from the data, whilst map aspect
+    ratios, data limits and independently reserved ancillary bands are retained.
+    Half a title em provides a font-relative page inset; no export is cropped
+    or enlarged to accommodate overflowing text.
+    """
+
+    for ax in axes:
+        title = ax.title
+        if not title.get_visible() or not str(title.get_text()).strip():
+            continue
+        for _attempt in range(6):
+            fig.canvas.draw()
+            renderer = fig.canvas.get_renderer()
+            canvas = fig.get_window_extent(renderer)
+            box = title.get_window_extent(renderer)
+            inset = max(1.0, float(title.get_fontsize()) * float(fig.dpi) / 144.0)
+            if not all(math.isfinite(float(value)) for value in box.bounds):
+                raise GridRenderError("Rendered title bounds are non-finite")
+            available_width = float(canvas.width) - 2.0 * inset
+            if float(box.width) > available_width:
+                raise GridRenderError("Rendered title is wider than the physical canvas; wrap the title")
+            dx = max(float(canvas.x0) + inset - float(box.x0), 0.0)
+            dx -= max(float(box.x1) - float(canvas.x1) + inset, 0.0)
+            overflow = max(float(box.y1) - float(canvas.y1) + inset, 0.0)
+            if abs(dx) <= 1e-7 and overflow <= 1e-7:
+                break
+            if dx:
+                anchor = title.get_transform().transform(title.get_position())
+                new_x, _new_y = title.get_transform().inverted().transform((anchor[0] + dx, anchor[1]))
+                title.set_x(float(new_x))
+            if overflow:
+                x0, y0, width, height = (float(value) for value in ax.get_position().bounds)
+                corrected_height = height - math.nextafter(overflow / float(canvas.height), math.inf)
+                if corrected_height <= 0.0:
+                    raise GridRenderError("Rendered title leaves no positive plot height")
+                ax.set_position((x0, y0, width, corrected_height))
+        else:
+            raise GridRenderError("Unable to contain the rendered title within the physical canvas")
+    fig.canvas.draw()
+
+
 def ensure_vertical_band_xlabel_clearance(
     fig: Figure,
     axes: VerticalBandAxes,

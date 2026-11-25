@@ -20,21 +20,22 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.patches import Patch
+from matplotlib.patches import Rectangle
+from matplotlib.text import Text
 
 from .contracts import FigureSpecificationContract, PresentationExportSpecificationContract
 from .figures import FigureRenderError, RenderedFigure, draw_coefficient_or_plot, draw_stacked_proportions, export_figure
-from .grid_rendering import build_horizontal_gutter_axes, build_vertical_band_axes
+from .grid_rendering import (
+    build_horizontal_gutter_axes,
+    build_vertical_band_axes,
+    ensure_vertical_band_xlabel_clearance,
+)
 from .mapping import GhanaMapAuthority, MappingError, choropleth, prepare_geography
 from .style import PublicationStyle
 
 
 class _GeometryAuthorityLike(Protocol):
     members: Mapping[str, tuple[Path, ...]]
-
-
-class _RegistryLike(Protocol):
-    semantic_styles: Mapping[str, Any]
 
 
 class _BundleLike(Protocol):
@@ -47,7 +48,6 @@ class _RunLike(Protocol):
 
 class RenderContextLike(Protocol):
     geometry: _GeometryAuthorityLike
-    registry: _RegistryLike
     bundle: _BundleLike
     run: _RunLike
     style: PublicationStyle
@@ -137,11 +137,11 @@ def _f5_spec(context: RenderContextLike) -> FigureSpecificationContract:
     return spec
 
 
-def _four_state_palette(context: RenderContextLike) -> dict[str, str]:
-    raw = context.registry.semantic_styles.get("four_state_categories")
-    if not isinstance(raw, Mapping) or not raw:
-        raise FigureRenderError("Presentation registry lacks governed four-state colour semantics")
-    return {str(key): str(value) for key, value in raw.items()}
+def _four_state_styles(context: RenderContextLike) -> Mapping[str, Mapping[str, str]]:
+    styles = _f5_spec(context).renderer_options.get("state_styles")
+    if not isinstance(styles, Mapping) or set(styles) != set(_EXPECTED_STATES):
+        raise FigureRenderError("Governed F5 four-state styles are not concordant with the export order")
+    return styles
 
 
 def _f5_state_aliases(context: RenderContextLike) -> dict[str, str]:
@@ -189,8 +189,10 @@ def _overall_four_state_counts(context: RenderContextLike) -> dict[str, int]:
     if observed_states != _EXPECTED_STATES:
         raise FigureRenderError("Governed overall four-state summary has unexpected state order")
     denominators = pd.to_numeric(overall["denominator_n"], errors="raise").astype(int)
-    if not denominators.eq(38595).all():
-        raise FigureRenderError("Governed four-state overall denominator must be 38,595")
+    if denominators.nunique() != 1 or int(denominators.iloc[0]) <= 0:
+        raise FigureRenderError("Four-state overall denominator must be one positive realised count")
+    if int(pd.to_numeric(overall["count"], errors="raise").sum()) != int(denominators.iloc[0]):
+        raise FigureRenderError("Four-state counts do not reconcile to their denominator")
     counts = pd.to_numeric(overall["count"], errors="raise").astype(int)
     return dict(zip(observed_states, counts, strict=True))
 
@@ -221,7 +223,6 @@ def _normalise_four_state(
     frame: pd.DataFrame,
     *,
     spec: PresentationExportSpecificationContract,
-    context: RenderContextLike,
 ) -> pd.DataFrame:
     _require_columns(frame, _FOUR_STATE_COLUMNS, context=spec.export_id)
     work = frame.loc[:, _FOUR_STATE_COLUMNS].copy()
@@ -233,9 +234,6 @@ def _normalise_four_state(
     state_order = tuple(str(value) for value in spec.category_order.get("values", ()))
     if state_order != _EXPECTED_STATES:
         raise FigureRenderError("RQ3 four-state export must preserve the configured state order")
-    palette = _four_state_palette(context)
-    if set(state_order) != set(palette):
-        raise FigureRenderError("Configured four-state palette is not concordant with the export order")
     work["proportion"] = pd.to_numeric(work["proportion"], errors="raise").astype(float)
     if not work["proportion"].between(0.0, 1.0, inclusive="both").all():
         raise FigureRenderError("RQ3 four-state proportions must lie within 0-1")
@@ -251,6 +249,70 @@ def _normalise_four_state(
     return work
 
 
+def _wrap_measured_text(artist: Text, *, width_px: float) -> None:
+    """Wrap complete words against the actual font metrics of the export canvas."""
+    if not np.isfinite(width_px) or width_px <= 0.0:
+        raise FigureRenderError("RQ3 annotation has no positive available width")
+    figure = artist.get_figure()
+    assert figure is not None
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    paragraphs = str(artist.get_text()).split("\n")
+    lines: list[str] = []
+    for paragraph in paragraphs:
+        line = ""
+        for word in paragraph.split():
+            candidate = f"{line} {word}" if line else word
+            artist.set_text(candidate)
+            if artist.get_window_extent(renderer).width > width_px:
+                if not line:
+                    raise FigureRenderError("RQ3 annotation contains a word wider than its reserved region")
+                lines.append(line)
+                line = word
+                artist.set_text(word)
+                if artist.get_window_extent(renderer).width > width_px:
+                    raise FigureRenderError("RQ3 annotation contains a word wider than its reserved region")
+            else:
+                line = candidate
+        lines.append(line)
+    artist.set_text("\n".join(lines))
+
+
+def _focal_footer(fig: Figure, ax: Axes, *, text: str, style: PublicationStyle):
+    """Reserve the measured, wrapped diagnostic footer across the whole panel."""
+    # Measure at the actual raster export resolution.  Half an em on either
+    # side also leaves a margin for vector-backend font metric differences.
+    fig.set_dpi(style.dpi)
+    x0, y0, width, height = ax.get_position().bounds
+    pad_px = style.tick_font * fig.dpi / 144.0
+    note = fig.text(
+        x0 + pad_px / fig.bbox.width,
+        y0 + pad_px / fig.bbox.height,
+        text,
+        ha="left",
+        va="bottom",
+        fontsize=style.tick_font,
+        color="#333333",
+        gid="rq3-focal-footnote",
+    )
+    _wrap_measured_text(note, width_px=width * fig.bbox.width - 2.0 * pad_px)
+    fig.canvas.draw()
+    note_height = note.get_window_extent(fig.canvas.get_renderer()).height
+    band_fraction = (note_height + 2.0 * pad_px) / (height * fig.bbox.height)
+    if band_fraction + 0.04 >= 1.0:
+        raise FigureRenderError("RQ3 diagnostic footer leaves no positive plot height")
+    banded = build_vertical_band_axes(
+        fig, ax, band_fraction=band_fraction, gap_fraction=0.04,
+        gid_prefix="rq3-focal-footer",
+    )
+    banded.band_ax.add_patch(Rectangle(
+        (0, 0), 1, 1, transform=banded.band_ax.transAxes,
+        facecolor="#eeeeee", edgecolor="#cccccc", linewidth=0.6,
+        clip_on=False, gid="rq3-focal-notes-box",
+    ))
+    return banded
+
+
 def render_rq3_four_state_correspondence(
     frame: pd.DataFrame | None,
     *,
@@ -259,17 +321,17 @@ def render_rq3_four_state_correspondence(
 ) -> RenderedFigure:
     if frame is None:
         raise FigureRenderError("RQ3 four-state correspondence renderer requires the governed presentation source")
-    work = _normalise_four_state(frame, spec=spec, context=context)
+    work = _normalise_four_state(frame, spec=spec)
     aliases = _f5_state_aliases(context)
-    palette = _four_state_palette(context)
+    state_styles = _four_state_styles(context)
     counts = _overall_four_state_counts(context)
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         fig, ax = plt.subplots(figsize=context.style.single_panel)
         banded = build_vertical_band_axes(
             fig,
             ax,
-            band_fraction=0.22,
-            gap_fraction=0.06,
+            band_fraction=0.16,
+            gap_fraction=0.08,
             gid_prefix="rq3-four-state",
         )
         draw_stacked_proportions(
@@ -279,38 +341,41 @@ def render_rq3_four_state_correspondence(
             state="state",
             proportion="proportion",
             state_order=_EXPECTED_STATES,
-            ylabel="Proportion of paired district-months",
+            ylabel="Paired district-months (%)",
             style=context.style,
             legend_ax=banded.band_ax,
             display_aliases=aliases,
             legend_ncol=2,
+            legend_loc="center",
+            state_styles=state_styles,
+            show_percent=True,
         )
-        for container, state in zip(banded.plot_ax.containers, _EXPECTED_STATES, strict=True):
-            colour = palette[state]
-            for patch in container.patches:
-                patch.set_facecolor(colour)
-                patch.set_edgecolor("white")
-                patch.set_linewidth(0.4)
         banded.plot_ax.set_xlabel("Agro-climatic zone")
         banded.plot_ax.set_title(spec.label)
+        ensure_vertical_band_xlabel_clearance(fig, banded)
         count_text = (
-            "Overall paired population n=38,595\n"
+            f"Overall paired population n={sum(counts.values()):,}\n"
             f"Both zero: {counts['both_zero']:,}; "
-            f"MCD64A1 only: {counts['mcd64a1_positive_viirs_zero']:,}; "
+            f"MCD64A1 only: {counts['mcd64a1_positive_viirs_zero']:,}\n"
             f"VIIRS only: {counts['viirs_positive_mcd64a1_zero']:,}; "
             f"Both positive: {counts['both_positive']:,}"
         )
-        banded.plot_ax.text(
-            0.01,
-            0.99,
+        count_summary = banded.plot_ax.text(
+            0.985,
+            0.02,
             count_text,
             transform=banded.plot_ax.transAxes,
-            ha="left",
-            va="top",
+            ha="right",
+            va="bottom",
             fontsize=context.style.tick_font,
             color="#333333",
-            bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "0.8", "alpha": 0.9},
+            bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "0.7", "alpha": 0.75},
+            zorder=5,
             gid="rq3-four-state-counts",
+        )
+        _wrap_measured_text(
+            count_summary,
+            width_px=0.94 * banded.plot_ax.get_window_extent().width,
         )
         return export_figure(fig, context.style)
 
@@ -327,11 +392,11 @@ def render_rq3_district_mismatch(
     work = frame.loc[:, _DISTRICT_MISMATCH_COLUMNS].copy()
     if work["unit_id"].astype(str).duplicated().any():
         raise FigureRenderError("RQ3 district mismatch source has duplicate district identifiers")
-    if len(work) != 260:
-        raise FigureRenderError(f"{spec.export_id} requires the full governed 260-district map universe; got {len(work)}")
+    if work.empty:
+        raise FigureRenderError("District mismatch source must not be empty")
     valid = work.loc[~work["support_status"].astype(str).eq("excluded")].copy()
-    if len(valid) != 249 or valid["unit_id"].astype(str).nunique() != 249:
-        raise FigureRenderError("RQ3 district mismatch source must contain 249 non-excluded districts")
+    if valid.empty or valid["unit_id"].astype(str).nunique() != len(valid):
+        raise FigureRenderError("District mismatch source needs unique supported districts")
     valid["value"] = pd.to_numeric(valid["value"], errors="raise").astype(float)
     if not valid["value"].between(0.0, 1.0, inclusive="both").all():
         raise FigureRenderError("RQ3 district mismatch values must lie within 0-1 for all supported districts")
@@ -343,7 +408,8 @@ def render_rq3_district_mismatch(
         title=spec.label,
         colorbar_label=_configured_colourbar_label(spec),
         style=context.style,
-        cmap="viridis",
+        cmap=str(_f5_spec(context).renderer_options["panel_colormaps"][0]),
+        show_percent=True,
     )
 
 
@@ -378,17 +444,36 @@ def render_rq3_focal_effects(
     if frame is None:
         raise FigureRenderError("RQ3 focal-effects renderer requires the governed presentation source")
     work = _normalise_focal_effects(frame, spec=spec)
-    observations, districts, outcome_y1, outcome_y0, model_columns = _overall_model_diagnostics(context)
+    observations, districts, _, _, model_columns = _overall_model_diagnostics(context)
     effect_aliases = _f5_effect_aliases(context)
+    options = _f5_spec(context).renderer_options
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         fig, ax = plt.subplots(figsize=context.style.wide_single_panel)
+        banded = _focal_footer(
+            fig, ax,
+            text=(
+                f"Conditional model population: n={observations:,} VIIRS-positive district-months; {districts} districts\n"
+                f"Outcome Y=1 mapped burned-area absence; Y=0 mapped burned-area presence; design columns={model_columns}"
+            ),
+            style=context.style,
+        )
         gutter = build_horizontal_gutter_axes(
             fig,
             ax,
-            label_fraction=0.46,
+            label_fraction=0.25,
             gap_fraction=0.02,
             gid_prefix="rq3-focal-effects",
         )
+        _, _, layout_width, _ = gutter.original_cell_bounds
+        plot_x, plot_y, plot_width, plot_height = gutter.plot_ax.get_position().bounds
+        stats_width = layout_width * 0.3
+        stats_gap = layout_width * 0.025
+        gutter.plot_ax.set_position((plot_x, plot_y, plot_width - stats_width - stats_gap, plot_height))
+        stats_ax = fig.add_axes(
+            (plot_x + plot_width - stats_width, plot_y, stats_width, plot_height), sharey=gutter.plot_ax
+        )
+        stats_ax.set_gid("rq3-focal-effects-summary")
+        stats_ax.set_axis_off()
         draw_coefficient_or_plot(
             gutter.plot_ax,
             work,
@@ -401,31 +486,43 @@ def render_rq3_focal_effects(
             label_ax=gutter.label_ax,
             display_aliases=effect_aliases,
             vertical_padding_rows=context.style.geometry.effect_vertical_padding_rows,
+            decimal_ticks=options.get("effect_decimal_ticks", ()),
+            **options.get("effect_style", {}),
         )
-        gutter.plot_ax.set_title(spec.label)
-        gutter.plot_ax.text(
-            0.01,
-            0.02,
-            f"Conditional model population: n={observations:,} VIIRS-positive district-months; {districts} districts\nOutcome Y=1 mapped burned-area absence; Y=0 mapped burned-area presence; design columns={model_columns}",
-            transform=gutter.plot_ax.transAxes,
-            ha="left",
-            va="bottom",
-            fontsize=context.style.tick_font,
-            color="#333333",
-            gid="rq3-focal-footnote",
-        )
+        fig.suptitle(spec.label)
         for idx, row in enumerate(work.itertuples(index=False)):
-            gutter.plot_ax.text(
-                0.99,
+            stats_ax.text(
+                0,
                 float(idx),
                 f"OR {row.adjusted_or:.3f} [{row.or_lower_95:.3f}, {row.or_upper_95:.3f}]\np={row.p:.2e}",
-                transform=gutter.plot_ax.get_yaxis_transform(),
-                ha="right",
+                transform=stats_ax.get_yaxis_transform(),
+                ha="left",
                 va="center",
                 fontsize=context.style.tick_font,
                 color="#333333",
                 gid=f"rq3-focal-stat-{idx}",
             )
+        ensure_vertical_band_xlabel_clearance(fig, banded)
+        # The raster helper guarantees one raster pixel.  Leave a font-relative
+        # reserve as well: PDF uses point-space font metrics and a different
+        # descender height, so a single raster pixel is insufficient there.
+        renderer = fig.canvas.get_renderer()
+        clearance = (
+            gutter.plot_ax.xaxis.label.get_window_extent(renderer).y0
+            - banded.band_ax.get_window_extent(renderer).y1
+        )
+        reserve = context.style.tick_font * fig.dpi / 72.0
+        if clearance < reserve:
+            px, py, pw, ph = gutter.plot_ax.get_position().bounds
+            delta = (reserve - clearance) / fig.bbox.height
+            if ph <= delta:
+                raise FigureRenderError("RQ3 footer clearance leaves no positive plot height")
+            gutter.plot_ax.set_position((px, py + delta, pw, ph - delta))
+        # Keep both text columns aligned after the x-label clearance adjustment.
+        _plot_x, plot_y, _plot_w, plot_h = gutter.plot_ax.get_position().bounds
+        for column_ax in (gutter.label_ax, stats_ax):
+            column_x, _, column_w, _ = column_ax.get_position().bounds
+            column_ax.set_position((column_x, plot_y, column_w, plot_h))
         return export_figure(fig, context.style)
 
 
@@ -433,7 +530,7 @@ def _normalise_standardised_probabilities(
     frame: pd.DataFrame,
     *,
     spec: PresentationExportSpecificationContract,
-) -> dict[str, dict[float, dict[str, float]]]:
+) -> tuple[dict[str, dict[float, dict[str, float]]], int, int]:
     _require_columns(frame, _STANDARDISED_PROBABILITY_COLUMNS, context=spec.export_id)
     work = frame.loc[:, _STANDARDISED_PROBABILITY_COLUMNS].copy()
     if len(work) != 4:
@@ -444,10 +541,10 @@ def _normalise_standardised_probabilities(
         raise FigureRenderError("RQ3 standardised probabilities must lie within 0-1")
     if not work["quantile"].isin([0.25, 0.75]).all():
         raise FigureRenderError("RQ3 standardised-probability rows must be governed Q25/Q75 values")
-    if work["n"].nunique() != 1 or int(work["n"].iloc[0]) != 22939:
-        raise FigureRenderError("RQ3 standardised-probability source must report n=22,939")
-    if work["districts"].nunique() != 1 or int(work["districts"].iloc[0]) != 249:
-        raise FigureRenderError("RQ3 standardised-probability source must report 249 districts")
+    if work["n"].nunique() != 1 or int(work["n"].iloc[0]) <= 0:
+        raise FigureRenderError("Standardised-probability source needs one positive realised sample size")
+    if work["districts"].nunique() != 1 or int(work["districts"].iloc[0]) <= 0:
+        raise FigureRenderError("Standardised-probability source needs one positive realised district count")
     grouped: dict[str, dict[float, dict[str, float]]] = {}
     for predictor_id, group in work.groupby("predictor_id", sort=False, observed=True):
         if len(group) != 2:
@@ -464,7 +561,7 @@ def _normalise_standardised_probabilities(
         }
     if tuple(grouped) != ("viirs_detection_count", "viirs_mean_frp"):
         raise FigureRenderError("RQ3 standardised-probability source must preserve the governed focal predictor order")
-    return grouped
+    return grouped, int(work["n"].iloc[0]), int(work["districts"].iloc[0])
 
 
 def _predictor_display_name(predictor_id: str) -> str:
@@ -485,6 +582,7 @@ def _draw_probability_pair(
     predictor_id: str,
     pair: Mapping[float, Mapping[str, float]],
     style: PublicationStyle,
+    colour: str,
 ) -> None:
     q25 = pair[0.25]
     q75 = pair[0.75]
@@ -494,11 +592,12 @@ def _draw_probability_pair(
         "",
         xy=(p75, y),
         xytext=(p25, y),
-        arrowprops={"arrowstyle": "->", "linewidth": 1.1, "color": "0.25"},
+        arrowprops={"arrowstyle": "->", "linewidth": 1.1, "color": colour},
     )
-    ax.plot([p25, p75], [y, y], linewidth=1.1, color="0.45", gid=f"rq3-std-line-{predictor_id}")
-    ax.plot([p25], [y], marker="o", markersize=4.5, color="black", gid=f"rq3-std-q25-{predictor_id}")
-    ax.plot([p75], [y], marker="s", markersize=4.2, color="black", gid=f"rq3-std-q75-{predictor_id}")
+    ax.plot([p25, p75], [y, y], linewidth=1.1, color=colour, gid=f"rq3-std-line-{predictor_id}")
+    ax.plot([p25], [y], marker="o", markersize=4.5, color=colour,
+            markerfacecolor=ax.get_facecolor(), gid=f"rq3-std-q25-{predictor_id}")
+    ax.plot([p75], [y], marker="s", markersize=4.2, color=colour, gid=f"rq3-std-q75-{predictor_id}")
     delta_pp = (p75 - p25) * 100.0
     name = _predictor_display_name(predictor_id)
     ax.text(
@@ -534,14 +633,15 @@ def _draw_probability_pair(
         gid=f"rq3-std-q75-text-{predictor_id}",
     )
     ax.text(
-        0.99,
+        1.015,
         y,
         f"Δ={delta_pp:+.1f} pp",
         transform=ax.get_yaxis_transform(),
-        ha="right",
+        ha="left",
         va="center",
         fontsize=style.tick_font,
         color="#111111",
+        clip_on=False,
         gid=f"rq3-std-delta-{predictor_id}",
     )
 
@@ -554,12 +654,15 @@ def render_rq3_standardised_probabilities(
 ) -> RenderedFigure:
     if frame is None:
         raise FigureRenderError("RQ3 standardised-probability renderer requires the governed supplement source")
-    grouped = _normalise_standardised_probabilities(frame, spec=spec)
+    grouped, observations, districts = _normalise_standardised_probabilities(frame, spec=spec)
+    colour = _f5_spec(context).renderer_options["effect_style"]["estimate_color"]
     with plt.rc_context(matplotlib.RcParams(context.style.rc_params())):
         fig, ax = plt.subplots(figsize=context.style.wide_single_panel)
         y_positions = np.array([1.0, 0.0])
         for y, predictor_id in zip(y_positions, grouped, strict=True):
-            _draw_probability_pair(ax, y=y, predictor_id=predictor_id, pair=grouped[predictor_id], style=context.style)
+            _draw_probability_pair(
+                ax, y=y, predictor_id=predictor_id, pair=grouped[predictor_id], style=context.style, colour=colour,
+            )
         ax.set_xlim(0.0, 1.0)
         ax.set_ylim(-0.5, 1.5)
         ax.set_yticks([])
@@ -569,7 +672,8 @@ def render_rq3_standardised_probabilities(
         ax.text(
             0.01,
             0.02,
-            "Q25/Q75 vary one focal predictor at a time across observed covariates\nConditional model population: n=22,939 VIIRS-positive district-months; 249 districts",
+            "Q25/Q75 vary one focal predictor at a time across observed covariates\n"
+            f"Conditional model population: n={observations:,} VIIRS-positive district-months; {districts} districts",
             transform=ax.transAxes,
             ha="left",
             va="bottom",

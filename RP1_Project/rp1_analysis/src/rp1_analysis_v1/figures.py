@@ -7,6 +7,7 @@ figure-data tables and render them deterministically.
 from __future__ import annotations
 
 import io
+import math
 import textwrap
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -17,11 +18,19 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import patheffects
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
+from matplotlib.ticker import NullFormatter, NullLocator, PercentFormatter
 
-from .grid_rendering import apply_row_vertical_padding, ensure_axis_labels_inside_canvas
-from .style import PublicationStyle, panel_label
+from .grid_rendering import (
+    apply_row_vertical_padding,
+    build_vertical_band_axes,
+    ensure_axis_labels_inside_canvas,
+    ensure_axis_titles_inside_canvas,
+    ensure_vertical_band_xlabel_clearance,
+)
+from .style import ACZ_SERIES_STYLES, PublicationStyle, panel_label
 
 
 class FigureRenderError(ValueError):
@@ -442,22 +451,30 @@ def seasonality_lines(
     xlabel: str,
     ylabel: str,
     style: PublicationStyle,
+    figure_size: tuple[float, float] | None = None,
+    zone_order: Sequence[str] | None = None,
+    zone_colours: Mapping[str, str] | None = None,
 ) -> RenderedFigure:
     """Render governed ACZ climatologies with circular timing/concentration labels."""
-    _require(frame, ["unit_name", "month", "value", "circular_mean_month", "mean_resultant_length"])
     with plt.rc_context(matplotlib.RcParams(style.rc_params())):
-        fig, ax = plt.subplots(figsize=style.wide_single_panel)
-        for name, g in frame.groupby("unit_name", sort=True, observed=True):
-            g=g.sort_values("month")
-            mu=float(pd.to_numeric(g["circular_mean_month"],errors="raise").iloc[0])
-            R=float(pd.to_numeric(g["mean_resultant_length"],errors="raise").iloc[0])
-            ax.plot(g["month"], g["value"], marker="o", markersize=2.2, linewidth=1.0, label=f"{name} (μ={mu:.2f}, R={R:.3f})")
-        ax.set_xticks(range(1,13))
-        ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
-        ax.grid(alpha=style.grid_alpha)
-        ax.legend(frameon=False, fontsize=style.legend_font, ncol=1, loc="upper center", bbox_to_anchor=(0.5,-0.14))
-        fig.tight_layout()
-        return _export(fig, style)
+        fig, ax = plt.subplots(figsize=figure_size or style.wide_single_panel)
+        fig.subplots_adjust(left=0.13, right=0.94, bottom=0.08, top=0.91 if title else 0.93)
+        banded = build_vertical_band_axes(
+            fig, ax, band_fraction=0.21, gap_fraction=0.11, gid_prefix="acz-seasonality",
+        )
+        try:
+            draw_seasonality_lines(
+                ax, frame, xlabel=xlabel, ylabel=ylabel, style=style,
+                legend_ax=banded.band_ax, legend_ncol=2,
+                zone_order=zone_order, zone_colours=zone_colours,
+            )
+            if title:
+                ax.set_title(title)
+            ensure_vertical_band_xlabel_clearance(fig, banded)
+            return export_figure(fig, style)
+        except Exception:
+            plt.close(fig)
+            raise
 
 
 
@@ -472,33 +489,22 @@ def district_seasonal_diagnostics(
     panel_ylabels: Sequence[str | None],
 ) -> RenderedFigure:
     """Render full district monthly shares, circular mean month and resultant length."""
-    _require(frame,["record_type","unit_id","unit_name","parent_code","month","monthly_share","circular_mean_month","mean_resultant_length"])
-    work=frame.loc[frame["record_type"].astype(str).eq("monthly_share")].copy()
-    if work.empty:
-        raise FigureRenderError("District seasonal source contains no monthly-share rows")
-    summary=work.drop_duplicates("unit_id")[["unit_id","unit_name","parent_code","circular_mean_month","mean_resultant_length"]].copy()
-    order=summary.sort_values(["parent_code","circular_mean_month","unit_name"])["unit_id"].tolist()
-    pivot=work.pivot(index="unit_id",columns="month",values="monthly_share").reindex(order)
-    summary=summary.set_index("unit_id").reindex(order).reset_index()
+    pivot, summary = district_seasonal_components(frame)
     if panel_count != 3:
         raise FigureRenderError("District seasonal diagnostics require the configured three-panel structure")
     if len(panel_xlabels) != panel_count or len(panel_ylabels) != panel_count:
         raise FigureRenderError("District seasonal panel label arrays must match configured panel_count")
     with plt.rc_context(matplotlib.RcParams(style.rc_params())):
-        fig, axes=plt.subplots(panel_count,1,figsize=figure_size,gridspec_kw={"height_ratios":[2.4,1.0,1.0]})
-        axes=np.atleast_1d(axes)
-        im=axes[0].imshow(pivot.to_numpy(float),aspect="auto",interpolation="nearest")
-        axes[0].set_xticks(np.arange(12),[str(i) for i in range(1,13)])
-        axes[0].set_xlabel(str(panel_xlabels[0] or "")); axes[0].set_ylabel(str(panel_ylabels[0] or ""))
-        cb=fig.colorbar(im,ax=axes[0],orientation="horizontal",fraction=0.04,pad=0.08); cb.set_label("Share of district long-run burned area")
-        y=np.arange(len(summary))
-        axes[1].scatter(summary["circular_mean_month"],y,s=7)
-        axes[1].set_xlim(0.5,12.5); axes[1].set_xticks(range(1,13)); axes[1].set_yticks([]); axes[1].set_xlabel(str(panel_xlabels[1] or "")); axes[1].set_ylabel(str(panel_ylabels[1] or ""))
-        groups=[]; labels=[]
-        for code,g in summary.groupby("parent_code",sort=True,observed=True):
-            groups.append(pd.to_numeric(g["mean_resultant_length"],errors="coerce").dropna().to_numpy(float)); labels.append(str(code))
-        axes[2].boxplot(groups,tick_labels=labels,showfliers=False)
-        axes[2].set_xlabel(str(panel_xlabels[2] or "")); axes[2].set_ylabel(str(panel_ylabels[2] or ""))
+        fig, axes = plt.subplots(
+            panel_count, 1, figsize=figure_size, gridspec_kw={"height_ratios": [2.4, 1.0, 1.0]},
+        )
+        xlabels = [str(label or "") for label in panel_xlabels]
+        ylabels = [str(label or "") for label in panel_ylabels]
+        image = draw_district_seasonal_heatmap(axes[0], pivot, xlabel=xlabels[0], ylabel=ylabels[0])
+        colorbar = fig.colorbar(image, ax=axes[0], orientation="horizontal", fraction=0.04, pad=0.08)
+        label_district_share_colorbar(colorbar, image)
+        draw_circular_mean_timing(axes[1], summary, xlabel=xlabels[1], ylabel=ylabels[1], style=style)
+        draw_resultant_length_by_group(axes[2], summary, xlabel=xlabels[2], ylabel=ylabels[2])
         for idx,ax in enumerate(axes):
             ax.text(-0.02,1.02,panel_label(idx),transform=ax.transAxes,ha="right",va="bottom",fontweight=style.panels.label_weight,fontsize=style.panel_label_font)
             ax.grid(alpha=style.grid_alpha if idx else 0)
@@ -674,6 +680,25 @@ def multi_model_or_plot(
 # study statistics.  Parent renderers own Figure/GridSpec creation and export.
 # ---------------------------------------------------------------------------
 
+def acz_line_style(
+    zone: str, *, colour: str, width: float,
+) -> dict:
+    """Use the same redundant ACZ line and point encodings in every panel."""
+    marker, linestyle = ACZ_SERIES_STYLES[zone]
+    effects = []
+    if zone in {"CZ", "GS"}:
+        effects = [patheffects.Stroke(linewidth=width + 0.5, foreground="#4B5260"), patheffects.Normal()]
+    return {
+        "color": colour,
+        "marker": marker,
+        "linestyle": linestyle,
+        "linewidth": width,
+        "markeredgecolor": "#4B5260",
+        "markeredgewidth": 0.35,
+        "path_effects": effects,
+    }
+
+
 def draw_seasonality_lines(
     ax: Axes,
     frame: pd.DataFrame,
@@ -683,24 +708,52 @@ def draw_seasonality_lines(
     style: PublicationStyle,
     legend_ax: Axes | None = None,
     legend_ncol: int = 3,
+    compact_legend: bool = False,
+    zone_order: Sequence[str] | None = None,
+    zone_colours: Mapping[str, str] | None = None,
 ) -> None:
     _require(frame, ["unit_name", "month", "value", "circular_mean_month", "mean_resultant_length"])
-    for name, group_frame in frame.groupby("unit_name", sort=True, observed=True):
-        g = group_frame.sort_values("month")
-        mu = float(pd.to_numeric(g["circular_mean_month"], errors="raise").iloc[0])
-        resultant = float(pd.to_numeric(g["mean_resultant_length"], errors="raise").iloc[0])
+    has_zone_codes = "parent_code" in frame
+    zone_codes = frame["parent_code" if has_zone_codes else "unit_name"].astype(str)
+    order = tuple(sorted(zone_codes.unique())) if zone_order is None else tuple(zone_order)
+    if len(order) != len(set(order)) or set(zone_codes) != set(order):
+        raise FigureRenderError("ACZ seasonality categories do not match configured order")
+    if zone_colours is not None and not set(order).issubset(zone_colours):
+        raise FigureRenderError("ACZ seasonality palette does not cover all configured zones")
+    style_order = tuple(ACZ_SERIES_STYLES)
+    for index, zone in enumerate(order):
+        group = frame.loc[zone_codes.eq(zone)].sort_values("month")
+        months = pd.to_numeric(group["month"], errors="raise").to_numpy(float)
+        if not np.array_equal(months, np.arange(1, 13)):
+            raise FigureRenderError(f"ACZ seasonality {zone!r} must contain months 1–12 exactly once")
+        names = group["unit_name"].astype(str).unique()
+        if len(names) != 1:
+            raise FigureRenderError(f"ACZ seasonality {zone!r} has inconsistent zone names")
+        values = pd.to_numeric(group["value"], errors="raise").to_numpy(float)
+        mu = pd.to_numeric(group["circular_mean_month"], errors="raise").to_numpy(float)
+        resultant = pd.to_numeric(group["mean_resultant_length"], errors="raise").to_numpy(float)
+        if not np.isfinite(np.concatenate((values, mu, resultant))).all():
+            raise FigureRenderError(f"ACZ seasonality {zone!r} contains non-finite source values")
+        if not (np.allclose(mu, mu[0]) and np.allclose(resultant, resultant[0])):
+            raise FigureRenderError(f"ACZ seasonality circular summaries vary within {zone!r}")
+        style_zone = zone if zone in ACZ_SERIES_STYLES else style_order[index % len(style_order)]
+        colour = zone_colours[zone] if zone_colours is not None else style.acz_colours[style_zone]
+        name = names[0].title()
+        label = (zone if has_zone_codes else name) if compact_legend else f"{name} (μ={mu[0]:.2f}, R={resultant[0]:.3f})"
         ax.plot(
-            g["month"],
-            g["value"],
-            marker="o",
-            markersize=2.2,
-            linewidth=1.0,
-            label=f"{name} (μ={mu:.2f}, R={resultant:.3f})",
+            months,
+            values,
+            markersize=3.0,
+            label=label,
+            **acz_line_style(style_zone, colour=colour, width=max(1.0, style.line_width)),
         )
     ax.set_xticks(range(1, 13))
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.grid(alpha=style.grid_alpha)
+    if compact_legend:
+        ax.grid(False)
+    else:
+        ax.grid(alpha=style.grid_alpha)
     line_count = max(1, len(ax.lines))
     target_ax = legend_ax if legend_ax is not None else ax
     if legend_ax is not None:
@@ -715,9 +768,9 @@ def draw_seasonality_lines(
         handlelength=1.5,
         columnspacing=0.8,
         borderaxespad=0.0,
-        title=style.circular_mean_month_display.legend_title,
+        title=None if compact_legend else style.circular_mean_month_display.legend_title,
     )
-    legend.set_gid("f3-seasonality-legend")
+    legend.set_gid("acz-seasonality-legend")
 
 
 def draw_stacked_proportions(
@@ -733,6 +786,9 @@ def draw_stacked_proportions(
     legend_ax: Axes | None = None,
     display_aliases: Mapping[str, str] | None = None,
     legend_ncol: int = 2,
+    legend_loc: str = "center",
+    state_styles: Mapping[str, Mapping[str, str]] | None = None,
+    show_percent: bool = False,
 ) -> None:
     _require(frame, [category, state, proportion])
     categories = list(dict.fromkeys(frame[category].astype(str).tolist()))
@@ -747,9 +803,13 @@ def draw_stacked_proportions(
             values.append(float(subset.iloc[0]) if len(subset) else 0.0)
         aliases = display_aliases or {}
         display_label = str(aliases.get(str(state_value), str(state_value).replace("_", " ")))
-        ax.bar(categories, values, bottom=bottom, label=display_label)
+        bar_style = {"linewidth": 0.4, **(state_styles or {}).get(str(state_value), {})}
+        ax.bar(categories, values, bottom=bottom, label=display_label, **bar_style)
         bottom += np.asarray(values)
     ax.set_ylim(0, 1)
+    if show_percent:
+        ax.set_yticks((0.0, 0.25, 0.5, 0.75, 1.0))
+        ax.yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
     ax.set_ylabel(ylabel)
     target_ax = legend_ax if legend_ax is not None else ax
     if legend_ax is not None:
@@ -761,13 +821,13 @@ def draw_stacked_proportions(
         frameon=False,
         fontsize=style.legend_font,
         ncol=max(1, min(int(legend_ncol), len(state_order))),
-        loc="center",
+        loc=legend_loc,
         handlelength=1.6,
         columnspacing=0.8,
         borderaxespad=0.0,
     )
     legend.set_gid("f5-state-legend")
-    ax.tick_params(axis="x", rotation=20)
+    ax.tick_params(axis="x", rotation=0 if show_percent else 20)
 
 
 def draw_coefficient_or_plot(
@@ -784,6 +844,9 @@ def draw_coefficient_or_plot(
     label_ax: Axes | None = None,
     display_aliases: Mapping[str, str] | None = None,
     vertical_padding_rows: float = 0.0,
+    decimal_ticks: Sequence[float] = (),
+    estimate_color: str | None = None,
+    reference_color: str | None = None,
 ) -> None:
     required = [label, estimate, low, high] + ([order] if order else [])
     _require(frame, required)
@@ -794,10 +857,12 @@ def draw_coefficient_or_plot(
     hi = pd.to_numeric(work[high], errors="raise").to_numpy(float)
     if np.any(est <= 0) or np.any(lo <= 0) or np.any(hi <= 0):
         raise FigureRenderError("Odds-ratio forest plot requires strictly positive estimates and intervals")
-    artist = ax.errorbar(est, y, xerr=np.vstack((est - lo, hi - est)), fmt="o", capsize=3)
+    artist = ax.errorbar(
+        est, y, xerr=np.vstack((est - lo, hi - est)), fmt="o", capsize=3, color=estimate_color,
+    )
     if artist.lines:
         artist.lines[0].set_gid("f5-focal-effect-estimates")
-    null_line = ax.axvline(1.0, linestyle="--", linewidth=0.8)
+    null_line = ax.axvline(1.0, linestyle="--", linewidth=0.8, color=reference_color, zorder=1)
     null_line.set_gid("f5-focal-effect-null")
     ax.set_xscale("log")
     aliases = display_aliases or {}
@@ -813,7 +878,16 @@ def draw_coefficient_or_plot(
         padding_rows=vertical_padding_rows,
     )
     ax.set_xlabel(xlabel)
-    ax.grid(axis="x", alpha=style.grid_alpha)
+    if decimal_ticks:
+        ticks = tuple(float(value) for value in decimal_ticks)
+        if not np.isfinite(ticks).all() or any(value <= 0 for value in ticks) or 1.0 not in ticks:
+            raise FigureRenderError("Log odds-ratio ticks must be positive and include the 1.0 reference")
+        ax.set_xticks(ticks, [f"{value:g}" if value != 1 else "1.0" for value in ticks])
+        ax.xaxis.set_minor_locator(NullLocator())
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_xlim(min(float(lo.min()), min(ticks)) / 1.06, max(float(hi.max()), max(ticks)) * 1.06)
+    else:
+        ax.grid(axis="x", alpha=style.grid_alpha)
     if label_ax is not None:
         label_ax.set_axis_off()
         label_ax.set_ylim(ax.get_ylim())
@@ -845,7 +919,9 @@ def draw_trajectory_panel(
     ylabel: str,
     style: PublicationStyle,
     trajectory_styles: Mapping[str, Mapping[str, object]] | None = None,
-) -> None:
+    common_y_limits: tuple[float, float] | None = None,
+    show_group_title: bool = True,
+) -> tuple[float, float, float]:
     _require(frame, [x, y, slope, *annotation_fields])
     g = frame.sort_values(x)
     xv = pd.to_numeric(g[x], errors="raise").to_numpy(float)
@@ -877,18 +953,57 @@ def draw_trajectory_panel(
     slope_style.setdefault("linewidth", 1.2)
     slope_line = ax.plot(xx, anchor_y + float(b[0]) * (xx - anchor_x), **slope_style)[0]
     slope_line.set_gid("f4-sen-slope")
-    ax.text(
-        0.015,
-        0.95,
-        f"{group_label}\nSen slope={b[0]:.3f}; p={raw_p[0]:.4f}; q={q[0]:.4f}",
-        transform=ax.transAxes,
-        ha="left",
-        va="top",
-        fontsize=style.tick_font,
-    )
-    ax.grid(alpha=style.grid_alpha)
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", color="0.65", alpha=style.grid_alpha)
+    if common_y_limits is None:
+        ax.text(
+            0.015,
+            0.95,
+            f"{group_label}\nSen slope={b[0]:.3f}; p={raw_p[0]:.4f}; q={q[0]:.4f}",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=style.tick_font,
+        )
+    else:
+        ax.set_ylim(*common_y_limits)
+        if show_group_title:
+            ax.set_title(group_label.title(), loc="center", fontsize=style.tick_font, pad=3)
+        else:
+            ax.text(
+                0.02,
+                1.0 + style.geometry.panel_label_offset_y,
+                group_label.title(),
+                transform=ax.transAxes,
+                ha="left",
+                va="bottom",
+                fontsize=style.tick_font,
+                gid="trajectory-panel-group",
+            )
+        first_year = int(xv[0])
+        last_year = int(xv[-1])
+        year_ticks = [first_year, *range(first_year + 5, last_year - 1, 5), last_year]
+        ax.set_xticks(year_ticks)
+        ax.set_xlim(first_year - 0.45, last_year + 0.45)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    return float(b[0]), float(raw_p[0]), float(q[0])
+
+
+def common_trajectory_y_limits(
+    frame: pd.DataFrame, *, group: str, x: str, y: str, slope: str,
+) -> tuple[float, float]:
+    """Fit a common display range around observed rates and all rendered line endpoints."""
+    observed = pd.to_numeric(frame[y], errors="raise")
+    minimum, maximum = float(observed.min()), float(observed.max())
+    for _, series in frame.groupby(group, sort=False, observed=True):
+        years = pd.to_numeric(series[x], errors="raise")
+        mean_rate = float(pd.to_numeric(series[y], errors="raise").mean())
+        coefficient = float(series[slope].iloc[0])
+        endpoints = mean_rate + coefficient * (np.array([years.min(), years.max()]) - years.mean())
+        minimum = min(minimum, float(endpoints.min()))
+        maximum = max(maximum, float(endpoints.max()))
+    return min(0.0, 5.0 * math.floor(minimum / 5.0)), max(5.0, 5.0 * math.ceil(maximum / 5.0))
 
 
 def draw_shared_trajectory_key(
@@ -897,8 +1012,9 @@ def draw_shared_trajectory_key(
     entries: Sequence[dict[str, str]],
     style: PublicationStyle,
     trajectory_styles: Mapping[str, Mapping[str, object]] | None = None,
+    statistics: Sequence[tuple[str, tuple[float, float, float]]] = (),
 ) -> None:
-    """Render a graphical key in an auxiliary GridSpec cell without creating a data panel."""
+    """Render the shared key and optional governed statistics in the auxiliary cell."""
     handles: list[Line2D] = []
     labels: list[str] = []
     configured = trajectory_styles or {}
@@ -931,7 +1047,46 @@ def draw_shared_trajectory_key(
     if not handles:
         raise FigureRenderError("Shared trajectory key requires at least one entry")
     ax.set_axis_off()
-    ax.legend(handles, labels, loc="center", frameon=False, fontsize=style.legend_font)
+    if not statistics:
+        ax.legend(handles, labels, loc="center", frameon=False, fontsize=style.legend_font)
+        return
+
+    legend = ax.legend(
+        handles,
+        labels,
+        loc="upper left",
+        bbox_to_anchor=(0.025, 0.97),
+        borderaxespad=0.0,
+        ncol=len(handles),
+        frameon=False,
+        handlelength=1.65,
+        columnspacing=1.1,
+        fontsize=style.legend_font,
+    )
+    legend.set_gid("f4-shared-key")
+    summary = ax.table(
+        cellText=[
+            (f"{panel_label(index)} {name.title()}", f"{slope:.3f}", f"{raw_p:.4f}", f"{q:.4f}")
+            for index, (name, (slope, raw_p, q)) in enumerate(statistics)
+        ],
+        colLabels=("ACZ", "Sen slope", "Raw p", "BH q"),
+        cellLoc="right",
+        colLoc="right",
+        colWidths=(0.44, 0.24, 0.16, 0.16),
+        bbox=(0.025, 0.015, 0.95, 0.77),
+    )
+    summary.set_gid("f4-statistics-below-key")
+    summary.auto_set_font_size(False)
+    summary.set_fontsize(style.legend_font)
+    for (row, column), cell in summary.get_celld().items():
+        cell.set_facecolor("#e8e8e8" if row == 0 else "#f5f5f5")
+        cell.set_edgecolor("#d1d3d4")
+        cell.set_linewidth(0.4)
+        cell.PAD = 0.03
+        if row == 0:
+            cell.get_text().set_fontweight("bold")
+        if column == 0:
+            cell.get_text().set_ha("left")
 
 
 def district_seasonal_components(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -942,7 +1097,9 @@ def district_seasonal_components(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.
         raise FigureRenderError("District seasonal source contains no monthly-share rows")
     summary = work.drop_duplicates("unit_id")[["unit_id", "unit_name", "parent_code", "circular_mean_month", "mean_resultant_length"]].copy()
     order = summary.sort_values(["parent_code", "circular_mean_month", "unit_name"])["unit_id"].tolist()
-    pivot = work.pivot(index="unit_id", columns="month", values="monthly_share").reindex(order)
+    pivot = work.pivot(index="unit_id", columns="month", values="monthly_share").reindex(
+        index=order, columns=range(1, 13),
+    )
     summary = summary.set_index("unit_id").reindex(order).reset_index()
     return pivot, summary
 
@@ -954,11 +1111,28 @@ def draw_district_seasonal_heatmap(
     xlabel: str,
     ylabel: str,
 ):
-    image = ax.imshow(pivot.to_numpy(float), aspect="auto", interpolation="nearest")
+    values = pivot.to_numpy(dtype=float, na_value=np.nan)
+    if np.isinf(values).any() or np.any((values < 0.0) | (values > 1.0)):
+        raise FigureRenderError("Governed district monthly shares must remain within 0–1")
+    image = ax.imshow(
+        np.ma.masked_invalid(values), aspect="auto", interpolation="nearest",
+        cmap=matplotlib.colormaps["viridis_r"].with_extremes(bad="#FFFFFF"),
+        vmin=0.0, vmax=1.0,
+    )
     ax.set_xticks(np.arange(12), [str(i) for i in range(1, 13)])
+    ax.set_yticks([])
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     return image
+
+
+def label_district_share_colorbar(colorbar, image) -> None:
+    """Key the masked cells independently of the quantitative share scale."""
+    colorbar.set_ticks((0.0, 0.25, 0.5, 0.75, 1.0))
+    label = "Share of district long-run burned area"
+    if np.ma.getmaskarray(image.get_array()).any():
+        label += "\nWhite = undefined share"
+    colorbar.set_label(label)
 
 
 def draw_circular_mean_timing(
@@ -970,7 +1144,9 @@ def draw_circular_mean_timing(
     style: PublicationStyle,
 ) -> None:
     y = np.arange(len(summary))
-    ax.scatter(summary["circular_mean_month"], y, s=7)
+    values = pd.to_numeric(summary["circular_mean_month"], errors="coerce")
+    finite = np.isfinite(values.to_numpy(float, na_value=np.nan))
+    ax.scatter(values.loc[finite], y[finite], s=7, color="#30343B")
     convention = style.circular_mean_month_display
     ax.set_xlim(convention.axis_min, convention.axis_max)
     ax.set_xticks(convention.ticks, convention.tick_labels)
@@ -985,13 +1161,26 @@ def draw_resultant_length_by_group(
     *,
     xlabel: str,
     ylabel: str,
+    zone_order: Sequence[str] | None = None,
 ) -> None:
     groups: list[np.ndarray] = []
-    labels: list[str] = []
-    for code, g in summary.groupby("parent_code", sort=True, observed=True):
-        groups.append(pd.to_numeric(g["mean_resultant_length"], errors="coerce").dropna().to_numpy(float))
-        labels.append(str(code))
-    ax.boxplot(groups, tick_labels=labels, showfliers=False)
+    zone_codes = summary["parent_code"].astype(str)
+    labels = list(sorted(set(zone_codes)) if zone_order is None else zone_order)
+    for code in labels:
+        group = summary.loc[zone_codes.eq(code), "mean_resultant_length"]
+        values = pd.to_numeric(group, errors="coerce").dropna().to_numpy(float)
+        if zone_order is not None and values.size == 0:
+            raise FigureRenderError(f"No finite governed resultant-length values for ACZ {code!r}")
+        if np.any((values < 0.0) | (values > 1.0)):
+            raise FigureRenderError("Governed mean resultant length must remain within 0–1")
+        groups.append(values)
+    ax.boxplot(
+        groups, tick_labels=labels, showfliers=False, patch_artist=True,
+        boxprops={"facecolor": "#E8E8E8", "edgecolor": "#646A73"},
+        medianprops={"color": "#30343B", "linewidth": 1.25},
+        whiskerprops={"color": "#646A73"}, capprops={"color": "#646A73"},
+    )
+    ax.set_ylim(0.0, 1.0)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
@@ -999,4 +1188,5 @@ def draw_resultant_length_by_group(
 def export_figure(fig, style: PublicationStyle) -> RenderedFigure:
     """Export a parent-owned figure without cropping the governed canvas."""
     ensure_axis_labels_inside_canvas(fig, tuple(fig.axes))
+    ensure_axis_titles_inside_canvas(fig, tuple(fig.axes))
     return _export(fig, style)

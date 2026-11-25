@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .atomic_io import publish_file_no_replace
 
 def utc_now_iso() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
@@ -169,10 +170,10 @@ class RunProvenance:
                 handle.flush()
                 os.fsync(handle.fileno())
             try:
-                os.link(tmp, path)
+                publish_file_no_replace(tmp, path)
             except FileExistsError:
                 raise FileExistsError(path) from None
-            tmp.unlink()
+            tmp.unlink(missing_ok=True)
         finally:
             if tmp.exists():
                 tmp.unlink()

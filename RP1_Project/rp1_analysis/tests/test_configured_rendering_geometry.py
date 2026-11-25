@@ -83,7 +83,7 @@ def test_required_presentation_contract_keys_fail_closed(tmp_path: Path, mutate,
         load_figure_contract(_mutated(tmp_path, mutate))
 
 
-def test_semantic_support_palette_is_configuration_owned_and_distinct() -> None:
+def test_semantic_support_palette_is_configuration_owned_and_distinct(tmp_path: Path) -> None:
     contract = load_figure_contract(CONFIG)
     semantic = contract.semantic_styles
     assert semantic.valid_zero.face == "#BFD7EA"
@@ -91,10 +91,16 @@ def test_semantic_support_palette_is_configuration_owned_and_distinct() -> None:
     assert semantic.excluded.face == "#FFFFFF"
     assert len({semantic.valid_zero.face, semantic.not_significant.face, semantic.excluded.face}) == 3
     assert semantic.excluded.hatch == "////"
-    style_source = (ROOT / "src/rp1_analysis_v1/style.py").read_text(encoding="utf-8")
+    def change_support_colours(raw):
+        palette = raw["semantic_styles"]
+        palette["valid_zero"]["face"] = "#D6E7F2"
+        palette["local_moran"]["HH"]["face"] = "#BD4F03"
+
+    altered = PublicationStyle.from_contract(load_figure_contract(_mutated(tmp_path, change_support_colours)))
+    assert altered.semantic.valid_zero.face == "#D6E7F2"
+    assert altered.semantic.local_moran["HH"].face == "#BD4F03"
     mapping_source = (ROOT / "src/rp1_analysis_v1/mapping.py").read_text(encoding="utf-8")
     for configured_colour in ("#BFD7EA", "#D9D9D9", "#D55E00", "#0072B2", "#CC79A7", "#009E73", "#F0E442"):
-        assert configured_colour not in style_source
         assert configured_colour not in mapping_source
 
 
@@ -107,6 +113,8 @@ def test_local_moran_semantic_identities_are_fixed_and_not_auto_palette_owned() 
     assert local["HL"].face == "#CC79A7"
     assert local["LH"].face == "#009E73"
     assert local["NS"].face == contract.semantic_styles.not_significant.face
+    assert len({state.hatch for state in local.values()}) == len(local)
+    assert contract.semantic_styles.excluded.hatch not in {state.hatch for state in local.values()}
     assert "tab20" not in inspect.getsource(draw_categorical_axis)
 
 
@@ -180,6 +188,47 @@ def test_paired_map_viewports_remain_equal_with_different_ancillary_content() ->
         assert panel_b.map_ax.get_position().bounds == pytest.approx(before_b, abs=1e-12)
     finally:
         import matplotlib.pyplot as plt
+        plt.close(grid.figure)
+
+
+def test_f3_maps_keep_sign_and_local_classes_distinct_without_colour() -> None:
+    import matplotlib.pyplot as plt
+
+    bundle, style, geography = _objects()
+    layout = bundle.figure.grid_layouts["rectangular_top_span_two_bottom"]
+    grid = build_grid_figure(layout, figure_size=style.dimensions_for("rectangular_top_span_two_bottom"))
+    apply_grid_spacing(grid.figure, layout, style=style)
+    continuous = _continuous_frame(geography)
+    continuous.loc[2::2, "value"] *= -1
+    try:
+        departure = draw_choropleth_axis(
+            grid.figure, grid.data_axes[1], geography, continuous, value="value",
+            colorbar_label="District departure", style=style, cmap="coolwarm", symmetric_about_zero=True,
+        )
+        classes = draw_categorical_axis(
+            grid.figure, grid.data_axes[2], geography, _categorical_frame(geography),
+            category="local_class", style=style,
+        )
+        grid.figure.canvas.draw()
+        renderer = grid.figure.canvas.get_renderer()
+        departure_legend = departure.support_or_status_legend_ax.get_legend()
+        hatches = {handle.get_label(): handle.get_hatch() for handle in departure_legend.legend_handles}
+        assert hatches["Below ACZ"] and not hatches["Above ACZ"]
+        assert hatches["Below ACZ"] != hatches["Excluded"]
+        assert hatches["Below ACZ"] in {artist.get_hatch() for artist in departure.map_ax.collections}
+        departure_box = departure_legend.get_window_extent(renderer)
+        assert grid.figure.bbox.contains(departure_box.x0, departure_box.y0)
+        assert grid.figure.bbox.contains(departure_box.x1, departure_box.y1)
+        assert not departure_box.overlaps(
+            classes.support_or_status_legend_ax.get_legend().get_window_extent(renderer)
+        )
+        class_legend = classes.colorbar_or_categorical_key_ax.get_legend()
+        expected = {label: state.hatch or None for label, state in style.semantic.local_moran.items()}
+        assert {handle.get_label(): handle.get_hatch() for handle in class_legend.legend_handles} == expected
+        assert not class_legend.get_window_extent(renderer).overlaps(
+            classes.support_or_status_legend_ax.get_legend().get_window_extent(renderer)
+        )
+    finally:
         plt.close(grid.figure)
 
 
